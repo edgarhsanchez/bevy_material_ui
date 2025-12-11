@@ -16,6 +16,19 @@ bevy = "0.17.3"
 
 [dev-dependencies]
 # No dynamic_linking to avoid Windows linker limit issues
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "color_benchmarks"
+harness = false
+
+[[bench]]
+name = "component_benchmarks"
+harness = false
+
+[[bench]]
+name = "system_benchmarks"
+harness = false
 
 [[example]]
 name = "showcase"
