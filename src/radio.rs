@@ -39,7 +39,15 @@ pub struct RadioPlugin;
 impl Plugin for RadioPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<RadioChangeEvent>()
-            .add_systems(Update, (radio_interaction_system, radio_group_system, radio_style_system));
+            .add_systems(
+                Update,
+                (
+                    radio_interaction_system,
+                    radio_group_system,
+                    radio_style_system,
+                    radio_theme_refresh_system,
+                ),
+            );
     }
 }
 
@@ -278,6 +286,62 @@ fn radio_style_system(
                         for inner_entity in outer_children.iter() {
                             if let Ok(mut bg) = inner_query.get_mut(inner_entity) {
                                 bg.0 = inner_color;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Refresh radio visuals when the theme changes.
+fn radio_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    radios: Query<(&MaterialRadio, &Children)>,
+    children_query: Query<&Children>,
+    state_layer_query: Query<&Children, With<RadioStateLayer>>,
+    mut outer_query: Query<(&mut BorderColor, &Children), With<RadioOuter>>,
+    mut inner_query: Query<&mut BackgroundColor, With<RadioInner>>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (radio, radio_children) in radios.iter() {
+        let outer_color = radio.outer_color(&theme);
+        let inner_color = if radio.selected {
+            radio.inner_color(&theme)
+        } else {
+            Color::NONE
+        };
+
+        for touch_target in radio_children.iter() {
+            if let Ok(state_layer_children) = state_layer_query.get(touch_target) {
+                for state_layer_child in state_layer_children.iter() {
+                    if let Ok((mut border, outer_children)) = outer_query.get_mut(state_layer_child) {
+                        *border = BorderColor::all(outer_color);
+                        for inner_entity in outer_children.iter() {
+                            if let Ok(mut bg) = inner_query.get_mut(inner_entity) {
+                                bg.0 = inner_color;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let Ok(touch_children) = children_query.get(touch_target) {
+                for touch_child in touch_children.iter() {
+                    if let Ok(state_layer_children) = state_layer_query.get(touch_child) {
+                        for state_layer_child in state_layer_children.iter() {
+                            if let Ok((mut border, outer_children)) = outer_query.get_mut(state_layer_child) {
+                                *border = BorderColor::all(outer_color);
+                                for inner_entity in outer_children.iter() {
+                                    if let Ok(mut bg) = inner_query.get_mut(inner_entity) {
+                                        bg.0 = inner_color;
+                                    }
+                                }
                             }
                         }
                     }

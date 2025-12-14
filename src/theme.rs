@@ -5,6 +5,8 @@
 
 use bevy::prelude::*;
 
+use crate::color::MaterialColorScheme;
+
 /// Theme mode (light or dark)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ThemeMode {
@@ -140,6 +142,58 @@ impl Default for MaterialTheme {
 }
 
 impl MaterialTheme {
+    /// Create a theme from a seed color using MD3 scheme generation.
+    pub fn from_seed(seed: Color, mode: ThemeMode) -> Self {
+        let scheme = match mode {
+            ThemeMode::Dark => MaterialColorScheme::dark_from_bevy_color(seed),
+            ThemeMode::Light => MaterialColorScheme::light_from_bevy_color(seed),
+        };
+
+        Self {
+            mode,
+
+            primary: scheme.primary,
+            on_primary: scheme.on_primary,
+            primary_container: scheme.primary_container,
+            on_primary_container: scheme.on_primary_container,
+
+            secondary: scheme.secondary,
+            on_secondary: scheme.on_secondary,
+            secondary_container: scheme.secondary_container,
+            on_secondary_container: scheme.on_secondary_container,
+
+            tertiary: scheme.tertiary,
+            on_tertiary: scheme.on_tertiary,
+            tertiary_container: scheme.tertiary_container,
+            on_tertiary_container: scheme.on_tertiary_container,
+
+            error: scheme.error,
+            on_error: scheme.on_error,
+            error_container: scheme.error_container,
+            on_error_container: scheme.on_error_container,
+
+            surface: scheme.surface,
+            on_surface: scheme.on_surface,
+            on_surface_variant: scheme.on_surface_variant,
+            surface_container_lowest: scheme.surface_container_lowest,
+            surface_container_low: scheme.surface_container_low,
+            surface_container: scheme.surface_container,
+            surface_container_high: scheme.surface_container_high,
+            surface_container_highest: scheme.surface_container_highest,
+
+            outline: scheme.outline,
+            outline_variant: scheme.outline_variant,
+            inverse_surface: scheme.inverse_surface,
+            inverse_on_surface: scheme.inverse_on_surface,
+            inverse_primary: scheme.inverse_primary,
+            scrim: scheme.scrim,
+            shadow: scheme.shadow,
+
+            selected: scheme.primary,
+            unselected: scheme.outline,
+        }
+    }
+
     /// Create a dark theme (recommended for games)
     pub fn dark() -> Self {
         Self {

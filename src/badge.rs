@@ -15,7 +15,7 @@ pub struct BadgePlugin;
 
 impl Plugin for BadgePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, badge_style_system);
+        app.add_systems(Update, (badge_style_system, badge_theme_refresh_system));
     }
 }
 
@@ -386,7 +386,7 @@ fn badge_style_system(
         (&MaterialBadge, &mut Node, &mut BackgroundColor, &mut BorderRadius),
         Changed<MaterialBadge>,
     >,
-    mut badge_texts: Query<(&ChildOf, &mut Text), With<BadgeContent>>,
+    mut badge_texts: Query<(&ChildOf, &mut Text, &mut TextColor), With<BadgeContent>>,
 ) {
     let Some(theme) = theme else { return };
 
@@ -405,11 +405,47 @@ fn badge_style_system(
     }
 
     // Update text content
-    for (parent, mut text) in badge_texts.iter_mut() {
+    for (parent, mut text, mut color) in badge_texts.iter_mut() {
         if let Ok((badge, _, _, _)) = badges.get(parent.parent()) {
             if let Some(content) = &badge.content {
                 **text = content.clone();
             }
+            color.0 = badge.content_color(&theme);
+        }
+    }
+}
+
+/// Refresh badge visuals when the theme changes.
+fn badge_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut badges: Query<(&MaterialBadge, &mut Node, &mut BackgroundColor, &mut BorderRadius)>,
+    mut badge_texts: Query<(&ChildOf, &mut Text, &mut TextColor), With<BadgeContent>>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (badge, mut node, mut bg_color, mut border_radius) in badges.iter_mut() {
+        let width = badge.width();
+        let height = badge.height();
+
+        node.width = Val::Px(width);
+        node.height = Val::Px(height);
+        node.min_width = Val::Px(width);
+        node.min_height = Val::Px(height);
+        node.display = if badge.visible { Display::Flex } else { Display::None };
+
+        *bg_color = BackgroundColor(badge.background_color(&theme));
+        *border_radius = BorderRadius::all(Val::Px(height / 2.0));
+    }
+
+    for (parent, mut text, mut color) in badge_texts.iter_mut() {
+        if let Ok(badge) = badges.get(parent.parent()).map(|(b, _, _, _)| b) {
+            if let Some(content) = &badge.content {
+                **text = content.clone();
+            }
+            color.0 = badge.content_color(&theme);
         }
     }
 }

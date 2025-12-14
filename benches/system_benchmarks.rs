@@ -114,7 +114,7 @@ fn bench_component_queries(c: &mut Criterion) {
                 let mut query_count = 0;
                 let world = app.world_mut();
                 let mut query = world.query::<&MaterialButton>();
-                for button in query.iter(&world) {
+                for button in query.iter(world) {
                     black_box(button);
                     query_count += 1;
                 }
@@ -147,7 +147,7 @@ fn bench_component_queries(c: &mut Criterion) {
                     let mut query_count = 0;
                     let world = app.world_mut();
                     let mut query = world.query_filtered::<&MaterialButton, With<Node>>();
-                    for button in query.iter(&world) {
+                    for button in query.iter(world) {
                         black_box(button);
                         query_count += 1;
                     }
@@ -177,9 +177,9 @@ fn bench_ripple_updates(c: &mut Criterion) {
 
             b.iter(|| {
                 // Simulate ripple update system
-                let mut world = app.world_mut();
+                let world = app.world_mut();
                 let mut query = world.query::<&mut Ripple>();
-                for mut ripple in query.iter_mut(&mut world) {
+                for mut ripple in query.iter_mut(world) {
                     // Simulate animation progress
                     ripple.scale = (ripple.scale + 0.016).min(1.0);
                     if ripple.scale >= 1.0 && !ripple.fading_out {
@@ -210,9 +210,9 @@ fn bench_focus_updates(c: &mut Criterion) {
             }));
 
             b.iter(|| {
-                let mut world = app.world_mut();
+                let world = app.world_mut();
                 let mut query = world.query::<&mut Focusable>();
-                for mut focusable in query.iter_mut(&mut world) {
+                for mut focusable in query.iter_mut(world) {
                     // Simulate focus toggle
                     focusable.focused = !focusable.focused;
                     focusable.focus_visible = focusable.focused;
@@ -362,14 +362,14 @@ fn bench_mixed_workload(c: &mut Criterion) {
 
             // Query buttons
             let mut button_query = world.query::<(&MaterialButton, &Interaction)>();
-            for (button, interaction) in button_query.iter(&world) {
+            for (button, interaction) in button_query.iter(world) {
                 black_box((button, interaction));
                 count += 1;
             }
 
             // Query checkboxes
             let mut checkbox_query = world.query::<(&MaterialCheckbox, &Interaction)>();
-            for (checkbox, interaction) in checkbox_query.iter(&world) {
+            for (checkbox, interaction) in checkbox_query.iter(world) {
                 black_box((checkbox, interaction));
                 count += 1;
             }

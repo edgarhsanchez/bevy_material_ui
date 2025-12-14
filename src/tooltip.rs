@@ -658,7 +658,7 @@ fn tooltip_position_system(
             continue;
         };
         
-        let scale = scale_factor as f32;
+        let scale = scale_factor;
         
         // Both UiGlobalTransform and ComputedNode.size() are in physical pixels
         let anchor_center_physical = anchor_transform.translation;

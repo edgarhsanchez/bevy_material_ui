@@ -174,7 +174,7 @@ fn spawn_selected_section(
         ComponentSection::Switches => spawn_switches_section(parent, theme),
         ComponentSection::RadioButtons => spawn_radios_section(parent, theme),
         ComponentSection::Chips => spawn_chips_section(parent, theme, icon_font),
-        ComponentSection::FAB => spawn_fab_section(parent, theme, icon_font),
+        ComponentSection::Fab => spawn_fab_section(parent, theme, icon_font),
         ComponentSection::Badges => spawn_badges_section(parent, theme, icon_font),
         ComponentSection::Progress => spawn_progress_section(parent, theme),
         ComponentSection::Cards => spawn_cards_section(parent, theme),

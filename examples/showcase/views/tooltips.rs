@@ -2,7 +2,6 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::chip::{ChipBuilder, ChipLabel};
 
 use crate::showcase::common::*;
 
@@ -42,25 +41,35 @@ pub fn spawn_tooltip_section(parent: &mut ChildSpawnerCommands, theme: &Material
                         TextColor(theme.on_surface_variant),
                     ));
                     
-                    // Position buttons
+                    // Position buttons (exclusive)
                     for (label, pos) in [
                         ("Top", TooltipPosition::Top),
                         ("Bottom", TooltipPosition::Bottom),
                         ("Left", TooltipPosition::Left),
                         ("Right", TooltipPosition::Right),
                     ] {
-                        let is_default = pos == TooltipPosition::Bottom;
-                        let chip_for_color = MaterialChip::filter(label).with_selected(is_default);
-                        let label_color = chip_for_color.label_color(theme);
+                        let selected = pos == TooltipPosition::Bottom;
+                        let button = MaterialButton::new(label).with_variant(if selected {
+                            ButtonVariant::FilledTonal
+                        } else {
+                            ButtonVariant::Outlined
+                        });
+                        let label_color = button.text_color(theme);
 
                         row.spawn((
                             TooltipPositionOption(pos),
                             Interaction::None,
-                            ChipBuilder::filter(label).selected(is_default).build(theme),
+                            MaterialButtonBuilder::new(label)
+                                .variant(if selected {
+                                    ButtonVariant::FilledTonal
+                                } else {
+                                    ButtonVariant::Outlined
+                                })
+                                .build(theme),
                         ))
-                        .with_children(|chip| {
-                            chip.spawn((
-                                ChipLabel,
+                        .with_children(|btn| {
+                            btn.spawn((
+                                ButtonLabel,
                                 Text::new(label),
                                 TextFont { font_size: 12.0, ..default() },
                                 TextColor(label_color),
@@ -87,18 +96,28 @@ pub fn spawn_tooltip_section(parent: &mut ChildSpawnerCommands, theme: &Material
                         ("0.5s", 0.5_f32),
                         ("1.0s", 1.0_f32),
                     ] {
-                        let is_default = (delay - 0.5).abs() < 0.01;
-                        let chip_for_color = MaterialChip::filter(label).with_selected(is_default);
-                        let label_color = chip_for_color.label_color(theme);
+                        let selected = (delay - 0.5).abs() < 0.01;
+                        let button = MaterialButton::new(label).with_variant(if selected {
+                            ButtonVariant::FilledTonal
+                        } else {
+                            ButtonVariant::Outlined
+                        });
+                        let label_color = button.text_color(theme);
 
                         row.spawn((
                             TooltipDelayOption(delay),
                             Interaction::None,
-                            ChipBuilder::filter(label).selected(is_default).build(theme),
+                            MaterialButtonBuilder::new(label)
+                                .variant(if selected {
+                                    ButtonVariant::FilledTonal
+                                } else {
+                                    ButtonVariant::Outlined
+                                })
+                                .build(theme),
                         ))
-                        .with_children(|chip| {
-                            chip.spawn((
-                                ChipLabel,
+                        .with_children(|btn| {
+                            btn.spawn((
+                                ButtonLabel,
                                 Text::new(label),
                                 TextFont { font_size: 12.0, ..default() },
                                 TextColor(label_color),

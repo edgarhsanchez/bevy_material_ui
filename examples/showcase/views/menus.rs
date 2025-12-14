@@ -140,7 +140,7 @@ fn spawn_menu_item(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, lab
 
     parent
         .spawn((
-            MenuItemMarker,
+            MenuItemMarker(label.to_string()),
             Interaction::None,
             builder.build(theme),
         ))

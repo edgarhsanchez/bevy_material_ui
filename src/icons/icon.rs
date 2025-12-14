@@ -5,6 +5,7 @@
 use bevy::prelude::*;
 use super::codepoints::*;
 use super::style::IconStyle;
+use super::MaterialIconFont;
 
 /// A Material Design icon component
 ///
@@ -46,7 +47,7 @@ impl MaterialIcon {
     ///
     /// Returns None if the name is not recognized.
     pub fn from_name(name: &str) -> Option<Self> {
-        icon_by_name(name).map(|c| Self::new(c))
+        icon_by_name(name).map(Self::new)
     }
 
     /// Get the icon as a string (single character)
@@ -382,24 +383,72 @@ pub struct IconPlugin;
 
 impl Plugin for IconPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, update_icon_text);
+        app.add_systems(Update, sync_icon_render_components);
     }
 }
 
-/// System to update icon text when the icon or style changes
-fn update_icon_text(
-    mut query: Query<(&MaterialIcon, &IconStyle, &mut Text), Changed<MaterialIcon>>,
+/// Keep icon entities renderable by ensuring required text components exist.
+///
+/// Many widgets spawn icons as `(MaterialIcon, IconStyle)` only; Bevy UI renders
+/// text using `Text` + `TextFont` (and optionally `TextColor`). This system
+/// bridges that gap and also keeps size/color in sync when `IconStyle` changes.
+fn sync_icon_render_components(
+    icon_font: Option<Res<MaterialIconFont>>,
+    mut commands: Commands,
+    mut query: Query<
+        (
+            Entity,
+            &MaterialIcon,
+            &IconStyle,
+            Option<&mut Text>,
+            Option<&mut TextFont>,
+            Option<&mut TextColor>,
+        ),
+        Or<(
+            Added<MaterialIcon>,
+            Added<IconStyle>,
+            Changed<MaterialIcon>,
+            Changed<IconStyle>,
+        )>,
+    >,
 ) {
-    for (icon, style, mut text) in query.iter_mut() {
-        // Update the text content to the icon character
-        *text = Text::new(icon.as_str());
-        
-        // Note: Font styling (fill, weight, grade, optical size) would require
-        // loading the Material Symbols variable font and setting font variation
-        // settings. This is a simplified implementation.
-        
-        // The color would be applied via TextColor component separately
-        let _ = style; // Style will be used when variable font support is added
+    let Some(icon_font) = icon_font else { return };
+
+    for (entity, icon, style, text, text_font, text_color) in query.iter_mut() {
+        let desired_text = Text::new(icon.as_str());
+        let desired_size = style.effective_size();
+
+        match text {
+            Some(mut text) => {
+                *text = desired_text;
+            }
+            None => {
+                commands.entity(entity).insert(desired_text);
+            }
+        }
+
+        match text_font {
+            Some(mut text_font) => {
+                text_font.font = icon_font.0.clone();
+                text_font.font_size = desired_size;
+            }
+            None => {
+                commands.entity(entity).insert(TextFont {
+                    font: icon_font.0.clone(),
+                    font_size: desired_size,
+                    ..default()
+                });
+            }
+        }
+
+        if let Some(color) = style.color {
+            match text_color {
+                Some(mut text_color) => text_color.0 = color,
+                None => {
+                    commands.entity(entity).insert(TextColor(color));
+                }
+            }
+        }
     }
 }
 

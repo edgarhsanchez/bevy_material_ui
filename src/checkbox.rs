@@ -27,6 +27,7 @@ impl Plugin for CheckboxPlugin {
             .add_systems(Update, (
                 checkbox_interaction_system,
                 checkbox_visual_update_system,
+                checkbox_theme_refresh_system,
                 checkbox_animation_system,
             ).chain());
     }
@@ -291,6 +292,68 @@ fn checkbox_visual_update_system(
     children_query: Query<&Children>,
 ) {
     let Some(theme) = theme else { return };
+
+    for (_entity, checkbox, children) in checkboxes.iter() {
+        // Find checkbox box and icon through children
+        for child in children.iter() {
+            // Check if this child is the state layer
+            if let Ok(mut layer) = state_layers.get_mut(child) {
+                layer.color = checkbox.state_layer_color(&theme);
+                if checkbox.pressed {
+                    layer.set_pressed();
+                } else if checkbox.hovered {
+                    layer.set_hovered();
+                } else {
+                    layer.clear();
+                }
+            }
+
+            // Navigate to checkbox box
+            if let Ok(grandchildren) = children_query.get(child) {
+                for grandchild in grandchildren.iter() {
+                    // Update box colors
+                    if let Ok((mut bg, mut border)) = boxes.get_mut(grandchild) {
+                        bg.0 = checkbox.container_color(&theme);
+                        *border = BorderColor::all(checkbox.outline_color(&theme));
+                    }
+
+                    // Update icon
+                    if let Ok(great_grandchildren) = children_query.get(grandchild) {
+                        for ggc in great_grandchildren.iter() {
+                            if let Ok((mut text, mut text_font, mut color)) = icons.get_mut(ggc) {
+                                if let Some(icon) = checkbox.state.icon() {
+                                    **text = icon.to_string();
+                                    color.0 = checkbox.icon_color(&theme);
+                                    // Set the Material Symbols font if available
+                                    if let Some(ref font) = icon_font {
+                                        text_font.font = font.0.clone();
+                                    }
+                                } else {
+                                    **text = String::new();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Refresh checkbox visuals when the theme changes.
+fn checkbox_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    icon_font: Option<Res<MaterialIconFont>>,
+    checkboxes: Query<(Entity, &MaterialCheckbox, &Children), With<MaterialCheckbox>>,
+    mut boxes: Query<(&mut BackgroundColor, &mut BorderColor), With<CheckboxBox>>,
+    mut icons: Query<(&mut Text, &mut TextFont, &mut TextColor), With<CheckboxIcon>>,
+    mut state_layers: Query<&mut StateLayer, With<CheckboxStateLayer>>,
+    children_query: Query<&Children>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
 
     for (_entity, checkbox, children) in checkboxes.iter() {
         // Find checkbox box and icon through children
@@ -950,6 +1013,7 @@ mod tests {
 
     #[test]
     fn test_touch_target_larger_than_checkbox() {
-        assert!(CHECKBOX_TOUCH_TARGET > CHECKBOX_SIZE);
+        use std::hint::black_box;
+        assert!(black_box(CHECKBOX_TOUCH_TARGET) > black_box(CHECKBOX_SIZE));
     }
 }

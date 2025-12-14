@@ -30,7 +30,14 @@ pub struct SwitchPlugin;
 impl Plugin for SwitchPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<SwitchChangeEvent>()
-            .add_systems(Update, (switch_interaction_system, switch_style_system));
+            .add_systems(
+                Update,
+                (
+                    switch_interaction_system,
+                    switch_style_system,
+                    switch_theme_refresh_system,
+                ),
+            );
     }
 }
 
@@ -124,9 +131,7 @@ impl MaterialSwitch {
 
         if self.selected {
             theme.on_primary
-        } else if self.pressed {
-            theme.on_surface_variant
-        } else if self.hovered {
+        } else if self.pressed || self.hovered {
             theme.on_surface_variant
         } else {
             theme.outline
@@ -243,6 +248,42 @@ fn switch_style_system(
         let handle_color = switch.handle_color(&theme);
         let handle_size = switch.handle_size();
         
+        for child in children.iter() {
+            if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child) {
+                *handle_bg = BackgroundColor(handle_color);
+                handle_node.width = Val::Px(handle_size);
+                handle_node.height = Val::Px(handle_size);
+                *handle_radius = BorderRadius::all(Val::Px(handle_size / 2.0));
+            }
+        }
+    }
+}
+
+/// Refresh switch visuals when the theme changes.
+fn switch_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut switches: Query<(&MaterialSwitch, &mut BackgroundColor, &mut BorderColor, &mut Node, &Children)>,
+    mut handles: Query<(&mut BackgroundColor, &mut Node, &mut BorderRadius), (With<SwitchHandle>, Without<MaterialSwitch>)>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (switch, mut bg_color, mut border_color, mut node, children) in switches.iter_mut() {
+        *bg_color = BackgroundColor(switch.track_color(&theme));
+        *border_color = BorderColor::all(switch.track_outline_color(&theme));
+
+        node.justify_content = if switch.selected {
+            JustifyContent::FlexEnd
+        } else {
+            JustifyContent::FlexStart
+        };
+        node.border = UiRect::all(Val::Px(if switch.selected { 0.0 } else { 2.0 }));
+
+        let handle_color = switch.handle_color(&theme);
+        let handle_size = switch.handle_size();
+
         for child in children.iter() {
             if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child) {
                 *handle_bg = BackgroundColor(handle_color);
@@ -686,13 +727,15 @@ mod tests {
     #[test]
     fn test_switch_handle_size_ordering() {
         // Pressed should be largest, then selected, then unselected
-        assert!(SWITCH_HANDLE_SIZE_PRESSED > SWITCH_HANDLE_SIZE_SELECTED);
-        assert!(SWITCH_HANDLE_SIZE_SELECTED > SWITCH_HANDLE_SIZE_UNSELECTED);
+        use std::hint::black_box;
+        assert!(black_box(SWITCH_HANDLE_SIZE_PRESSED) > black_box(SWITCH_HANDLE_SIZE_SELECTED));
+        assert!(black_box(SWITCH_HANDLE_SIZE_SELECTED) > black_box(SWITCH_HANDLE_SIZE_UNSELECTED));
     }
 
     #[test]
     fn test_switch_track_dimensions() {
         // Track should be wider than tall
-        assert!(SWITCH_TRACK_WIDTH > SWITCH_TRACK_HEIGHT);
+        use std::hint::black_box;
+        assert!(black_box(SWITCH_TRACK_WIDTH) > black_box(SWITCH_TRACK_HEIGHT));
     }
 }

@@ -29,6 +29,8 @@ impl Plugin for ButtonPlugin {
             .add_systems(Update, (
                 button_interaction_system,
                 button_style_system,
+                button_label_style_system,
+                button_theme_refresh_system,
                 button_shadow_system,
             ));
     }
@@ -431,6 +433,55 @@ fn button_style_system(
     for (button, mut bg_color, mut border_color) in buttons.iter_mut() {
         *bg_color = BackgroundColor(button.background_color(&theme));
         *border_color = BorderColor::all(button.border_color(&theme));
+    }
+}
+
+/// System to update button label text colors when button state changes.
+fn button_label_style_system(
+    theme: Option<Res<MaterialTheme>>,
+    buttons: Query<(&MaterialButton, &Children), Changed<MaterialButton>>,
+    mut labels: Query<&mut TextColor, With<ButtonLabel>>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (button, children) in buttons.iter() {
+        let label_color = button.text_color(&theme);
+        for child in children.iter() {
+            if let Ok(mut color) = labels.get_mut(child) {
+                color.0 = label_color;
+            }
+        }
+    }
+}
+
+/// System to refresh button visuals when the theme resource changes.
+///
+/// Theme changes are expected to be rare, so it is OK to update all buttons in one pass.
+fn button_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut buttons: Query<(
+        &MaterialButton,
+        &Children,
+        &mut BackgroundColor,
+        &mut BorderColor,
+    )>,
+    mut labels: Query<&mut TextColor, With<ButtonLabel>>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (button, children, mut bg_color, mut border_color) in buttons.iter_mut() {
+        *bg_color = BackgroundColor(button.background_color(&theme));
+        *border_color = BorderColor::all(button.border_color(&theme));
+
+        let label_color = button.text_color(&theme);
+        for child in children.iter() {
+            if let Ok(mut color) = labels.get_mut(child) {
+                color.0 = label_color;
+            }
+        }
     }
 }
 

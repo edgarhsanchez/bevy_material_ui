@@ -34,16 +34,10 @@ impl Plugin for TelemetryPlugin {
 }
 
 /// Configuration for telemetry features
-#[derive(Resource, Clone, Debug)]
+#[derive(Resource, Clone, Debug, Default)]
 pub struct TelemetryConfig {
     /// Whether telemetry is enabled
     pub enabled: bool,
-}
-
-impl Default for TelemetryConfig {
-    fn default() -> Self {
-        Self { enabled: false }
-    }
 }
 
 impl TelemetryConfig {

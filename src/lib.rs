@@ -119,6 +119,9 @@ pub mod progress;
 /// Dialog component
 pub mod dialog;
 
+/// Date & time picker component (dialog-based)
+pub mod datetime_picker;
+
 /// List and list item components
 pub mod list;
 
@@ -260,6 +263,13 @@ pub mod prelude {
         DialogActions, DialogBuilder, DialogCloseEvent, DialogConfirmEvent, DialogContent,
         DialogHeadline, DialogOpenEvent, DialogPlugin, DialogScrim, DialogType,
         MaterialDialog, SpawnDialogChild, create_dialog_scrim, DIALOG_MAX_WIDTH, DIALOG_MIN_WIDTH,
+    };
+
+    // DateTime Picker
+    pub use crate::datetime_picker::{
+        Date, DateTimePickerBuilder, DateTimePickerCancelEvent, DateTimePickerPlugin,
+        DateTimePickerSubmitEvent, MaterialDateTimePicker, SpawnDateTimePickerChild,
+        TimeFormat, Weekday,
     };
 
     // List
@@ -422,6 +432,7 @@ impl Plugin for MaterialUiPlugin {
             badge::BadgePlugin,
             tooltip::TooltipPlugin,
             scroll::ScrollPlugin,
+            datetime_picker::DateTimePickerPlugin,
         ));
 
         // Adaptive layout

@@ -87,6 +87,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
             section.spawn((
                 DialogContainer,
                 Visibility::Hidden,
+                GlobalZIndex(1000),
                 Node {
                     width: Val::Px(280.0),
                     flex_direction: FlexDirection::Column,

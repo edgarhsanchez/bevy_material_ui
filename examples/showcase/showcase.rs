@@ -11,6 +11,7 @@ use bevy::asset::RenderAssetUsages;
 use bevy::mesh::{Indices, PrimitiveTopology};
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
+use bevy_material_ui::text_field::InputType;
 use bevy_material_ui::theme::ThemeMode;
 
 use common::*;
@@ -49,48 +50,22 @@ struct DialogDemoOptions {
     position: DialogPosition,
 }
 
-#[derive(Resource)]
-struct TextFieldDemoOptions {
-    blink_speed: f32,
-    show_cursor: bool,
-}
-
-impl Default for TextFieldDemoOptions {
-    fn default() -> Self {
-        Self {
-            blink_speed: 0.53,
-            show_cursor: true,
-        }
-    }
-}
-
-#[derive(Resource)]
-struct TextFieldCursorBlink {
-    timer: Timer,
-    visible: bool,
-}
-
-impl Default for TextFieldCursorBlink {
-    fn default() -> Self {
-        Self {
-            timer: Timer::from_seconds(0.53, TimerMode::Repeating),
-            visible: true,
-        }
-    }
-}
-
 pub fn run() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(MaterialUiPlugin)
+        .init_resource::<ShowcaseThemeSelection>()
+        // Default seed theme (Material You purple)
+        .insert_resource(MaterialTheme::from_seed(
+            Color::srgb_u8(0x67, 0x50, 0xA4),
+            ThemeMode::Dark,
+        ))
         .init_resource::<SelectedSection>()
         .init_resource::<ComponentTelemetry>()
         .init_resource::<SnackbarDemoOptions>()
         .init_resource::<TooltipDemoOptions>()
         .init_resource::<ListDemoOptions>()
         .init_resource::<DialogDemoOptions>()
-        .init_resource::<TextFieldDemoOptions>()
-        .init_resource::<TextFieldCursorBlink>()
         .init_resource::<ThemeRebuildGate>()
         .add_systems(Startup, (setup_3d_scene, setup_ui, setup_telemetry))
         .add_systems(
@@ -100,6 +75,8 @@ pub fn run() {
                 handle_nav_clicks,
                 update_nav_highlights,
                 update_detail_content,
+                progress_demo_animate_system,
+                demo_click_log_system,
                 snackbar_demo_options_system,
                 snackbar_demo_trigger_system,
                 snackbar_demo_style_system,
@@ -107,6 +84,9 @@ pub fn run() {
                 tooltip_demo_options_system,
                 tooltip_demo_apply_system,
                 tooltip_demo_style_system,
+                menu_demo_system,
+                datetime_picker_demo_system,
+                email_validation_system,
             ),
         )
         .add_systems(
@@ -116,19 +96,63 @@ pub fn run() {
                 dialog_demo_position_style_system,
                 dialog_demo_apply_position_system,
                 dialog_demo_open_close_system,
-                text_field_demo_options_system,
-                text_field_demo_style_system,
-                text_field_demo_blink_tick_system,
-                text_field_demo_apply_cursor_system,
                 list_demo_mode_options_system,
                 list_demo_mode_style_system,
                 list_demo_apply_selection_mode_system,
                 theme_mode_option_system,
+                theme_seed_option_system,
                 rebuild_ui_on_theme_change_system,
                 write_telemetry,
             ),
         )
         .run();
+}
+
+fn progress_demo_animate_system(
+    time: Res<Time>,
+    mut bars: Query<(&mut MaterialLinearProgress, &mut ShowcaseProgressOscillator)>,
+    mut labels: Query<&mut Text>,
+) {
+    for (mut progress, mut osc) in bars.iter_mut() {
+        if progress.mode != ProgressMode::Determinate {
+            continue;
+        }
+
+        let mut value = progress.progress + osc.direction * osc.speed * time.delta_secs();
+        if value >= 1.0 {
+            value = 1.0;
+            osc.direction = -1.0;
+        } else if value <= 0.0 {
+            value = 0.0;
+            osc.direction = 1.0;
+        }
+
+        progress.progress = value;
+
+        if let Ok(mut text) = labels.get_mut(osc.label) {
+            *text = Text::new(format!("{:>3}%", (value * 100.0).round() as i32));
+        }
+    }
+}
+
+fn argb_to_seed_color(argb: u32) -> Color {
+    let r = ((argb >> 16) & 0xFF) as u8;
+    let g = ((argb >> 8) & 0xFF) as u8;
+    let b = (argb & 0xFF) as u8;
+    Color::srgb_u8(r, g, b)
+}
+
+fn demo_click_log_system(
+    mut icon_clicks: MessageReader<IconButtonClickEvent>,
+    mut fab_clicks: MessageReader<FabClickEvent>,
+    mut telemetry: ResMut<ComponentTelemetry>,
+) {
+    for ev in icon_clicks.read() {
+        telemetry.log_event(&format!("IconButton clicked: {:?}", ev.entity));
+    }
+    for ev in fab_clicks.read() {
+        telemetry.log_event(&format!("FAB clicked: {:?}", ev.entity));
+    }
 }
 
 fn list_demo_mode_options_system(
@@ -314,16 +338,29 @@ fn spawn_ui_root(
                     overflow: Overflow::clip_y(),
                     ..default()
                 },
-                BackgroundColor(theme.surface.with_alpha(0.0)),
+                BackgroundColor(theme.surface),
             ))
             .with_children(|detail| {
-                spawn_selected_section(detail, theme, selected, icon_font);
+                detail
+                    .spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            padding: UiRect::all(Val::Px(16.0)),
+                            ..default()
+                        },
+                        BackgroundColor(theme.surface_container_low),
+                        BorderRadius::all(Val::Px(16.0)),
+                    ))
+                    .with_children(|surface| {
+                        spawn_selected_section(surface, theme, selected, icon_font);
+                    });
             });
         });
 }
 
 fn theme_mode_option_system(
     mut theme: ResMut<MaterialTheme>,
+    selection: Res<ShowcaseThemeSelection>,
     mut options: Query<(&ThemeModeOption, &Interaction), Changed<Interaction>>,
     mut telemetry: ResMut<ComponentTelemetry>,
 ) {
@@ -332,14 +369,180 @@ fn theme_mode_option_system(
             continue;
         }
 
-        let new_theme = match opt.0 {
-            ThemeMode::Light => MaterialTheme::light(),
-            ThemeMode::Dark => MaterialTheme::dark(),
+        if theme.mode != opt.0 {
+            *theme = MaterialTheme::from_seed(argb_to_seed_color(selection.seed_argb), opt.0);
+            telemetry.log_event("Theme: mode changed");
+        }
+    }
+}
+
+fn theme_seed_option_system(
+    mut theme: ResMut<MaterialTheme>,
+    mut selection: ResMut<ShowcaseThemeSelection>,
+    mut options: Query<(&ThemeSeedOption, &Interaction), Changed<Interaction>>,
+    mut telemetry: ResMut<ComponentTelemetry>,
+) {
+    for (opt, interaction) in options.iter_mut() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        if selection.seed_argb != opt.0 {
+            selection.seed_argb = opt.0;
+            *theme = MaterialTheme::from_seed(argb_to_seed_color(selection.seed_argb), theme.mode);
+            telemetry.log_event("Theme: seed changed");
+        }
+    }
+}
+
+fn is_valid_email(value: &str) -> bool {
+    let value = value.trim();
+    if value.is_empty() {
+        return true;
+    }
+    if value.contains(char::is_whitespace) {
+        return false;
+    }
+    let Some((local, domain)) = value.split_once('@') else {
+        return false;
+    };
+    if local.is_empty() || domain.is_empty() {
+        return false;
+    }
+    // Very small, demo-oriented check: require at least one dot in the domain.
+    domain.contains('.') && !domain.starts_with('.') && !domain.ends_with('.')
+}
+
+fn email_validation_system(
+    mut changes: MessageReader<TextFieldChangeEvent>,
+    mut fields: Query<&mut MaterialTextField>,
+) {
+    for ev in changes.read() {
+        let Ok(mut field) = fields.get_mut(ev.entity) else {
+            continue;
         };
 
-        if theme.mode != new_theme.mode {
-            *theme = new_theme;
-            telemetry.log_event("Theme: mode changed");
+        if field.input_type != InputType::Email {
+            continue;
+        }
+
+        let valid = is_valid_email(&ev.value);
+        if valid {
+            field.error = false;
+            field.error_text = None;
+        } else {
+            field.error = true;
+            field.error_text = Some("Invalid email address".to_string());
+        }
+    }
+}
+
+#[allow(clippy::type_complexity)]
+fn menu_demo_system(
+    mut triggers: Query<(&ChildOf, &Interaction), (With<MenuTrigger>, Changed<Interaction>)>,
+    mut dropdowns: Query<(&ChildOf, &mut Visibility), With<MenuDropdown>>,
+    mut items: Query<(&ChildOf, &Interaction, &MenuItemMarker), Changed<Interaction>>,
+    triggers_all: Query<(Entity, &ChildOf), With<MenuTrigger>>,
+    mut selected_text: Query<(&ChildOf, &mut Text), With<MenuSelectedText>>,
+    parents: Query<&ChildOf>,
+    mut telemetry: ResMut<ComponentTelemetry>,
+) {
+    // Build lookup: container -> trigger entity
+    let mut trigger_by_container: std::collections::HashMap<Entity, Entity> =
+        std::collections::HashMap::new();
+    for (trigger_entity, parent) in triggers_all.iter() {
+        trigger_by_container.insert(parent.0, trigger_entity);
+    }
+
+    // Toggle dropdown on trigger press
+    for (parent, interaction) in triggers.iter_mut() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        let container = parent.0;
+        for (drop_parent, mut vis) in dropdowns.iter_mut() {
+            if drop_parent.0 == container {
+                *vis = match *vis {
+                    Visibility::Hidden => Visibility::Inherited,
+                    _ => Visibility::Hidden,
+                };
+            }
+        }
+    }
+
+    // Select item
+    for (parent, interaction, label) in items.iter_mut() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        // Item parent is the dropdown; dropdown parent is the container.
+        let dropdown_entity = parent.0;
+        let Ok(container_parent) = parents.get(dropdown_entity) else {
+            continue;
+        };
+        let container = container_parent.0;
+
+        // Update selected text on trigger button
+        if let Some(trigger_entity) = trigger_by_container.get(&container).copied() {
+            for (text_parent, mut text) in selected_text.iter_mut() {
+                if text_parent.0 == trigger_entity {
+                    *text = Text::new(label.0.as_str());
+                }
+            }
+        }
+
+        // Close dropdown
+        for (drop_parent, mut vis) in dropdowns.iter_mut() {
+            if drop_parent.0 == container {
+                *vis = Visibility::Hidden;
+            }
+        }
+
+        telemetry.log_event(&format!("Menu: selected {}", label.0));
+    }
+}
+
+#[allow(clippy::type_complexity)]
+fn datetime_picker_demo_system(
+    mut open_buttons: Query<(&Interaction, &DateTimePickerOpenButton), Changed<Interaction>>,
+    mut pickers: Query<&mut MaterialDateTimePicker>,
+    mut submit: MessageReader<DateTimePickerSubmitEvent>,
+    mut cancel: MessageReader<DateTimePickerCancelEvent>,
+    mut result_texts: Query<(&DateTimePickerResultDisplay, &mut Text)>,
+) {
+    // Open picker when the demo button is pressed.
+    for (interaction, open_button) in open_buttons.iter_mut() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        if let Ok(mut picker) = pickers.get_mut(open_button.0) {
+            picker.open = true;
+        }
+    }
+
+    // Update result text on submit.
+    for ev in submit.read() {
+        let label = format!(
+            "Result: {:04}-{:02}-{:02} {:02}:{:02}",
+            ev.date.year, ev.date.month, ev.date.day, ev.hour, ev.minute
+        );
+
+        for (display, mut text) in result_texts.iter_mut() {
+            if display.0 == ev.entity {
+                *text = Text::new(label.as_str());
+            }
+        }
+    }
+
+    // Update result text on cancel.
+    for ev in cancel.read() {
+        for (display, mut text) in result_texts.iter_mut() {
+            if display.0 == ev.entity {
+                *text = Text::new("Result: Canceled");
+            }
         }
     }
 }
@@ -492,19 +695,44 @@ fn tooltip_demo_apply_system(
 fn tooltip_demo_style_system(
     theme: Res<MaterialTheme>,
     options: Res<TooltipDemoOptions>,
-    mut position_chips: Query<(&TooltipPositionOption, &mut MaterialChip), Without<TooltipDelayOption>>,
-    mut delay_chips: Query<(&TooltipDelayOption, &mut MaterialChip), Without<TooltipPositionOption>>,
+    mut position_buttons: Query<(Entity, &TooltipPositionOption, &mut MaterialButton, &Children), Without<TooltipDelayOption>>,
+    mut delay_buttons: Query<(Entity, &TooltipDelayOption, &mut MaterialButton, &Children), Without<TooltipPositionOption>>,
+    mut label_colors: Query<&mut TextColor, With<ButtonLabel>>,
 ) {
     if !theme.is_changed() && !options.is_changed() {
         return;
     }
 
-    for (opt, mut chip) in position_chips.iter_mut() {
-        chip.selected = opt.0 == options.position;
+    for (_entity, opt, mut button, children) in position_buttons.iter_mut() {
+        let selected = opt.0 == options.position;
+        button.variant = if selected {
+            ButtonVariant::FilledTonal
+        } else {
+            ButtonVariant::Outlined
+        };
+
+        let text_color = button.text_color(&theme);
+        for child in children.iter() {
+            if let Ok(mut color) = label_colors.get_mut(child) {
+                *color = TextColor(text_color);
+            }
+        }
     }
 
-    for (opt, mut chip) in delay_chips.iter_mut() {
-        chip.selected = (opt.0 - options.delay).abs() < 0.01;
+    for (_entity, opt, mut button, children) in delay_buttons.iter_mut() {
+        let selected = (opt.0 - options.delay).abs() < 0.01;
+        button.variant = if selected {
+            ButtonVariant::FilledTonal
+        } else {
+            ButtonVariant::Outlined
+        };
+
+        let text_color = button.text_color(&theme);
+        for child in children.iter() {
+            if let Ok(mut color) = label_colors.get_mut(child) {
+                *color = TextColor(text_color);
+            }
+        }
     }
 }
 
@@ -626,80 +854,6 @@ fn dialog_demo_open_close_system(
     }
 }
 
-fn text_field_demo_options_system(
-    mut options: ResMut<TextFieldDemoOptions>,
-    mut speed_buttons: Query<(&TextFieldBlinkSpeedOption, &Interaction), Changed<Interaction>>,
-    mut cursor_toggle: Query<&Interaction, (Changed<Interaction>, With<TextFieldCursorToggle>)>,
-) {
-    for (opt, interaction) in speed_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
-            options.blink_speed = opt.0;
-        }
-    }
-
-    for interaction in cursor_toggle.iter_mut() {
-        if *interaction == Interaction::Pressed {
-            options.show_cursor = !options.show_cursor;
-        }
-    }
-}
-
-fn text_field_demo_style_system(
-    theme: Res<MaterialTheme>,
-    options: Res<TextFieldDemoOptions>,
-    mut speed_chips: Query<(&TextFieldBlinkSpeedOption, &mut MaterialChip), Without<TextFieldCursorToggle>>,
-    mut cursor_toggle_chip: Query<&mut MaterialChip, (With<TextFieldCursorToggle>, Without<TextFieldBlinkSpeedOption>)>,
-) {
-    if !theme.is_changed() && !options.is_changed() {
-        return;
-    }
-
-    for (opt, mut chip) in speed_chips.iter_mut() {
-        chip.selected = (opt.0 - options.blink_speed).abs() < 0.01;
-    }
-
-    for mut chip in cursor_toggle_chip.iter_mut() {
-        chip.selected = options.show_cursor;
-    }
-}
-
-fn text_field_demo_blink_tick_system(
-    time: Res<Time>,
-    options: Res<TextFieldDemoOptions>,
-    mut blink: ResMut<TextFieldCursorBlink>,
-) {
-    if options.is_changed() {
-        blink.timer.set_duration(std::time::Duration::from_secs_f32(options.blink_speed));
-        blink.timer.reset();
-        blink.visible = true;
-    }
-
-    blink.timer.tick(time.delta());
-    if blink.timer.just_finished() {
-        blink.visible = !blink.visible;
-    }
-}
-
-fn text_field_demo_apply_cursor_system(
-    options: Res<TextFieldDemoOptions>,
-    blink: Res<TextFieldCursorBlink>,
-    mut texts: Query<(&TextFieldDemoText, &mut Text)>,
-) {
-    if !options.is_changed() && !blink.is_changed() {
-        return;
-    }
-
-    for (base, mut text) in texts.iter_mut() {
-        if !options.show_cursor {
-            text.0 = base.base.clone();
-        } else if blink.visible {
-            text.0 = format!("{}|", base.base);
-        } else {
-            text.0 = base.base.clone();
-        }
-    }
-}
-
 fn update_detail_content(
     mut commands: Commands,
     theme: Res<MaterialTheme>,
@@ -737,7 +891,7 @@ fn spawn_selected_section(
         ComponentSection::Switches => spawn_switches_section(parent, theme),
         ComponentSection::RadioButtons => spawn_radios_section(parent, theme),
         ComponentSection::Chips => spawn_chips_section(parent, theme, icon_font),
-        ComponentSection::FAB => spawn_fab_section(parent, theme, icon_font),
+        ComponentSection::Fab => spawn_fab_section(parent, theme, icon_font),
         ComponentSection::Badges => spawn_badges_section(parent, theme, icon_font),
         ComponentSection::Progress => spawn_progress_section(parent, theme),
         ComponentSection::Cards => spawn_cards_section(parent, theme),
@@ -748,6 +902,7 @@ fn spawn_selected_section(
         ComponentSection::Sliders => spawn_sliders_section(parent, theme),
         ComponentSection::TextFields => spawn_text_fields_section(parent, theme),
         ComponentSection::Dialogs => spawn_dialogs_section(parent, theme),
+        ComponentSection::DateTimePicker => spawn_datetime_picker_section(parent, theme),
         ComponentSection::Menus => spawn_menus_section(parent, theme, icon_font),
         ComponentSection::Tabs => spawn_tabs_section(parent, theme),
         ComponentSection::Select => spawn_select_section(parent, theme, icon_font),

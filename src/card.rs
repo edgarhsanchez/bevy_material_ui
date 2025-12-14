@@ -27,6 +27,7 @@ impl Plugin for CardPlugin {
             .add_systems(Update, (
                 card_interaction_system,
                 card_style_system,
+                card_theme_refresh_system,
                 card_shadow_system,
             ));
     }
@@ -117,9 +118,7 @@ impl MaterialCard {
     pub fn elevation(&self) -> Elevation {
         match self.variant {
             CardVariant::Elevated => {
-                if self.pressed || self.draggable && self.pressed {
-                    Elevation::Level2
-                } else if self.hovered {
+                if self.pressed || self.hovered {
                     Elevation::Level2
                 } else {
                     Elevation::Level1
@@ -203,6 +202,22 @@ fn card_style_system(
     >,
 ) {
     let Some(theme) = theme else { return };
+
+    for (card, mut bg_color, mut border_color) in cards.iter_mut() {
+        *bg_color = BackgroundColor(card.background_color(&theme));
+        *border_color = BorderColor::all(card.border_color(&theme));
+    }
+}
+
+/// Refresh card colors when the theme changes.
+fn card_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut cards: Query<(&MaterialCard, &mut BackgroundColor, &mut BorderColor)>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
 
     for (card, mut bg_color, mut border_color) in cards.iter_mut() {
         *bg_color = BackgroundColor(card.background_color(&theme));

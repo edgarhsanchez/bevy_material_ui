@@ -125,9 +125,6 @@ mod snackbar_tests {
         let _builder = SnackbarBuilder::new("Test message")
             .action("Undo")
             .duration(5.0);
-        
-        // The builder is valid
-        assert!(true);
     }
 
     #[test]
@@ -151,7 +148,8 @@ mod snackbar_tests {
     #[test]
     fn test_snackbar_max_width_constant() {
         // MD3 spec: max width for snackbar
-        assert!(SNACKBAR_MAX_WIDTH > 200.0);
+        use std::hint::black_box;
+        assert!(black_box(SNACKBAR_MAX_WIDTH) > black_box(200.0));
     }
 
     #[test]
@@ -244,9 +242,6 @@ mod chip_tests {
         let _builder = ChipBuilder::new("Test")
             .variant(ChipVariant::Filter)
             .selected(true);
-        
-        // Builder is valid
-        assert!(true);
     }
 
     #[test]
@@ -304,8 +299,6 @@ mod app_bar_tests {
     #[test]
     fn test_top_app_bar_builder() {
         let _builder = TopAppBarBuilder::new("My App");
-        // Builder is valid
-        assert!(true);
     }
 }
 
@@ -374,9 +367,6 @@ mod badge_tests {
         let _builder = BadgeBuilder::dot();
         let _builder2 = BadgeBuilder::count(5);
         let _builder3 = BadgeBuilder::text("New");
-        
-        // Builders are valid
-        assert!(true);
     }
 }
 
@@ -410,9 +400,10 @@ mod tooltip_tests {
 
     #[test]
     fn test_tooltip_delay_constants() {
-        assert!(TOOLTIP_DELAY_DEFAULT > 0.0);
-        assert!(TOOLTIP_DELAY_SHORT < TOOLTIP_DELAY_DEFAULT);
-        assert!(TOOLTIP_DELAY_SHORT > 0.0);
+        use std::hint::black_box;
+        assert!(black_box(TOOLTIP_DELAY_DEFAULT) > black_box(0.0));
+        assert!(black_box(TOOLTIP_DELAY_SHORT) < black_box(TOOLTIP_DELAY_DEFAULT));
+        assert!(black_box(TOOLTIP_DELAY_SHORT) > black_box(0.0));
     }
 
     #[test]
@@ -421,7 +412,9 @@ mod tooltip_tests {
         assert!((TOOLTIP_HEIGHT_PLAIN - 24.0).abs() < 1.0);
         
         // Max width for plain tooltip
-        assert!(TOOLTIP_MAX_WIDTH > 100.0 && TOOLTIP_MAX_WIDTH < 300.0);
+        use std::hint::black_box;
+        let max_width = black_box(TOOLTIP_MAX_WIDTH);
+        assert!(max_width > black_box(100.0) && max_width < black_box(300.0));
     }
 
     #[test]

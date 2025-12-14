@@ -68,6 +68,49 @@ pub fn spawn_theme_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                     }
                 });
 
+            // Theme seed selection (simple preset seeds)
+            section
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    column_gap: Val::Px(8.0),
+                    ..default()
+                })
+                .with_children(|row| {
+                    row.spawn((
+                        Text::new("Theme:"),
+                        TextFont { font_size: 12.0, ..default() },
+                        TextColor(theme.on_surface_variant),
+                    ));
+
+                    for (label, seed) in [
+                        ("Purple", 0xFF6750A4),
+                        // More saturated/recognizable seeds for dynamic color generation.
+                        ("Teal", 0xFF00897B),
+                        ("Green", 0xFF43A047),
+                        ("Orange", 0xFFFB8C00),
+                    ] {
+                        let button = MaterialButton::new(label).with_variant(ButtonVariant::Outlined);
+                        let label_color = button.text_color(theme);
+
+                        row.spawn((
+                            ThemeSeedOption(seed),
+                            Interaction::None,
+                            MaterialButtonBuilder::new(label)
+                                .variant(ButtonVariant::Outlined)
+                                .build(theme),
+                        ))
+                        .with_children(|btn| {
+                            btn.spawn((
+                                ButtonLabel,
+                                Text::new(label),
+                                TextFont { font_size: 12.0, ..default() },
+                                TextColor(label_color),
+                            ));
+                        });
+                    }
+                });
+
             // Color groups
             section.spawn(Node {
                 flex_direction: FlexDirection::Column,

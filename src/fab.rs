@@ -12,6 +12,7 @@ use bevy::ui::BoxShadow;
 
 use crate::{
     elevation::Elevation,
+    icons::IconStyle,
     ripple::RippleHost,
     theme::{blend_state_layer, MaterialTheme},
     tokens::{CornerRadius, Spacing},
@@ -26,6 +27,8 @@ impl Plugin for FabPlugin {
             .add_systems(Update, (
                 fab_interaction_system,
                 fab_style_system,
+                fab_content_style_system,
+                fab_theme_refresh_system,
                 fab_shadow_system,
             ));
     }
@@ -252,6 +255,60 @@ fn fab_style_system(
     }
 }
 
+/// System to update FAB label and icon colors when FAB state changes.
+fn fab_content_style_system(
+    theme: Option<Res<MaterialTheme>>,
+    fabs: Query<(Entity, &MaterialFab), Changed<MaterialFab>>,
+    children_q: Query<&Children>,
+    mut icon_styles: Query<&mut IconStyle>,
+    mut labels: Query<&mut TextColor, With<FabLabel>>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (entity, fab) in fabs.iter() {
+        let Ok(children) = children_q.get(entity) else { continue };
+        let content_color = fab.content_color(&theme);
+
+        for child in children.iter() {
+            if let Ok(mut style) = icon_styles.get_mut(child) {
+                style.color = Some(content_color);
+            }
+            if let Ok(mut color) = labels.get_mut(child) {
+                color.0 = content_color;
+            }
+        }
+    }
+}
+
+/// Refresh FAB visuals when the theme changes.
+fn fab_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut fabs: Query<(Entity, &MaterialFab, &mut BackgroundColor)>,
+    children_q: Query<&Children>,
+    mut icon_styles: Query<&mut IconStyle>,
+    mut labels: Query<&mut TextColor, With<FabLabel>>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (entity, fab, mut bg_color) in fabs.iter_mut() {
+        *bg_color = BackgroundColor(fab.background_color(&theme));
+
+        let Ok(children) = children_q.get(entity) else { continue };
+        let content_color = fab.content_color(&theme);
+        for child in children.iter() {
+            if let Ok(mut style) = icon_styles.get_mut(child) {
+                style.color = Some(content_color);
+            }
+            if let Ok(mut color) = labels.get_mut(child) {
+                color.0 = content_color;
+            }
+        }
+    }
+}
+
 /// System to update FAB shadows using native BoxShadow
 fn fab_shadow_system(
     mut fabs: Query<(&MaterialFab, &mut BoxShadow), Changed<MaterialFab>>,
@@ -362,7 +419,7 @@ impl FabBuilder {
 // Spawn Traits for ChildSpawnerCommands
 // ============================================================================
 
-use crate::icons::{MaterialIcon, IconStyle};
+use crate::icons::MaterialIcon;
 
 /// Marker component for FAB label text
 #[derive(Component, Clone, Copy, Debug, Default)]

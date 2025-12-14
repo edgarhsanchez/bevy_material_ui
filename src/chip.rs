@@ -27,6 +27,7 @@ impl Plugin for ChipPlugin {
                 chip_interaction_system,
                 chip_style_system,
                 chip_content_style_system,
+                chip_theme_refresh_system,
                 chip_shadow_system,
             ));
     }
@@ -808,6 +809,50 @@ fn chip_shadow_system(
 ) {
     for (chip, mut shadow) in chips.iter_mut() {
         *shadow = chip.elevation.to_box_shadow();
+    }
+}
+
+/// Refresh chip visuals when the theme changes.
+fn chip_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut chips: Query<(Entity, &MaterialChip, &mut BackgroundColor, &mut BorderColor)>,
+    children_q: Query<&Children>,
+    mut colors: ParamSet<(
+        Query<&mut TextColor, With<ChipLabel>>,
+        Query<&mut TextColor, With<ChipLeadingIcon>>,
+        Query<&mut TextColor, With<ChipDeleteIcon>>,
+    )>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (chip_entity, chip, mut bg_color, mut border_color) in chips.iter_mut() {
+        *bg_color = BackgroundColor(chip.background_color(&theme));
+        *border_color = BorderColor::all(chip.outline_color(&theme));
+
+        let Ok(children) = children_q.get(chip_entity) else { continue };
+        let label_color = chip.label_color(&theme);
+        let icon_color = chip.icon_color(&theme);
+
+        for child in children.iter() {
+            if let Ok(mut color) = colors.p0().get_mut(child) {
+                color.0 = label_color;
+            }
+            if let Ok(mut color) = colors.p1().get_mut(child) {
+                color.0 = icon_color;
+            }
+
+            // Delete icon is a grandchild under ChipDeleteButton.
+            if let Ok(grandchildren) = children_q.get(child) {
+                for grandchild in grandchildren.iter() {
+                    if let Ok(mut color) = colors.p2().get_mut(grandchild) {
+                        color.0 = icon_color;
+                    }
+                }
+            }
+        }
     }
 }
 

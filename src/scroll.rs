@@ -518,7 +518,7 @@ fn scrollbar_thumb_drag_system(
 ) {
     let Ok(window) = windows.single() else { return };
     let cursor_pos = window.cursor_position();
-    let window_scale_factor = window.scale_factor() as f32;
+    let window_scale_factor = window.scale_factor();
     
     // Handle vertical scrollbar thumb dragging
     for (interaction, mut drag_state, track_parent, thumb_node) in thumb_v.iter_mut() {
@@ -1018,7 +1018,7 @@ mod tests {
     #[test]
     fn test_scroll_container_vertical() {
         let container = ScrollContainer::vertical();
-        assert!(container.needs_scroll_y() == false); // No content yet
+        assert!(!container.needs_scroll_y()); // No content yet
     }
 
     #[test]

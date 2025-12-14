@@ -11,7 +11,6 @@
 //! - Builder patterns
 //! - Default values
 
-use bevy_material_ui::prelude::*;
 use bevy_material_ui::button::{MaterialButton, ButtonVariant, IconGravity};
 use bevy_material_ui::checkbox::{MaterialCheckbox, CheckboxState};
 use bevy_material_ui::switch::MaterialSwitch;
@@ -1205,6 +1204,9 @@ mod tab_behavior_tests {
         // Simulating TabState behavior
         let mut selected_tab: usize = 0;
         let tab_count = 3;
+
+        // Initial selection
+        assert_eq!(selected_tab, 0);
         
         // Select tab 1
         selected_tab = 1;
@@ -1263,6 +1265,9 @@ mod nav_behavior_tests {
     fn test_nav_single_selection() {
         let mut selected_index: Option<usize> = None;
         let nav_item_count = 5;
+
+        // Initial selection
+        assert_eq!(selected_index, None);
         
         // Select first item
         selected_index = Some(0);
@@ -1295,7 +1300,7 @@ mod nav_behavior_tests {
         let transparent = (0, 0, 0, 0);
         let secondary_container = (232, 222, 248, 255); // Example MD3 color
         
-        let mut items = vec![
+        let mut items = [
             NavItemVisual { selected: false, bg_color: transparent },
             NavItemVisual { selected: true, bg_color: secondary_container },
             NavItemVisual { selected: false, bg_color: transparent },

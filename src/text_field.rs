@@ -18,14 +18,22 @@ impl Plugin for TextFieldPlugin {
         app.add_message::<TextFieldChangeEvent>()
             .add_message::<TextFieldSubmitEvent>()
             .init_resource::<ActiveTextField>()
+            .init_resource::<TextFieldCaretBlink>()
+            // These systems have ordering dependencies (input/focus must run before
+            // placeholder/display rendering updates in the same frame).
             .add_systems(
                 Update,
                 (
                     text_field_focus_system,
                     text_field_input_system,
+                    text_field_caret_blink_system,
+                    text_field_label_system,
+                    text_field_placeholder_system,
                     text_field_display_system,
+                    text_field_supporting_text_system,
                     text_field_style_system,
-                ),
+                )
+                    .chain(),
             );
     }
 }
@@ -33,6 +41,22 @@ impl Plugin for TextFieldPlugin {
 /// Tracks which text field should currently receive keyboard input.
 #[derive(Resource, Default, Debug, Clone, Copy)]
 struct ActiveTextField(pub Option<Entity>);
+
+/// Shared caret blink state for all text fields.
+#[derive(Resource)]
+struct TextFieldCaretBlink {
+    timer: Timer,
+    visible: bool,
+}
+
+impl Default for TextFieldCaretBlink {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+            visible: true,
+        }
+    }
+}
 
 /// Text field variants
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -522,20 +546,28 @@ fn text_field_input_system(
     let mut changed = false;
 
     // Backspace
-    if keys.just_pressed(KeyCode::Backspace) {
-        if !field.value.is_empty() {
-            field.value.pop();
-            changed = true;
-        }
+    if keys.just_pressed(KeyCode::Backspace) && !field.value.is_empty() {
+        field.value.pop();
+        changed = true;
     }
 
     // Text entry
+    // Primary: `KeyboardInput.text`
+    // Fallback: if `text` is None, use `logical_key == Key::Character(_)`.
     for ev in keyboard_inputs.read() {
         if ev.state != bevy::input::ButtonState::Pressed {
             continue;
         }
 
-        let Some(text) = ev.text.as_deref() else {
+        let text: Option<&str> = ev
+            .text
+            .as_deref()
+            .or_else(|| match &ev.logical_key {
+                bevy::input::keyboard::Key::Character(s) => Some(s.as_str()),
+                _ => None,
+            });
+
+        let Some(text) = text else {
             continue;
         };
 
@@ -584,33 +616,187 @@ fn text_field_input_system(
     }
 }
 
+/// Blink the caret for focused text fields.
+fn text_field_caret_blink_system(
+    time: Res<Time>,
+    mut blink: ResMut<TextFieldCaretBlink>,
+    mut fields: Query<&mut MaterialTextField>,
+) {
+    blink.timer.tick(time.delta());
+    if blink.timer.just_finished() {
+        blink.visible = !blink.visible;
+        // Force the display system to re-run for focused fields so the inline caret updates.
+        for mut field in fields.iter_mut() {
+            if !field.disabled && field.focused {
+                field.set_changed();
+            }
+        }
+    }
+}
+
 /// Update the displayed input text when the text field state changes.
 fn text_field_display_system(
     theme: Option<Res<MaterialTheme>>,
-    changed_fields: Query<(&MaterialTextField, &Children), Changed<MaterialTextField>>,
-    mut input_text: Query<(&mut Text, &mut TextColor), With<TextFieldInput>>,
+    blink: Res<TextFieldCaretBlink>,
+    changed_fields: Query<(Entity, &MaterialTextField), Changed<MaterialTextField>>,
+    mut input_text: Query<(&TextFieldInputFor, &mut Text, &mut TextColor), With<TextFieldInput>>,
 ) {
     let Some(theme) = theme else { return };
 
-    for (field, children) in changed_fields.iter() {
-        let placeholder = if field.placeholder.is_empty() {
+    // Keep a stable line height even when the caret is "hidden".
+    // If we used an empty string, Bevy's text node can collapse, causing the
+    // floating label to move up/down as the caret blinks.
+    const ZERO_WIDTH_SPACE: &str = "\u{200B}";
+
+    let caret = if blink.visible { "|" } else { ZERO_WIDTH_SPACE };
+
+    for (field_entity, field) in changed_fields.iter() {
+        let has_label = field.label.is_some();
+        // Expanded hint (inside field) is the label if present, otherwise the placeholder.
+        let expanded_hint = if has_label {
             field.label.as_deref().unwrap_or("")
         } else {
             field.placeholder.as_str()
         };
 
+        // Inline caret: render it as part of the input text so it appears right after the
+        // last glyph instead of being pushed to the far right by flex layout.
         let (display, color) = if field.value.is_empty() {
-            (placeholder, field.label_color(&theme))
+            if field.is_label_floating() {
+                // Label is floating (focused or has content). If empty, show just the caret.
+                if field.focused {
+                    (caret.to_string(), field.input_color(&theme))
+                } else {
+                    (ZERO_WIDTH_SPACE.to_string(), field.input_color(&theme))
+                }
+            } else {
+                // Expanded hint inside the field.
+                let hint_color = if has_label {
+                    field.label_color(&theme)
+                } else {
+                    field.placeholder_color(&theme)
+                };
+                (expanded_hint.to_string(), hint_color)
+            }
         } else {
-            (field.value.as_str(), field.input_color(&theme))
+            // Actual value (obscure for password types if needed)
+            let shown_value = if field.should_obscure_input() {
+                "•".repeat(field.value.chars().count())
+            } else {
+                field.value.clone()
+            };
+
+            if field.focused {
+                (format!("{}{}", shown_value, caret), field.input_color(&theme))
+            } else {
+                (shown_value, field.input_color(&theme))
+            }
         };
 
-        for child in children.iter() {
-            if let Ok((mut text, mut text_color)) = input_text.get_mut(child) {
-                *text = Text::new(display);
+        for (owner, mut text, mut text_color) in input_text.iter_mut() {
+            if owner.0 == field_entity {
+                *text = Text::new(display.clone());
                 *text_color = TextColor(color);
             }
         }
+    }
+}
+
+fn text_field_placeholder_system(
+    theme: Option<Res<MaterialTheme>>,
+    changed_fields: Query<(Entity, &MaterialTextField), Changed<MaterialTextField>>,
+    mut placeholders: Query<
+        (
+            &TextFieldPlaceholderFor,
+            &mut Text,
+            &mut TextColor,
+            &mut Node,
+            &mut Visibility,
+        ),
+        With<TextFieldPlaceholder>,
+    >,
+) {
+    let Some(theme) = theme else { return };
+
+    for (field_entity, field) in changed_fields.iter() {
+        // Android M3 placeholder behavior:
+        // - Placeholder is a separate layer.
+        // - Shown only when the label is floating (hint collapsed) and the field is empty.
+        // We only enable this when a label exists; otherwise placeholder acts as the expanded hint.
+        let show_placeholder = field.label.is_some()
+            && !field.placeholder.is_empty()
+            && field.value.is_empty()
+            && field.is_label_floating();
+
+        let display = if show_placeholder { Display::Flex } else { Display::None };
+        let visibility = if show_placeholder {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        };
+
+        for (owner, mut text, mut color, mut node, mut vis) in placeholders.iter_mut() {
+            if owner.0 == field_entity {
+                *text = Text::new(field.placeholder.as_str());
+                *color = TextColor(field.placeholder_color(&theme));
+                node.display = display;
+                *vis = visibility;
+            }
+        }
+    }
+}
+
+fn text_field_label_system(
+    theme: Option<Res<MaterialTheme>>,
+    changed_fields: Query<(Entity, &MaterialTextField), Changed<MaterialTextField>>,
+    mut labels: Query<(&TextFieldLabelFor, &mut TextColor, &mut Node), With<TextFieldLabel>>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (field_entity, field) in changed_fields.iter() {
+        let color = field.label_color(&theme);
+        let show_label = field.is_label_floating() && field.label.is_some();
+        let display = if show_label { Display::Flex } else { Display::None };
+
+        for (owner, mut text_color, mut node) in labels.iter_mut() {
+            if owner.0 == field_entity {
+                *text_color = TextColor(color);
+                node.display = display;
+            }
+        }
+    }
+}
+
+fn text_field_supporting_text_system(
+    theme: Option<Res<MaterialTheme>>,
+    fields: Query<&MaterialTextField>,
+    mut supporting: Query<(&TextFieldSupportingFor, &mut Text, &mut TextColor), With<TextFieldSupportingText>>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (owner, mut text, mut color) in supporting.iter_mut() {
+        let Ok(field) = fields.get(owner.0) else {
+            continue;
+        };
+
+        let (message, message_color) = if field.error {
+            (
+                field.error_text.as_deref().unwrap_or(""),
+                theme.error,
+            )
+        } else {
+            (
+                if field.value.is_empty() {
+                    field.supporting_text.as_deref().unwrap_or("")
+                } else {
+                    ""
+                },
+                theme.on_surface_variant,
+            )
+        };
+
+        *text = Text::new(message);
+        *color = TextColor(message_color);
     }
 }
 
@@ -698,6 +884,18 @@ impl TextFieldBuilder {
         self
     }
 
+    /// Set input type
+    pub fn input_type(mut self, input_type: InputType) -> Self {
+        self.text_field.input_type = input_type;
+        // Auto-enable password toggle for password fields
+        if matches!(input_type, InputType::Password)
+            && matches!(self.text_field.end_icon_mode, EndIconMode::None)
+        {
+            self.text_field.end_icon_mode = EndIconMode::PasswordToggle;
+        }
+        self
+    }
+
     /// Set disabled state
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.text_field.disabled = disabled;
@@ -738,6 +936,7 @@ impl TextFieldBuilder {
         (
             self.text_field,
             Button,
+            Interaction::None,
             Node {
                 width: self.width,
                 height: Val::Px(TEXT_FIELD_HEIGHT),
@@ -753,11 +952,7 @@ impl TextFieldBuilder {
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::top(Val::Px(if is_outlined {
-                CornerRadius::EXTRA_SMALL
-            } else {
-                CornerRadius::EXTRA_SMALL
-            })),
+            BorderRadius::top(Val::Px(CornerRadius::EXTRA_SMALL)),
         )
     }
 }
@@ -772,13 +967,34 @@ impl Default for TextFieldBuilder {
 #[derive(Component)]
 pub struct TextFieldLabel;
 
+/// Links a label entity to its owning text field entity.
+#[derive(Component)]
+pub struct TextFieldLabelFor(pub Entity);
+
 /// Marker for the input element
 #[derive(Component)]
 pub struct TextFieldInput;
 
+/// Links an input text entity to its owning text field entity.
+#[derive(Component)]
+pub struct TextFieldInputFor(pub Entity);
+
+/// Marker for the placeholder element.
+#[derive(Component)]
+pub struct TextFieldPlaceholder;
+
+/// Links a placeholder entity to its owning text field entity.
+#[derive(Component)]
+pub struct TextFieldPlaceholderFor(pub Entity);
+
+
 /// Marker for the supporting text element
 #[derive(Component)]
 pub struct TextFieldSupportingText;
+
+/// Links a supporting-text entity to its owning text field entity.
+#[derive(Component)]
+pub struct TextFieldSupportingFor(pub Entity);
 
 // ============================================================================
 // Spawn Traits for ChildSpawnerCommands
@@ -853,40 +1069,142 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
         let placeholder_text = builder.text_field.placeholder.clone();
         let label_color = builder.text_field.label_color(theme);
         let input_color = builder.text_field.input_color(theme);
+        let placeholder_color = builder.text_field.placeholder_color(theme);
+        let initial_is_label_floating = builder.text_field.is_label_floating();
+
+        let supporting_text = builder.text_field.supporting_text.clone();
+        let error = builder.text_field.error;
+        let error_text = builder.text_field.error_text.clone();
+
+        let (supporting_display, supporting_color) = if error {
+            (error_text.as_deref().unwrap_or(""), theme.error)
+        } else {
+            (supporting_text.as_deref().unwrap_or(""), theme.on_surface_variant)
+        };
+
+        let should_spawn_supporting = !supporting_display.is_empty();
         
-        self.spawn(builder.build(theme))
-            .with_children(|container| {
-                // Label (if present)
-                if let Some(ref label) = label_text {
-                    container.spawn((
-                        TextFieldLabel,
-                        Text::new(label.as_str()),
-                        TextFont { font_size: 12.0, ..default() },
-                        TextColor(label_color),
-                    ));
-                }
-                
-                // Input content area
-                let placeholder = if placeholder_text.is_empty() {
-                    label_text.as_deref().unwrap_or("")
-                } else {
-                    placeholder_text.as_str()
-                };
-                let display_text = if value_text.is_empty() { placeholder } else { &value_text };
-                container.spawn((
-                    TextFieldInput,
-                    Text::new(display_text),
-                    TextFont { font_size: 16.0, ..default() },
-                    TextColor(if value_text.is_empty() { 
-                        label_color 
-                    } else { 
-                        input_color 
-                    }),
-                    Node {
+        // Wrapper so supporting/error text can appear below the 56px field.
+        self.spawn(Node {
+            width: builder.width,
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(4.0),
+            ..default()
+        })
+        .with_children(|wrapper| {
+            let mut field_commands = wrapper.spawn(builder.build(theme));
+            let field_entity = field_commands.id();
+
+            field_commands.with_children(|container| {
+                // Content column so the label can float above the input.
+                container
+                    .spawn(Node {
                         flex_grow: 1.0,
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    })
+                    .with_children(|content| {
+                        // Floating label (hidden when expanded)
+                        if let Some(ref label) = label_text {
+                            content.spawn((
+                                TextFieldLabel,
+                                TextFieldLabelFor(field_entity),
+                                Text::new(label.as_str()),
+                                TextFont { font_size: 12.0, ..default() },
+                                TextColor(label_color),
+                                Node {
+                                    display: if initial_is_label_floating {
+                                        Display::Flex
+                                    } else {
+                                        Display::None
+                                    },
+                                    ..default()
+                                },
+                            ));
+                        }
+
+                        // Input text node (renders value/caret or in-field hint)
+                        let expanded_hint = if label_text.is_some() {
+                            label_text.as_deref().unwrap_or("")
+                        } else {
+                            placeholder_text.as_str()
+                        };
+
+                        let initial_display = if value_text.is_empty() {
+                            if initial_is_label_floating {
+                                "\u{200B}"
+                            } else {
+                                expanded_hint
+                            }
+                        } else {
+                            value_text.as_str()
+                        };
+
+                        let initial_color = if value_text.is_empty() {
+                            if initial_is_label_floating {
+                                input_color
+                            } else if label_text.is_some() {
+                                // Expanded label/hint uses label color.
+                                label_color
+                            } else {
+                                placeholder_color
+                            }
+                        } else {
+                            input_color
+                        };
+
+                        // Input line: placeholder (overlay) + actual input text.
+                        content
+                            .spawn(Node {
+                                position_type: PositionType::Relative,
+                                ..default()
+                            })
+                            .with_children(|input_line| {
+                                // Separate placeholder (shown only when label is floating and value is empty)
+                                // Spawn it even if it's initially hidden so systems can toggle it.
+                                input_line.spawn((
+                                    TextFieldPlaceholder,
+                                    TextFieldPlaceholderFor(field_entity),
+                                    Text::new(placeholder_text.as_str()),
+                                    TextFont { font_size: 16.0, ..default() },
+                                    TextColor(placeholder_color),
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(0.0),
+                                        right: Val::Px(0.0),
+                                        top: Val::Px(0.0),
+                                        bottom: Val::Px(0.0),
+                                        display: Display::None,
+                                        ..default()
+                                    },
+                                    Visibility::Hidden,
+                                ));
+
+                                input_line.spawn((
+                                    TextFieldInput,
+                                    TextFieldInputFor(field_entity),
+                                    Text::new(initial_display),
+                                    TextFont { font_size: 16.0, ..default() },
+                                    TextColor(initial_color),
+                                ));
+                            });
+                    });
+            });
+
+            if should_spawn_supporting {
+                wrapper.spawn((
+                    TextFieldSupportingText,
+                    TextFieldSupportingFor(field_entity),
+                    Text::new(supporting_display),
+                    TextFont { font_size: 12.0, ..default() },
+                    TextColor(supporting_color),
+                    Node {
+                        margin: UiRect::left(Val::Px(Spacing::LARGE)),
                         ..default()
                     },
                 ));
-            });
+            }
+        });
     }
 }

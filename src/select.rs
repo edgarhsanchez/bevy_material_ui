@@ -6,6 +6,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    icons::MaterialIcon,
     icons::MaterialIconFont,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
@@ -22,6 +23,8 @@ impl Plugin for SelectPlugin {
                 (
                     select_interaction_system,
                     select_style_system,
+                    select_content_style_system,
+                    select_theme_refresh_system,
                     select_dropdown_sync_system,
                     select_option_interaction_system,
                     select_option_icon_font_system,
@@ -306,6 +309,165 @@ fn select_style_system(
     }
 }
 
+/// Update select child visuals (text colors, dropdown surface, option selection highlight)
+/// whenever select state changes.
+fn select_content_style_system(
+    theme: Option<Res<MaterialTheme>>,
+    changed_selects: Query<Entity, Changed<MaterialSelect>>,
+    selects: Query<&MaterialSelect>,
+    mut text_colors: ParamSet<(
+        Query<(&ChildOf, &mut TextColor), With<SelectDisplayText>>,
+        Query<(&ChildOf, &mut TextColor), With<SelectDropdownArrow>>,
+        Query<&mut TextColor, With<SelectOptionLabelText>>,
+        Query<&mut TextColor, With<SelectOptionIcon>>,
+    )>,
+    mut dropdowns: Query<
+        (&ChildOf, &mut BackgroundColor),
+        (With<SelectDropdown>, Without<SelectOptionItem>, Without<MaterialSelect>),
+    >,
+    mut option_rows: Query<
+        (&SelectOwner, &SelectOptionItem, &mut BackgroundColor, &Children),
+        (Without<SelectDropdown>, Without<MaterialSelect>),
+    >,
+) {
+    let Some(theme) = theme else { return };
+    if changed_selects.iter().next().is_none() {
+        return;
+    }
+
+    for (parent, mut color) in text_colors.p0().iter_mut() {
+        if let Ok(select) = selects.get(parent.parent()) {
+            color.0 = select.text_color(&theme);
+        }
+    }
+
+    for (parent, mut color) in text_colors.p1().iter_mut() {
+        if let Ok(select) = selects.get(parent.parent()) {
+            color.0 = select.label_color(&theme);
+        }
+    }
+
+    for (parent, mut bg) in dropdowns.iter_mut() {
+        if selects.get(parent.parent()).is_ok() {
+            bg.0 = theme.surface_container;
+        }
+    }
+
+    for (owner, option_item, mut row_bg, children) in option_rows.iter_mut() {
+        let Ok(select) = selects.get(owner.0) else { continue };
+
+        let is_selected = select.selected_index.is_some_and(|i| i == option_item.index);
+        row_bg.0 = if is_selected {
+            theme.secondary_container
+        } else {
+            Color::NONE
+        };
+
+        let base = theme.on_surface;
+        let is_disabled = select
+            .options
+            .get(option_item.index)
+            .is_some_and(|o| o.disabled);
+        let text_color = if is_disabled {
+            base.with_alpha(0.38)
+        } else {
+            base
+        };
+
+        for child in children.iter() {
+            if let Ok(mut c) = text_colors.p2().get_mut(child) {
+                c.0 = text_color;
+            }
+            if let Ok(mut c) = text_colors.p3().get_mut(child) {
+                c.0 = text_color;
+            }
+        }
+    }
+}
+
+/// Refresh select visuals when the theme changes.
+fn select_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    selects: Query<&MaterialSelect>,
+    mut triggers: Query<
+        (&MaterialSelect, &mut BackgroundColor, &mut BorderColor),
+        (Without<SelectDropdown>, Without<SelectOptionItem>),
+    >,
+    mut text_colors: ParamSet<(
+        Query<(&ChildOf, &mut TextColor), With<SelectDisplayText>>,
+        Query<(&ChildOf, &mut TextColor), With<SelectDropdownArrow>>,
+        Query<&mut TextColor, With<SelectOptionLabelText>>,
+        Query<&mut TextColor, With<SelectOptionIcon>>,
+    )>,
+    mut dropdowns: Query<
+        (&ChildOf, &mut BackgroundColor),
+        (With<SelectDropdown>, Without<SelectOptionItem>, Without<MaterialSelect>),
+    >,
+    mut option_rows: Query<
+        (&SelectOwner, &SelectOptionItem, &mut BackgroundColor, &Children),
+        (Without<SelectDropdown>, Without<MaterialSelect>),
+    >,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (select, mut bg, mut border) in triggers.iter_mut() {
+        bg.0 = select.container_color(&theme);
+        *border = BorderColor::all(select.indicator_color(&theme));
+    }
+
+    for (parent, mut color) in text_colors.p0().iter_mut() {
+        if let Ok(select) = selects.get(parent.parent()) {
+            color.0 = select.text_color(&theme);
+        }
+    }
+
+    for (parent, mut color) in text_colors.p1().iter_mut() {
+        if let Ok(select) = selects.get(parent.parent()) {
+            color.0 = select.label_color(&theme);
+        }
+    }
+
+    for (parent, mut bg) in dropdowns.iter_mut() {
+        if selects.get(parent.parent()).is_ok() {
+            bg.0 = theme.surface_container;
+        }
+    }
+
+    for (owner, option_item, mut row_bg, children) in option_rows.iter_mut() {
+        let Ok(select) = selects.get(owner.0) else { continue };
+
+        let is_selected = select.selected_index.is_some_and(|i| i == option_item.index);
+        row_bg.0 = if is_selected {
+            theme.secondary_container
+        } else {
+            Color::NONE
+        };
+
+        let base = theme.on_surface;
+        let is_disabled = select
+            .options
+            .get(option_item.index)
+            .is_some_and(|o| o.disabled);
+        let text_color = if is_disabled {
+            base.with_alpha(0.38)
+        } else {
+            base
+        };
+
+        for child in children.iter() {
+            if let Ok(mut c) = text_colors.p2().get_mut(child) {
+                c.0 = text_color;
+            }
+            if let Ok(mut c) = text_colors.p3().get_mut(child) {
+                c.0 = text_color;
+            }
+        }
+    }
+}
+
 /// Builder for select components
 pub struct SelectBuilder {
     select: MaterialSelect,
@@ -407,11 +569,7 @@ impl SelectBuilder {
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::top(Val::Px(if is_outlined {
-                CornerRadius::EXTRA_SMALL
-            } else {
-                CornerRadius::EXTRA_SMALL
-            })),
+            BorderRadius::top(Val::Px(CornerRadius::EXTRA_SMALL)),
         )
     }
 }
@@ -454,6 +612,14 @@ pub struct SelectTrigger {
 /// Marker for select's displayed text
 #[derive(Component)]
 pub struct SelectDisplayText;
+
+/// Marker for the dropdown arrow text node.
+#[derive(Component)]
+pub struct SelectDropdownArrow;
+
+/// Marker for select option label text nodes.
+#[derive(Component)]
+pub struct SelectOptionLabelText;
 
 /// Keep dropdown visibility + displayed text in sync with `MaterialSelect`.
 fn select_dropdown_sync_system(
@@ -530,7 +696,7 @@ fn select_option_interaction_system(
 /// Apply the Material Symbols font to select option icon text nodes.
 fn select_option_icon_font_system(
     icon_font: Option<Res<MaterialIconFont>>,
-    mut icons: Query<&mut TextFont, With<SelectOptionIcon>>,
+    mut icons: Query<&mut TextFont, Or<(With<SelectOptionIcon>, With<SelectDropdownArrow>)>>,
 ) {
     let Some(icon_font) = icon_font else { return };
     for mut text_font in icons.iter_mut() {
@@ -623,8 +789,9 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
 
                 // Dropdown arrow
                 select.spawn((
-                    Text::new("▼"),
-                    TextFont { font_size: 12.0, ..default() },
+                    SelectDropdownArrow,
+                    Text::new(MaterialIcon::expand_more().as_str()),
+                    TextFont { font_size: 20.0, ..default() },
                     TextColor(label_color),
                 ));
 
@@ -678,9 +845,13 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                 .with_children(|row| {
                                     // Optional leading icon
                                     if let Some(icon) = &option.icon {
+                                        let icon_text = MaterialIcon::from_name(icon.as_str())
+                                            .map(|i| i.as_str())
+                                            .unwrap_or_else(|| icon.clone());
+
                                         row.spawn((
                                             SelectOptionIcon,
-                                            Text::new(icon.clone()),
+                                            Text::new(icon_text),
                                             TextFont { font_size: 20.0, ..default() },
                                             TextColor(if is_disabled {
                                                 option_text_color.with_alpha(0.38)
@@ -691,6 +862,7 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                     }
 
                                     row.spawn((
+                                        SelectOptionLabelText,
                                         Text::new(option.label.clone()),
                                         TextFont { font_size: 14.0, ..default() },
                                         TextColor(if is_disabled {

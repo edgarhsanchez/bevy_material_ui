@@ -81,7 +81,7 @@ pub enum ComponentSection {
     Switches,
     RadioButtons,
     Chips,
-    FAB,
+    Fab,
     Badges,
     Progress,
     Cards,
@@ -92,6 +92,7 @@ pub enum ComponentSection {
     Sliders,
     TextFields,
     Dialogs,
+    DateTimePicker,
     Menus,
     Tabs,
     Select,
@@ -110,7 +111,7 @@ impl ComponentSection {
             Self::Switches => "Switches",
             Self::RadioButtons => "Radio Buttons",
             Self::Chips => "Chips",
-            Self::FAB => "FAB",
+            Self::Fab => "FAB",
             Self::Badges => "Badges",
             Self::Progress => "Progress",
             Self::Cards => "Cards",
@@ -121,6 +122,7 @@ impl ComponentSection {
             Self::Sliders => "Sliders",
             Self::TextFields => "Text Fields",
             Self::Dialogs => "Dialogs",
+            Self::DateTimePicker => "DateTime Picker",
             Self::Menus => "Menus",
             Self::Tabs => "Tabs",
             Self::Select => "Select",
@@ -139,7 +141,7 @@ impl ComponentSection {
             Self::Switches,
             Self::RadioButtons,
             Self::Chips,
-            Self::FAB,
+            Self::Fab,
             Self::Badges,
             Self::Progress,
             Self::Cards,
@@ -150,6 +152,7 @@ impl ComponentSection {
             Self::Sliders,
             Self::TextFields,
             Self::Dialogs,
+            Self::DateTimePicker,
             Self::Menus,
             Self::Tabs,
             Self::Select,
@@ -233,10 +236,6 @@ impl Default for SnackbarDemoOptions {
 // NOTE: Slider components (SliderHandle, SliderLabel, SliderTrack, SliderActiveTrack)
 // are now imported from bevy_material_ui::prelude
 
-/// Marker for FAB buttons
-#[derive(Component)]
-pub struct FabButton;
-
 /// Marker for selectable list items
 #[derive(Component)]
 pub struct SelectableListItem;
@@ -244,16 +243,6 @@ pub struct SelectableListItem;
 /// Marker for the demo list root (to apply selection mode changes)
 #[derive(Component)]
 pub struct ListDemoRoot;
-
-/// Marker for text field demo input container
-#[derive(Component)]
-pub struct TextFieldDemoInput;
-
-/// Marker for the Text component inside demo inputs
-#[derive(Component)]
-pub struct TextFieldDemoText {
-    pub base: String,
-}
 
 /// Marker for dialog container
 #[derive(Component)]
@@ -275,6 +264,14 @@ pub struct DialogConfirmButton;
 #[derive(Component)]
 pub struct DialogResultDisplay;
 
+/// Marker for date-time picker demo open button
+#[derive(Component)]
+pub struct DateTimePickerOpenButton(pub Entity);
+
+/// Marker for date-time picker demo result display
+#[derive(Component)]
+pub struct DateTimePickerResultDisplay(pub Entity);
+
 /// Marker for menu trigger button
 #[derive(Component)]
 pub struct MenuTrigger;
@@ -285,7 +282,7 @@ pub struct MenuDropdown;
 
 /// Marker for menu item with its label
 #[derive(Component)]
-pub struct MenuItemMarker;
+pub struct MenuItemMarker(pub String);
 
 /// Marker for the text that shows the selected menu item
 #[derive(Component)]
@@ -298,10 +295,6 @@ pub struct SnackbarTrigger;
 /// Marker for interactive icon buttons
 #[derive(Component)]
 pub struct IconButtonMarker;
-
-/// Marker for app bar icon buttons
-#[derive(Component)]
-pub struct AppBarIconButton;
 
 /// Marker for tooltip demo button (updates when options change)
 #[derive(Component)]
@@ -327,6 +320,25 @@ pub struct SnackbarActionToggle;
 #[derive(Component)]
 pub struct ThemeModeOption(pub ThemeMode);
 
+/// Resource tracking the currently selected theme seed (ARGB).
+#[derive(Resource, Debug, Clone, Copy)]
+pub struct ShowcaseThemeSelection {
+    pub seed_argb: u32,
+}
+
+impl Default for ShowcaseThemeSelection {
+    fn default() -> Self {
+        Self {
+            // Default Material You purple
+            seed_argb: 0xFF6750A4,
+        }
+    }
+}
+
+/// Marker for theme seed option buttons (ARGB).
+#[derive(Component)]
+pub struct ThemeSeedOption(pub u32);
+
 /// Marker for dialog position option buttons
 #[derive(Component)]
 pub struct DialogPositionOption(pub DialogPosition);
@@ -334,14 +346,6 @@ pub struct DialogPositionOption(pub DialogPosition);
 /// Marker for list selection mode option buttons
 #[derive(Component)]
 pub struct ListSelectionModeOption(pub bevy_material_ui::list::ListSelectionMode);
-
-/// Marker for text field blink speed option buttons
-#[derive(Component)]
-pub struct TextFieldBlinkSpeedOption(pub f32);
-
-/// Marker for text field cursor toggle
-#[derive(Component)]
-pub struct TextFieldCursorToggle;
 
 // NOTE: RadioOuter, RadioInner, and SwitchHandle are exported by the library
 // Use bevy_material_ui::prelude::{RadioOuter, RadioInner, SwitchHandle}

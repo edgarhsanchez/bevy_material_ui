@@ -15,11 +15,20 @@ pub struct ProgressPlugin;
 
 impl Plugin for ProgressPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            linear_progress_animation_system,
-            circular_progress_animation_system,
-            progress_style_system,
-        ));
+        // These systems have ordering dependencies (animation must run before indicator
+        // geometry updates in the same frame).
+        app.add_systems(
+            Update,
+            (
+                linear_progress_animation_system,
+                circular_progress_animation_system,
+                progress_style_system,
+                ensure_linear_progress_indicator_system,
+                linear_progress_indicator_system,
+                progress_theme_refresh_system,
+            )
+                .chain(),
+        );
     }
 }
 
@@ -229,6 +238,122 @@ fn progress_style_system(
     }
 }
 
+/// Update the indicator (fill) element for linear progress bars.
+fn linear_progress_indicator_system(
+    theme: Option<Res<MaterialTheme>>,
+    progress_bars: Query<(Entity, &MaterialLinearProgress), Changed<MaterialLinearProgress>>,
+    mut indicators: Query<(
+        &LinearProgressIndicatorFor,
+        &mut Node,
+        &mut BackgroundColor,
+    ), With<ProgressIndicator>>,
+) {
+    let Some(theme) = theme else { return };
+
+    // Indeterminate segment width (percent of track width).
+    const INDETERMINATE_SEGMENT_WIDTH: f32 = 30.0;
+
+    for (bar_entity, progress) in progress_bars.iter() {
+        let indicator_color = progress.indicator_color(&theme);
+
+        for (owner, mut node, mut bg) in indicators.iter_mut() {
+            if owner.0 != bar_entity {
+                continue;
+            }
+
+            bg.0 = indicator_color;
+
+            match progress.mode {
+                ProgressMode::Determinate => {
+                    node.left = Val::Px(0.0);
+                    node.width = Val::Percent(progress.progress.clamp(0.0, 1.0) * 100.0);
+                }
+                ProgressMode::Indeterminate => {
+                    let t = progress.animation_progress.clamp(0.0, 1.0);
+                    // Travel from -segment_width to 100%.
+                    let left = t * (100.0 + INDETERMINATE_SEGMENT_WIDTH) - INDETERMINATE_SEGMENT_WIDTH;
+                    node.left = Val::Percent(left);
+                    node.width = Val::Percent(INDETERMINATE_SEGMENT_WIDTH);
+                }
+            }
+        }
+    }
+}
+
+/// Links an indicator entity to its owning linear progress entity.
+#[derive(Component)]
+pub struct LinearProgressIndicatorFor(pub Entity);
+
+/// Ensure each linear progress bar has a fill indicator child.
+///
+/// This makes `LinearProgressBuilder::build()` usable directly (as in the showcase),
+/// without requiring callers to spawn an indicator child manually.
+fn ensure_linear_progress_indicator_system(
+    mut commands: Commands,
+    theme: Option<Res<MaterialTheme>>,
+    progress_bars: Query<(Entity, &MaterialLinearProgress, Option<&Children>)>,
+    indicator_nodes: Query<(), With<ProgressIndicator>>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (entity, progress, children) in progress_bars.iter() {
+        let has_indicator = children
+            .is_some_and(|children| children.iter().any(|child| indicator_nodes.contains(child)));
+
+        if has_indicator {
+            continue;
+        }
+
+        let indicator_color = progress.indicator_color(&theme);
+
+        commands.entity(entity).with_children(|container| {
+            container.spawn((
+                ProgressIndicator,
+                LinearProgressIndicatorFor(entity),
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(0.0),
+                    top: Val::Px(0.0),
+                    bottom: Val::Px(0.0),
+                    width: Val::Percent(progress.progress.clamp(0.0, 1.0) * 100.0),
+                    ..default()
+                },
+                BackgroundColor(indicator_color),
+                BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+            ));
+        });
+    }
+}
+
+/// Refresh progress bar colors when the theme changes.
+fn progress_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut progress_bars: Query<
+        (&MaterialLinearProgress, &Children, &mut BackgroundColor),
+        Without<ProgressIndicator>,
+    >,
+    mut indicators: Query<
+        &mut BackgroundColor,
+        (With<ProgressIndicator>, Without<MaterialLinearProgress>),
+    >,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (progress, children, mut track_bg) in progress_bars.iter_mut() {
+        track_bg.0 = progress.track_color(&theme);
+        let indicator_color = progress.indicator_color(&theme);
+
+        for child in children.iter() {
+            if let Ok(mut bg) = indicators.get_mut(child) {
+                bg.0 = indicator_color;
+            }
+        }
+    }
+}
+
 /// Builder for linear progress
 pub struct LinearProgressBuilder {
     progress: MaterialLinearProgress,
@@ -278,6 +403,7 @@ impl LinearProgressBuilder {
                 width: self.width,
                 height: Val::Px(LINEAR_PROGRESS_HEIGHT),
                 overflow: Overflow::clip(),
+                position_type: PositionType::Relative,
                 ..default()
             },
             BackgroundColor(bg_color),
@@ -438,21 +564,28 @@ impl SpawnProgressChild for ChildSpawnerCommands<'_> {
     ) {
         let progress_value = builder.progress.progress;
         let indicator_color = builder.progress.indicator_color(theme);
-        
-        self.spawn(builder.build(theme))
-            .with_children(|container| {
-                // Progress indicator fill
-                container.spawn((
-                    ProgressIndicator,
-                    Node {
-                        width: Val::Percent(progress_value * 100.0),
-                        height: Val::Percent(100.0),
-                        ..default()
-                    },
-                    BackgroundColor(indicator_color),
-                    BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
-                ));
-            });
+
+        let mut bar = self.spawn(builder.build(theme));
+        let bar_entity = bar.id();
+
+        bar.with_children(|container| {
+            // Progress indicator fill
+            container.spawn((
+                ProgressIndicator,
+                LinearProgressIndicatorFor(bar_entity),
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(0.0),
+                    top: Val::Px(0.0),
+                    bottom: Val::Px(0.0),
+                    width: Val::Percent(progress_value * 100.0),
+                    height: Val::Percent(100.0),
+                    ..default()
+                },
+                BackgroundColor(indicator_color),
+                BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+            ));
+        });
     }
     
     fn spawn_circular_progress_with(

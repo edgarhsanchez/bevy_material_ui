@@ -86,17 +86,17 @@ fn test_tonal_palette() {
     
     // Tone 0 should be near black
     let tone_0 = palette.tone(0);
-    let r = ((tone_0 >> 16) & 0xFF) as u32;
-    let g = ((tone_0 >> 8) & 0xFF) as u32;
-    let b = (tone_0 & 0xFF) as u32;
+    let r = (tone_0 >> 16) & 0xFF;
+    let g = (tone_0 >> 8) & 0xFF;
+    let b = tone_0 & 0xFF;
     let max_0 = r.max(g).max(b);
     assert!(max_0 < 30, "Tone 0 should be nearly black, got max={}", max_0);
 
     // Tone 100 should be near white
     let tone_100 = palette.tone(100);
-    let r = ((tone_100 >> 16) & 0xFF) as u32;
-    let g = ((tone_100 >> 8) & 0xFF) as u32;
-    let b = (tone_100 & 0xFF) as u32;
+    let r = (tone_100 >> 16) & 0xFF;
+    let g = (tone_100 >> 8) & 0xFF;
+    let b = tone_100 & 0xFF;
     let min_100 = r.min(g).min(b);
     assert!(min_100 > 220, "Tone 100 should be nearly white, got min={}", min_100);
 }

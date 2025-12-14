@@ -6,6 +6,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    icons::IconStyle,
     ripple::RippleHost,
     theme::{blend_state_layer, MaterialTheme},
     tokens::CornerRadius,
@@ -17,7 +18,15 @@ pub struct IconButtonPlugin;
 impl Plugin for IconButtonPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<IconButtonClickEvent>()
-            .add_systems(Update, (icon_button_interaction_system, icon_button_style_system));
+            .add_systems(
+                Update,
+                (
+                    icon_button_interaction_system,
+                    icon_button_style_system,
+                    icon_button_content_style_system,
+                    icon_button_theme_refresh_system,
+                ),
+            );
     }
 }
 
@@ -274,6 +283,57 @@ fn icon_button_style_system(
     }
 }
 
+/// System to update the icon's `IconStyle` color when the icon button state changes.
+fn icon_button_content_style_system(
+    theme: Option<Res<MaterialTheme>>,
+    buttons: Query<(Entity, &MaterialIconButton), Changed<MaterialIconButton>>,
+    children_q: Query<&Children>,
+    mut icon_styles: Query<&mut IconStyle>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (entity, button) in buttons.iter() {
+        let Ok(children) = children_q.get(entity) else { continue };
+        let icon_color = button.icon_color(&theme);
+        for child in children.iter() {
+            if let Ok(mut style) = icon_styles.get_mut(child) {
+                style.color = Some(icon_color);
+            }
+        }
+    }
+}
+
+/// Refresh icon button visuals when the theme resource changes.
+fn icon_button_theme_refresh_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut buttons: Query<(
+        Entity,
+        &MaterialIconButton,
+        &mut BackgroundColor,
+        &mut BorderColor,
+    )>,
+    children_q: Query<&Children>,
+    mut icon_styles: Query<&mut IconStyle>,
+) {
+    let Some(theme) = theme else { return };
+    if !theme.is_changed() {
+        return;
+    }
+
+    for (entity, button, mut bg_color, mut border_color) in buttons.iter_mut() {
+        *bg_color = BackgroundColor(button.background_color(&theme));
+        *border_color = BorderColor::all(button.border_color(&theme));
+
+        let Ok(children) = children_q.get(entity) else { continue };
+        let icon_color = button.icon_color(&theme);
+        for child in children.iter() {
+            if let Ok(mut style) = icon_styles.get_mut(child) {
+                style.color = Some(icon_color);
+            }
+        }
+    }
+}
+
 /// Standard icon button size
 pub const ICON_BUTTON_SIZE: f32 = 40.0;
 /// Icon size within button
@@ -369,7 +429,7 @@ impl IconButtonBuilder {
 // Spawn Traits for ChildSpawnerCommands
 // ============================================================================
 
-use crate::icons::{MaterialIcon, IconStyle};
+use crate::icons::MaterialIcon;
 
 /// Extension trait to spawn Material icon buttons as children
 /// 
