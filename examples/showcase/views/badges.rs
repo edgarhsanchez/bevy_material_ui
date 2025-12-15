@@ -71,35 +71,18 @@ fn spawn_badge_example(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme,
             TextColor(theme.on_surface),
         ));
         
-        // Badge
-        let (width, text) = match count {
-            None => (Val::Px(8.0), String::new()),
-            Some(c) => (Val::Auto, c.to_string()),
-        };
-        
-        container.spawn((
-            Node {
-                position_type: PositionType::Absolute,
-                top: Val::Px(4.0),
-                right: Val::Px(4.0),
-                width,
-                min_width: Val::Px(if count.is_some() { 16.0 } else { 8.0 }),
-                height: Val::Px(if count.is_some() { 16.0 } else { 8.0 }),
-                padding: UiRect::axes(Val::Px(4.0), Val::Px(0.0)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(theme.error),
-            BorderRadius::all(Val::Px(8.0)),
-        )).with_children(|badge| {
-            if !text.is_empty() {
-                badge.spawn((
-                    Text::new(text),
-                    TextFont { font_size: 10.0, ..default() },
-                    TextColor(theme.on_error),
-                ));
+        // Badge (real MaterialBadge component)
+        match count {
+            None => {
+                container.spawn_small_badge(theme);
             }
-        });
+            Some("99+") => {
+                container.spawn_badge_with(theme, BadgeBuilder::count(150).max(99));
+            }
+            Some(c) => {
+                let parsed = c.parse::<u32>().unwrap_or(0);
+                container.spawn_badge_count(theme, parsed);
+            }
+        }
     });
 }

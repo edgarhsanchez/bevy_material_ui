@@ -450,15 +450,49 @@ pub trait SpawnIconButtonChild {
         icon: impl Into<String>,
         variant: IconButtonVariant,
     );
+
+    /// Spawn an icon button using a resolved `MaterialIcon` (no name lookup).
+    fn spawn_icon_button_icon(
+        &mut self,
+        theme: &MaterialTheme,
+        icon: MaterialIcon,
+        variant: IconButtonVariant,
+    );
+
+    /// Spawn an icon button using a raw icon codepoint (e.g. `ICON_CLOSE`).
+    fn spawn_icon_button_codepoint(
+        &mut self,
+        theme: &MaterialTheme,
+        codepoint: char,
+        variant: IconButtonVariant,
+    );
     
     /// Spawn a standard icon button
     fn spawn_standard_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
+
+    /// Spawn a standard icon button using a resolved `MaterialIcon`.
+    fn spawn_standard_icon_button_icon(&mut self, theme: &MaterialTheme, icon: MaterialIcon);
+
+    /// Spawn a standard icon button using a raw icon codepoint.
+    fn spawn_standard_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char);
     
     /// Spawn a filled icon button
     fn spawn_filled_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
+
+    /// Spawn a filled icon button using a resolved `MaterialIcon`.
+    fn spawn_filled_icon_button_icon(&mut self, theme: &MaterialTheme, icon: MaterialIcon);
+
+    /// Spawn a filled icon button using a raw icon codepoint.
+    fn spawn_filled_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char);
     
     /// Spawn an outlined icon button
     fn spawn_outlined_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
+
+    /// Spawn an outlined icon button using a resolved `MaterialIcon`.
+    fn spawn_outlined_icon_button_icon(&mut self, theme: &MaterialTheme, icon: MaterialIcon);
+
+    /// Spawn an outlined icon button using a raw icon codepoint.
+    fn spawn_outlined_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char);
     
     /// Spawn an icon button with full builder control
     fn spawn_icon_button_with(&mut self, theme: &MaterialTheme, button: MaterialIconButton);
@@ -485,17 +519,68 @@ impl SpawnIconButtonChild for ChildSpawnerCommands<'_> {
                 }
             });
     }
+
+    fn spawn_icon_button_icon(
+        &mut self,
+        theme: &MaterialTheme,
+        icon: MaterialIcon,
+        variant: IconButtonVariant,
+    ) {
+        // Store the glyph string for debugging; rendering uses the resolved icon directly.
+        let builder = IconButtonBuilder::new(icon.as_str()).variant(variant);
+        let icon_color = builder.button.icon_color(theme);
+
+        self.spawn(builder.build(theme)).with_children(|button| {
+            button.spawn((
+                icon,
+                IconStyle::outlined().with_color(icon_color).with_size(ICON_SIZE),
+            ));
+        });
+    }
+
+    fn spawn_icon_button_codepoint(
+        &mut self,
+        theme: &MaterialTheme,
+        codepoint: char,
+        variant: IconButtonVariant,
+    ) {
+        self.spawn_icon_button_icon(theme, MaterialIcon::new(codepoint), variant);
+    }
     
     fn spawn_standard_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_icon_button(theme, icon, IconButtonVariant::Standard);
+    }
+
+    fn spawn_standard_icon_button_icon(&mut self, theme: &MaterialTheme, icon: MaterialIcon) {
+        self.spawn_icon_button_icon(theme, icon, IconButtonVariant::Standard);
+    }
+
+    fn spawn_standard_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char) {
+        self.spawn_icon_button_codepoint(theme, codepoint, IconButtonVariant::Standard);
     }
     
     fn spawn_filled_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_icon_button(theme, icon, IconButtonVariant::Filled);
     }
+
+    fn spawn_filled_icon_button_icon(&mut self, theme: &MaterialTheme, icon: MaterialIcon) {
+        self.spawn_icon_button_icon(theme, icon, IconButtonVariant::Filled);
+    }
+
+    fn spawn_filled_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char) {
+        self.spawn_icon_button_codepoint(theme, codepoint, IconButtonVariant::Filled);
+    }
     
     fn spawn_outlined_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_icon_button(theme, icon, IconButtonVariant::Outlined);
+    }
+
+    fn spawn_outlined_icon_button_icon(&mut self, theme: &MaterialTheme, icon: MaterialIcon) {
+        self.spawn_icon_button_icon(theme, icon, IconButtonVariant::Outlined);
+    }
+
+    fn spawn_outlined_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char) {
+        self.spawn_icon_button_codepoint(theme, codepoint, IconButtonVariant::Outlined);
     }
     
     fn spawn_icon_button_with(&mut self, theme: &MaterialTheme, button: MaterialIconButton) {

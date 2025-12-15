@@ -931,6 +931,7 @@ dependencies = [
  "bevy",
  "criterion",
  "serde_json",
+ "ttf-parser 0.20.0",
 ]
 
 [[package]]

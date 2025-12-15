@@ -7,11 +7,25 @@ use bevy::prelude::*;
 use bevy::ui::ScrollPosition;
 
 use crate::{
+    icons::{icon_by_name, IconStyle, MaterialIcon},
     ripple::RippleHost,
     scroll::ScrollContainerBuilder,
     theme::{blend_state_layer, MaterialTheme},
     tokens::Spacing,
 };
+
+fn resolve_icon_codepoint(icon: &str) -> Option<char> {
+    let icon = icon.trim();
+    if icon.is_empty() {
+        return None;
+    }
+
+    if icon.chars().count() == 1 {
+        return icon.chars().next();
+    }
+
+    icon_by_name(icon)
+}
 
 /// Plugin for the list component
 pub struct ListPlugin;
@@ -570,6 +584,7 @@ impl ListItemBuilder {
                 width: Val::Percent(100.0),
                 height: Val::Px(height),
                 padding: UiRect::axes(Val::Px(Spacing::LARGE), Val::Px(Spacing::SMALL)),
+                flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::LARGE),
                 ..default()
@@ -720,7 +735,98 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
     }
     
     fn spawn_list_item_with(&mut self, theme: &MaterialTheme, builder: ListItemBuilder) {
-        self.spawn(builder.build(theme));
+        let headline = builder.item.headline.clone();
+        let supporting_text = builder.item.supporting_text.clone();
+        let trailing_text = builder.item.trailing_text.clone();
+        let leading_icon = builder.item.leading_icon.clone();
+        let trailing_icon = builder.item.trailing_icon.clone();
+
+        let headline_color = builder.item.headline_color(theme);
+        let supporting_color = builder.item.supporting_text_color(theme);
+        let icon_color = builder.item.icon_color(theme);
+
+        self.spawn(builder.build(theme))
+            .with_children(|item| {
+                // Leading content
+                if let Some(icon_str) = leading_icon.as_deref() {
+                    if let Some(codepoint) = resolve_icon_codepoint(icon_str) {
+                        item.spawn((
+                            ListItemLeading,
+                            Node {
+                                width: Val::Px(56.0),
+                                height: Val::Px(56.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                        ))
+                        .with_children(|leading| {
+                            leading.spawn((
+                                MaterialIcon::new(codepoint),
+                                IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                            ));
+                        });
+                    }
+                }
+
+                // Body
+                item.spawn((
+                    ListItemBody,
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        flex_grow: 1.0,
+                        ..default()
+                    },
+                ))
+                .with_children(|body| {
+                    body.spawn((
+                        ListItemHeadline,
+                        Text::new(&headline),
+                        TextFont { font_size: 16.0, ..default() },
+                        TextColor(headline_color),
+                    ));
+
+                    if let Some(ref supporting) = supporting_text {
+                        body.spawn((
+                            ListItemSupportingText,
+                            Text::new(supporting),
+                            TextFont { font_size: 14.0, ..default() },
+                            TextColor(supporting_color),
+                        ));
+                    }
+                });
+
+                // Trailing content
+                if trailing_text.is_some() || trailing_icon.is_some() {
+                    item.spawn((
+                        ListItemTrailing,
+                        Node {
+                            flex_direction: FlexDirection::Row,
+                            align_items: AlignItems::Center,
+                            column_gap: Val::Px(Spacing::MEDIUM),
+                            ..default()
+                        },
+                    ))
+                    .with_children(|trailing| {
+                        if let Some(ref text) = trailing_text {
+                            trailing.spawn((
+                                Text::new(text),
+                                TextFont { font_size: 14.0, ..default() },
+                                TextColor(supporting_color),
+                            ));
+                        }
+
+                        if let Some(icon_str) = trailing_icon.as_deref() {
+                            if let Some(codepoint) = resolve_icon_codepoint(icon_str) {
+                                trailing.spawn((
+                                    MaterialIcon::new(codepoint),
+                                    IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                                ));
+                            }
+                        }
+                    });
+                }
+            });
     }
     
     fn spawn_list_divider(&mut self, theme: &MaterialTheme, inset: bool) {

@@ -2,12 +2,13 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
+use bevy_material_ui::icons::ICON_CLOSE;
 use bevy_material_ui::chip::{ChipBuilder, ChipLabel};
 
 use crate::showcase::common::*;
 
 /// Spawn the snackbar section content
-pub fn spawn_snackbar_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+pub fn spawn_snackbar_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, icon_font: Handle<Font>) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -149,6 +150,7 @@ pub fn spawn_snackbar_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     Text::new("Item deleted"),
                     TextFont { font_size: 14.0, ..default() },
                     TextColor(theme.inverse_on_surface),
+                    Node { flex_grow: 1.0, ..default() },
                 ));
                 
                 snackbar.spawn((
@@ -163,6 +165,33 @@ pub fn spawn_snackbar_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                         TextColor(theme.inverse_primary),
                     ));
                 });
+
+                // Close button (X icon)
+                snackbar
+                    .spawn((
+                        Button,
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(32.0),
+                            height: Val::Px(32.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(9999.0)),
+                    ))
+                    .with_children(|btn| {
+                        btn.spawn((
+                            Text::new(ICON_CLOSE.to_string()),
+                            TextFont {
+                                font: icon_font.clone(),
+                                font_size: 24.0,
+                                ..default()
+                            },
+                            TextColor(theme.inverse_on_surface),
+                        ));
+                    });
             });
 
             spawn_code_block(section, theme,

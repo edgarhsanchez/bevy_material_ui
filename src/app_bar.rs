@@ -8,6 +8,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    icons::{IconStyle, MaterialIcon},
     ripple::RippleHost,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
@@ -611,14 +612,14 @@ pub fn spawn_top_app_bar(
                             BorderRadius::all(Val::Px(CornerRadius::FULL)),
                         ))
                         .with_children(|btn| {
-                            btn.spawn((
-                                Text::new(icon),
-                                TextFont {
-                                    font_size: 24.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface),
-                            ));
+                            if let Some(icon) = MaterialIcon::from_name(icon) {
+                                btn.spawn((
+                                    icon,
+                                    IconStyle::outlined()
+                                        .with_color(theme.on_surface)
+                                        .with_size(24.0),
+                                ));
+                            }
                         });
                     }
 
@@ -679,14 +680,14 @@ pub fn spawn_top_app_bar(
                             BorderRadius::all(Val::Px(CornerRadius::FULL)),
                         ))
                         .with_children(|btn| {
-                            btn.spawn((
-                                Text::new(&action.icon),
-                                TextFont {
-                                    font_size: 24.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface_variant),
-                            ));
+                            if let Some(icon) = MaterialIcon::from_name(&action.icon) {
+                                btn.spawn((
+                                    icon,
+                                    IconStyle::outlined()
+                                        .with_color(theme.on_surface_variant)
+                                        .with_size(24.0),
+                                ));
+                            }
                         });
                     }
                 });

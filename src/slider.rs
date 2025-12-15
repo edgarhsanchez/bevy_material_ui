@@ -747,6 +747,9 @@ impl SpawnSliderChild for ChildSpawnerCommands<'_> {
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Center,
             column_gap: Val::Px(16.0),
+            row_gap: Val::Px(8.0),
+            flex_wrap: FlexWrap::Wrap,
+            width: Val::Percent(100.0),
             ..default()
         }).with_children(|row| {
             // Optional left label
@@ -764,7 +767,10 @@ impl SpawnSliderChild for ChildSpawnerCommands<'_> {
                 Button,
                 Interaction::None,
                 Node {
-                    width: Val::Px(200.0),
+                    flex_grow: 1.0,
+                    width: Val::Percent(100.0),
+                    // Allow flexbox to shrink this item on compact widths.
+                    min_width: Val::Px(0.0),
                     height: Val::Px(SLIDER_HANDLE_SIZE + 8.0),
                     align_items: AlignItems::Center,
                     ..default()

@@ -6,9 +6,26 @@
 use bevy::prelude::*;
 
 use crate::{
+    icons::{icon_by_name, IconStyle, MaterialIcon, ICON_CLOSE},
+    ripple::RippleHost,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
 };
+
+fn resolve_icon_codepoint(icon: &str) -> Option<char> {
+    let icon = icon.trim();
+    if icon.is_empty() {
+        return None;
+    }
+
+    // If the caller passed an actual icon glyph (e.g. ICON_EMAIL.to_string()), keep it.
+    if icon.chars().count() == 1 {
+        return icon.chars().next();
+    }
+
+    // Otherwise treat it as an icon name.
+    icon_by_name(icon)
+}
 
 /// Plugin for the text field component
 pub struct TextFieldPlugin;
@@ -25,12 +42,14 @@ impl Plugin for TextFieldPlugin {
                 Update,
                 (
                     text_field_focus_system,
+                    text_field_end_icon_click_system,
                     text_field_input_system,
                     text_field_caret_blink_system,
                     text_field_label_system,
                     text_field_placeholder_system,
                     text_field_display_system,
                     text_field_supporting_text_system,
+                    text_field_icon_system,
                     text_field_style_system,
                 )
                     .chain(),
@@ -499,6 +518,7 @@ pub const TEXT_FIELD_MIN_WIDTH: f32 = 210.0;
 
 /// System to handle text field focus
 fn text_field_focus_system(
+    mouse: Res<ButtonInput<MouseButton>>,
     mut active: ResMut<ActiveTextField>,
     mut fields: ParamSet<(
         Query<(Entity, &Interaction), (Changed<Interaction>, With<MaterialTextField>)>,
@@ -507,7 +527,12 @@ fn text_field_focus_system(
 ) {
     // Determine which field was pressed this frame.
     for (entity, interaction) in fields.p0().iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == Interaction::Pressed
+            // Some frames (notably during window resize) can miss the transient
+            // `Pressed` state. When the mouse button is released, interaction will
+            // typically be `Hovered`, so treat that as activation as well.
+            || (*interaction == Interaction::Hovered && mouse.just_released(MouseButton::Left))
+        {
             active.0 = Some(entity);
         }
     }
@@ -987,6 +1012,38 @@ pub struct TextFieldPlaceholder;
 #[derive(Component)]
 pub struct TextFieldPlaceholderFor(pub Entity);
 
+/// Marker for the leading icon button (start icon).
+#[derive(Component)]
+pub struct TextFieldLeadingIconButton;
+
+/// Links a leading icon button entity to its owning text field entity.
+#[derive(Component)]
+pub struct TextFieldLeadingIconButtonFor(pub Entity);
+
+/// Marker for the leading icon glyph entity.
+#[derive(Component)]
+pub struct TextFieldLeadingIcon;
+
+/// Links a leading icon glyph entity to its owning text field entity.
+#[derive(Component)]
+pub struct TextFieldLeadingIconFor(pub Entity);
+
+/// Marker for the end icon button (trailing icon).
+#[derive(Component)]
+pub struct TextFieldEndIconButton;
+
+/// Links an end icon button entity to its owning text field entity.
+#[derive(Component)]
+pub struct TextFieldEndIconButtonFor(pub Entity);
+
+/// Marker for the end icon glyph entity.
+#[derive(Component)]
+pub struct TextFieldEndIcon;
+
+/// Links an end icon glyph entity to its owning text field entity.
+#[derive(Component)]
+pub struct TextFieldEndIconFor(pub Entity);
+
 
 /// Marker for the supporting text element
 #[derive(Component)]
@@ -1070,6 +1127,12 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
         let label_color = builder.text_field.label_color(theme);
         let input_color = builder.text_field.input_color(theme);
         let placeholder_color = builder.text_field.placeholder_color(theme);
+        let icon_color = builder.text_field.icon_color(theme);
+        let leading_icon_text = builder.text_field.leading_icon.clone();
+        let end_icon_text = builder
+            .text_field
+            .effective_trailing_icon()
+            .map(|s| s.to_string());
         let initial_is_label_floating = builder.text_field.is_label_floating();
 
         let supporting_text = builder.text_field.supporting_text.clone();
@@ -1096,6 +1159,46 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
             let field_entity = field_commands.id();
 
             field_commands.with_children(|container| {
+                // Leading icon (start icon)
+                let leading_icon_visible = leading_icon_text
+                    .as_deref()
+                    .and_then(resolve_icon_codepoint)
+                    .is_some();
+                container
+                    .spawn((
+                        TextFieldLeadingIconButton,
+                        TextFieldLeadingIconButtonFor(field_entity),
+                        Button,
+                        RippleHost::new(),
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            display: if leading_icon_visible {
+                                Display::Flex
+                            } else {
+                                Display::None
+                            },
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    ))
+                    .with_children(|btn| {
+                        let codepoint = leading_icon_text
+                            .as_deref()
+                            .and_then(resolve_icon_codepoint)
+                            .unwrap_or(ICON_CLOSE);
+                        btn.spawn((
+                            TextFieldLeadingIcon,
+                            TextFieldLeadingIconFor(field_entity),
+                            MaterialIcon::new(codepoint),
+                            IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                        ));
+                    });
+
                 // Content column so the label can float above the input.
                 container
                     .spawn(Node {
@@ -1190,6 +1293,46 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                                 ));
                             });
                     });
+
+                // End icon (trailing icon)
+                let end_icon_visible = end_icon_text
+                    .as_deref()
+                    .and_then(resolve_icon_codepoint)
+                    .is_some();
+                container
+                    .spawn((
+                        TextFieldEndIconButton,
+                        TextFieldEndIconButtonFor(field_entity),
+                        Button,
+                        RippleHost::new(),
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            display: if end_icon_visible {
+                                Display::Flex
+                            } else {
+                                Display::None
+                            },
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    ))
+                    .with_children(|btn| {
+                        let codepoint = end_icon_text
+                            .as_deref()
+                            .and_then(resolve_icon_codepoint)
+                            .unwrap_or(ICON_CLOSE);
+                        btn.spawn((
+                            TextFieldEndIcon,
+                            TextFieldEndIconFor(field_entity),
+                            MaterialIcon::new(codepoint),
+                            IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                        ));
+                    });
             });
 
             if should_spawn_supporting {
@@ -1206,5 +1349,114 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                 ));
             }
         });
+    }
+}
+
+fn text_field_end_icon_click_system(
+    mut click_events: MessageWriter<TextFieldChangeEvent>,
+    mut fields: Query<&mut MaterialTextField>,
+    interactions: Query<(&Interaction, &TextFieldEndIconButtonFor), (Changed<Interaction>, With<TextFieldEndIconButton>)>,
+) {
+    for (interaction, TextFieldEndIconButtonFor(field_entity)) in interactions.iter() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        let Ok(mut field) = fields.get_mut(*field_entity) else { continue };
+
+        match field.end_icon_mode {
+            EndIconMode::PasswordToggle => {
+                field.toggle_password_visibility();
+            }
+            EndIconMode::ClearText => {
+                if !field.value.is_empty() {
+                    field.value.clear();
+                    field.has_content = false;
+                    click_events.write(TextFieldChangeEvent {
+                        entity: *field_entity,
+                        value: field.value.clone(),
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn text_field_icon_system(
+    theme: Option<Res<MaterialTheme>>,
+    changed_fields: Query<(Entity, &MaterialTextField), Changed<MaterialTextField>>,
+    mut leading_buttons: Query<
+        (&TextFieldLeadingIconButtonFor, &mut Node),
+        (With<TextFieldLeadingIconButton>, Without<TextFieldEndIconButton>),
+    >,
+    mut leading_icons: Query<
+        (&TextFieldLeadingIconFor, &mut MaterialIcon, &mut IconStyle),
+        (With<TextFieldLeadingIcon>, Without<TextFieldEndIcon>),
+    >,
+    mut end_buttons: Query<
+        (&TextFieldEndIconButtonFor, &mut Node),
+        (With<TextFieldEndIconButton>, Without<TextFieldLeadingIconButton>),
+    >,
+    mut end_icons: Query<
+        (&TextFieldEndIconFor, &mut MaterialIcon, &mut IconStyle),
+        (With<TextFieldEndIcon>, Without<TextFieldLeadingIcon>),
+    >,
+) {
+    let Some(theme) = theme else { return };
+
+    for (field_entity, field) in changed_fields.iter() {
+        let icon_color = field.icon_color(&theme);
+
+        // Leading
+        let leading_codepoint = field
+            .leading_icon
+            .as_deref()
+            .and_then(resolve_icon_codepoint);
+        for (owner, mut icon, mut style) in leading_icons.iter_mut() {
+            if owner.0 != field_entity {
+                continue;
+            }
+            if let Some(cp) = leading_codepoint {
+                icon.codepoint = cp;
+                style.color = Some(icon_color);
+                style.size = Some(24.0);
+            }
+        }
+        for (owner, mut node) in leading_buttons.iter_mut() {
+            if owner.0 != field_entity {
+                continue;
+            }
+            node.display = if leading_codepoint.is_some() {
+                Display::Flex
+            } else {
+                Display::None
+            };
+        }
+
+        // End icon (trailing)
+        let end_codepoint = field
+            .effective_trailing_icon()
+            .and_then(resolve_icon_codepoint);
+        for (owner, mut icon, mut style) in end_icons.iter_mut() {
+            if owner.0 != field_entity {
+                continue;
+            }
+            if let Some(cp) = end_codepoint {
+                icon.codepoint = cp;
+                style.color = Some(icon_color);
+                style.size = Some(24.0);
+            }
+        }
+        for (owner, mut node) in end_buttons.iter_mut() {
+            if owner.0 != field_entity {
+                continue;
+            }
+            node.display = if end_codepoint.is_some() {
+                Display::Flex
+            } else {
+                Display::None
+            };
+        }
     }
 }

@@ -60,6 +60,53 @@ pub fn spawn_nav_item(
     });
 }
 
+/// Spawn a navigation item intended for a horizontal (bottom) navigation surface.
+///
+/// Keeps the same `TestId` format as `spawn_nav_item` so automation doesn't need
+/// special-casing.
+pub fn spawn_nav_item_horizontal(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    section: ComponentSection,
+    is_selected: bool,
+) {
+    let item = MaterialListItem::new(section.display_name()).selected(is_selected);
+    let text_color = item.headline_color(theme);
+    let bg_color = item.background_color(theme);
+
+    let test_id = format!("nav_{}", section.display_name().to_lowercase().replace(" ", "_"));
+
+    parent
+        .spawn((
+            NavItem(section),
+            TestId::new(test_id),
+            item,
+            Button,
+            Interaction::None,
+            Node {
+                // Fixed width so many items can live in a horizontal scroller.
+                width: Val::Px(160.0),
+                height: Val::Px(48.0),
+                padding: UiRect::axes(Val::Px(12.0), Val::Px(12.0)),
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(bg_color),
+            BorderRadius::all(Val::Px(8.0)),
+        ))
+        .with_children(|item_container| {
+            item_container.spawn((
+                ListItemHeadline,
+                Text::new(section.display_name()),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(text_color),
+            ));
+        });
+}
+
 // ============================================================================
 // Navigation Systems
 // ============================================================================
@@ -78,6 +125,9 @@ pub fn handle_nav_clicks(
                 selected.current = nav_item.0;
                 info!("📍 Selected section: {:?}", nav_item.0);
                 telemetry.log_event(&format!("Nav selected: {:?}", nav_item.0));
+                telemetry
+                    .states
+                    .insert("selected_section".to_string(), nav_item.0.telemetry_name().to_string());
             }
         }
     }

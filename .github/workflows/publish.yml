@@ -1,0 +1,59 @@
+name: Publish to crates.io
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Verify tag matches Cargo.toml version
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import tomllib
+
+          tag = os.environ.get('GITHUB_REF_NAME', '')
+          m = re.fullmatch(r'v(\d+\.\d+\.\d+)', tag)
+          if not m:
+              raise SystemExit(f"Expected tag like vMAJOR.MINOR.PATCH, got: {tag!r}")
+          tag_version = m.group(1)
+
+          with open('Cargo.toml', 'rb') as f:
+              cargo = tomllib.load(f)
+          cargo_version = cargo['package']['version']
+
+          if cargo_version != tag_version:
+              raise SystemExit(
+                  f"Tag version ({tag_version}) does not match Cargo.toml version ({cargo_version})."
+              )
+
+          print(f"OK: tag {tag} matches Cargo.toml version {cargo_version}")
+          PY
+
+      - name: Dry-run publish
+        run: cargo publish --dry-run --locked
+
+      - name: Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --locked

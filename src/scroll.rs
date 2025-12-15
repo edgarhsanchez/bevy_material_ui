@@ -14,7 +14,10 @@
 //!         ..default() 
 //!     },
 //! )).with_children(|parent| {
-//!     parent.spawn((ScrollContent, Node { ..default() }))
+//!     // Important: `ScrollContent` is the *scroll wrapper* node (created automatically
+//!     // by the plugin if you don't spawn it). Your actual content should be children
+//!     // of that wrapper, not the wrapper node itself.
+//!     parent.spawn(Node { ..default() })
 //!         .with_children(|content| {
 //!             // Your scrollable content here
 //!         });
@@ -29,6 +32,7 @@ use bevy::picking::Pickable;
 use std::collections::HashSet;
 
 use crate::theme::MaterialTheme;
+use crate::telemetry::{InsertTestIdIfExists, TestId};
 
 /// Plugin for scroll container functionality
 pub struct ScrollPlugin;
@@ -39,6 +43,8 @@ impl Plugin for ScrollPlugin {
             Update,
             (
                 ensure_scroll_content_wrapper_system,
+                ensure_scrollbars_system,
+                assign_scrollbar_test_ids_system,
                 sync_scroll_state_system,
                 mouse_wheel_scroll_system,
                 scrollbar_thumb_drag_system,
@@ -47,6 +53,138 @@ impl Plugin for ScrollPlugin {
             )
                 .chain(),
         );
+    }
+}
+
+fn ensure_scrollbars_system(
+    mut commands: Commands,
+    theme: Res<MaterialTheme>,
+    containers: Query<(Entity, &ScrollContainer, Option<&Children>), With<ScrollContainer>>,
+    track_v: Query<(), With<ScrollbarTrackVertical>>,
+    track_h: Query<(), With<ScrollbarTrackHorizontal>>,
+) {
+    for (entity, container, children) in containers.iter() {
+        let (mut has_v, mut has_h) = (false, false);
+        let mut existing_tracks_v: Vec<Entity> = Vec::new();
+        let mut existing_tracks_h: Vec<Entity> = Vec::new();
+
+        if let Some(children) = children {
+            for child in children.iter() {
+                if track_v.get(child).is_ok() {
+                    has_v = true;
+                    existing_tracks_v.push(child);
+                }
+                if track_h.get(child).is_ok() {
+                    has_h = true;
+                    existing_tracks_h.push(child);
+                }
+            }
+        }
+
+        let wants_v = container.show_scrollbars
+            && matches!(container.direction, ScrollDirection::Vertical | ScrollDirection::Both);
+        let wants_h = container.show_scrollbars
+            && matches!(container.direction, ScrollDirection::Horizontal | ScrollDirection::Both);
+
+        // Spawn missing scrollbars.
+        if wants_v || wants_h {
+            // If both are desired, spawn with correct corner reservations.
+            if matches!(container.direction, ScrollDirection::Both) {
+                if !has_v {
+                    commands.entity(entity).with_children(|c| {
+                        spawn_scrollbar_vertical(c, &theme, true);
+                    });
+                }
+                if !has_h {
+                    commands.entity(entity).with_children(|c| {
+                        spawn_scrollbar_horizontal(c, &theme, true);
+                    });
+                }
+            } else if wants_v && !has_v {
+                commands.entity(entity).with_children(|c| {
+                    spawn_scrollbar_vertical(c, &theme, false);
+                });
+            } else if wants_h && !has_h {
+                commands.entity(entity).with_children(|c| {
+                    spawn_scrollbar_horizontal(c, &theme, false);
+                });
+            }
+        }
+
+        // Toggle visibility based on current container settings.
+        // We do this via commands so we don't require Visibility to already exist.
+        for track in existing_tracks_v {
+            commands
+                .entity(track)
+                .insert(if wants_v { Visibility::Visible } else { Visibility::Hidden });
+        }
+        for track in existing_tracks_h {
+            commands
+                .entity(track)
+                .insert(if wants_h { Visibility::Visible } else { Visibility::Hidden });
+        }
+    }
+}
+
+fn assign_scrollbar_test_ids_system(
+    mut commands: Commands,
+    parents: Query<&ChildOf>,
+    test_ids: Query<&TestId>,
+    tracks_v: Query<Entity, (With<ScrollbarTrackVertical>, Without<TestId>)>,
+    thumbs_v: Query<Entity, (With<ScrollbarThumbVertical>, Without<TestId>)>,
+    tracks_h: Query<Entity, (With<ScrollbarTrackHorizontal>, Without<TestId>)>,
+    thumbs_h: Query<Entity, (With<ScrollbarThumbHorizontal>, Without<TestId>)>,
+) {
+    fn ancestor_test_id(
+        start: Entity,
+        parents: &Query<&ChildOf>,
+        test_ids: &Query<&TestId>,
+    ) -> Option<String> {
+        let mut current = Some(start);
+        for _ in 0..32 {
+            let Some(entity) = current else { break };
+            if let Ok(id) = test_ids.get(entity) {
+                return Some(id.id().to_string());
+            }
+            current = parents.get(entity).ok().map(|p| p.0);
+        }
+        None
+    }
+
+    for entity in tracks_v.iter() {
+        if let Some(prefix) = ancestor_test_id(entity, &parents, &test_ids) {
+            commands.queue(InsertTestIdIfExists {
+                entity,
+                id: format!("{prefix}_scroll_track_v"),
+            });
+        }
+    }
+
+    for entity in thumbs_v.iter() {
+        if let Some(prefix) = ancestor_test_id(entity, &parents, &test_ids) {
+            commands.queue(InsertTestIdIfExists {
+                entity,
+                id: format!("{prefix}_scroll_thumb_v"),
+            });
+        }
+    }
+
+    for entity in tracks_h.iter() {
+        if let Some(prefix) = ancestor_test_id(entity, &parents, &test_ids) {
+            commands.queue(InsertTestIdIfExists {
+                entity,
+                id: format!("{prefix}_scroll_track_h"),
+            });
+        }
+    }
+
+    for entity in thumbs_h.iter() {
+        if let Some(prefix) = ancestor_test_id(entity, &parents, &test_ids) {
+            commands.queue(InsertTestIdIfExists {
+                entity,
+                id: format!("{prefix}_scroll_thumb_h"),
+            });
+        }
     }
 }
 
@@ -94,24 +232,45 @@ fn ensure_scroll_content_wrapper_system(
             0.0
         };
 
-        // Create the wrapper that will actually scroll its children.
-        let mut content_node = Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            // Important for scroll containers inside flex columns:
-            // allow shrinking so overflow/scrolling can happen.
-            min_height: Val::Px(0.0),
-            flex_direction: node.flex_direction,
-            row_gap: node.row_gap,
-            column_gap: node.column_gap,
-            padding: UiRect {
-                right: Val::Px(reserve_right),
-                bottom: Val::Px(reserve_bottom),
-                ..default()
-            },
-            ..default()
+        let content_width = match node.width {
+            Val::Auto => Val::Auto,
+            _ => Val::Percent(100.0),
         };
+        let content_height = match node.height {
+            Val::Auto => Val::Auto,
+            _ => Val::Percent(100.0),
+        };
+
+        fn add_px(base: Val, extra: f32) -> Val {
+            if extra == 0.0 {
+                return base;
+            }
+            match base {
+                Val::Px(v) => Val::Px(v + extra),
+                Val::Auto => Val::Px(extra),
+                other => other,
+            }
+        }
+
+        // Create the wrapper that will actually scroll its children.
+        //
+        // Important: if the container uses `height: Auto` (common for lists that should size
+        // themselves to their children), forcing `height: 100%` on the scroll node can collapse
+        // it to 0 because the parent's computed height isn't definite.
+        let mut content_node = node.clone();
+        content_node.width = content_width;
+        content_node.height = content_height;
+        content_node.margin = UiRect::default();
+        content_node.border = UiRect::default();
+        // Important for scroll containers inside flex columns:
+        // allow shrinking so overflow/scrolling can happen.
+        content_node.min_height = Val::Px(0.0);
         content_node.overflow = node.overflow;
+        content_node.padding = UiRect {
+            right: add_px(node.padding.right, reserve_right),
+            bottom: add_px(node.padding.bottom, reserve_bottom),
+            ..node.padding
+        };
 
         let initial_scroll = scroll_pos
             .map(|p| ScrollPosition(**p))
@@ -124,11 +283,25 @@ fn ensure_scroll_content_wrapper_system(
                 // The scrollable content fills the container; don't let it block pointer
                 // interaction with overlay UI (scrollbar tracks/thumb).
                 Pickable::IGNORE,
-                ChildOf(container_entity),
             ))
             .id();
 
+        // Attach the ScrollContent wrapper under the container, but do it safely.
+        // The container may be despawned in the same frame (e.g. showcase view rebuild).
+        commands.queue(move |world: &mut World| {
+            if world.get_entity(container_entity).is_ok() {
+                if let Ok(mut content) = world.get_entity_mut(content_entity) {
+                    content.insert(ChildOf(container_entity));
+                }
+            }
+        });
+
         // Move all non-scrollbar children into the ScrollContent wrapper.
+        //
+        // Important: also guard on the container still existing at apply time.
+        // If the container is despawned (e.g. view rebuild) and we reparent anyway,
+        // we'd effectively detach the child subtree under an unparented wrapper,
+        // making it disappear.
         for child in children.iter() {
             if is_scrollbar_part.get(child).is_ok() {
                 continue;
@@ -136,15 +309,35 @@ fn ensure_scroll_content_wrapper_system(
             if is_scroll_content.get(child).is_ok() {
                 continue;
             }
-            commands.entity(child).insert(ChildOf(content_entity));
+
+            // Use a deferred command to safely reparent the child, handling the case where
+            // the child entity may have been despawned in the meantime.
+            commands.queue(move |world: &mut World| {
+                if world.get_entity(container_entity).is_err() {
+                    return;
+                }
+                if world.get_entity(content_entity).is_err() {
+                    return;
+                }
+                if let Ok(mut child_entity) = world.get_entity_mut(child) {
+                    child_entity.insert(ChildOf(content_entity));
+                }
+            });
         }
 
+        let mut container_node = node.clone();
+        // The container becomes a clip/overlay host; padding must live on the ScrollContent node
+        // so it applies to the scrolled children.
+        container_node.padding = UiRect::all(Val::Px(0.0));
+        container_node.overflow = Overflow::clip();
+        
         // The container itself should clip; the ScrollContent child scrolls.
         // (We intentionally do not try to preserve scroll_y vs scroll_x here;
         // the child inherited the original overflow, and the parent just clips.)
-        commands.entity(container_entity).insert(Node {
-            overflow: Overflow::clip(),
-            ..node.clone()
+        commands.queue(move |world: &mut World| {
+            if let Ok(mut container) = world.get_entity_mut(container_entity) {
+                container.insert(container_node);
+            }
         });
     }
 }
@@ -863,25 +1056,38 @@ fn update_scrollbars(
 /// Spawn scrollbars for a scroll container
 /// Call this after spawning ScrollContainer to add visual scrollbars
 pub fn spawn_scrollbars(commands: &mut ChildSpawnerCommands, theme: &MaterialTheme, direction: ScrollDirection) {
+    if matches!(direction, ScrollDirection::Vertical | ScrollDirection::Both) {
+        spawn_scrollbar_vertical(commands, theme, matches!(direction, ScrollDirection::Both));
+    }
+    if matches!(direction, ScrollDirection::Horizontal | ScrollDirection::Both) {
+        spawn_scrollbar_horizontal(commands, theme, matches!(direction, ScrollDirection::Both));
+    }
+}
+
+fn spawn_scrollbar_vertical(
+    commands: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    reserve_bottom_corner: bool,
+) {
     let scrollbar_width = SCROLLBAR_THICKNESS;
     let track_color = theme.surface_container_highest.with_alpha(0.5);
     let thumb_color = theme.primary.with_alpha(0.7);
 
-    // Vertical scrollbar
-    if matches!(direction, ScrollDirection::Vertical | ScrollDirection::Both) {
-        commands.spawn((
+    commands
+        .spawn((
             ScrollbarTrackVertical,
             Node {
                 position_type: PositionType::Absolute,
                 right: Val::Px(0.0),
                 top: Val::Px(0.0),
-                bottom: Val::Px(if matches!(direction, ScrollDirection::Both) { scrollbar_width } else { 0.0 }),
+                bottom: Val::Px(if reserve_bottom_corner { scrollbar_width } else { 0.0 }),
                 width: Val::Px(scrollbar_width),
                 ..default()
             },
             BackgroundColor(track_color),
             BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
-        )).with_children(|track| {
+        ))
+        .with_children(|track| {
             track.spawn((
                 ScrollbarThumbVertical,
                 ScrollbarDragging::default(),
@@ -898,23 +1104,32 @@ pub fn spawn_scrollbars(commands: &mut ChildSpawnerCommands, theme: &MaterialThe
                 BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
             ));
         });
-    }
+}
 
-    // Horizontal scrollbar
-    if matches!(direction, ScrollDirection::Horizontal | ScrollDirection::Both) {
-        commands.spawn((
+fn spawn_scrollbar_horizontal(
+    commands: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    reserve_right_corner: bool,
+) {
+    let scrollbar_width = SCROLLBAR_THICKNESS;
+    let track_color = theme.surface_container_highest.with_alpha(0.5);
+    let thumb_color = theme.primary.with_alpha(0.7);
+
+    commands
+        .spawn((
             ScrollbarTrackHorizontal,
             Node {
                 position_type: PositionType::Absolute,
                 bottom: Val::Px(0.0),
                 left: Val::Px(0.0),
-                right: Val::Px(if matches!(direction, ScrollDirection::Both) { scrollbar_width } else { 0.0 }),
+                right: Val::Px(if reserve_right_corner { scrollbar_width } else { 0.0 }),
                 height: Val::Px(scrollbar_width),
                 ..default()
             },
             BackgroundColor(track_color),
             BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
-        )).with_children(|track| {
+        ))
+        .with_children(|track| {
             track.spawn((
                 ScrollbarThumbHorizontal,
                 ScrollbarDragging::default(),
@@ -931,7 +1146,6 @@ pub fn spawn_scrollbars(commands: &mut ChildSpawnerCommands, theme: &MaterialThe
                 BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
             ));
         });
-    }
 }
 
 /// Builder for scroll containers

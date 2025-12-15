@@ -11,7 +11,7 @@ use bevy::picking::Pickable;
 
 use crate::{
     elevation::Elevation,
-    icons::{MaterialIconFont, ICON_CLOSE},
+    icons::{IconStyle, MaterialIcon, MaterialIconFont, ICON_CLOSE},
     motion::{ease_standard_decelerate, ease_standard_accelerate},
     theme::MaterialTheme,
     tokens::{CornerRadius, Duration, Spacing},
@@ -32,6 +32,7 @@ impl Plugin for SnackbarPlugin {
                 snackbar_timeout_system,
                 snackbar_action_system,
                 snackbar_close_system,
+                snackbar_close_button_style_system,
                 snackbar_cleanup_system,
             ));
     }
@@ -488,6 +489,7 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
         let action_text = builder.snackbar.action.clone();
         let message_color = theme.inverse_on_surface;
         let action_color = theme.inverse_primary;
+        let close_color = theme.inverse_on_surface;
         
         self.spawn(builder.build(theme))
             .with_children(|snackbar| {
@@ -518,6 +520,30 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
                         ));
                     });
                 }
+
+                // Close button (X icon)
+                snackbar
+                    .spawn((
+                        SnackbarCloseButton,
+                        Button,
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(32.0),
+                            height: Val::Px(32.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::left(Val::Px(Spacing::SMALL)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    ))
+                    .with_children(|btn| {
+                        btn.spawn((
+                            MaterialIcon::new(ICON_CLOSE),
+                            IconStyle::outlined().with_color(close_color).with_size(24.0),
+                        ));
+                    });
             });
     }
 }
@@ -599,12 +625,12 @@ pub fn spawn_snackbar(
             }
             
             // Close button (X icon) - always shown for easy dismissal
-            let close_text = ICON_CLOSE.to_string();
-            let close_font = icon_font.map(|f| f.0.clone());
             let inverse_on_surface = theme.inverse_on_surface;
+            let icon_font_handle = icon_font.map(|f| f.0.clone());
             parent.spawn((
                 SnackbarCloseButton,
                 Button,
+                Interaction::None,
                 Node {
                     width: Val::Px(32.0),
                     height: Val::Px(32.0),
@@ -614,20 +640,32 @@ pub fn spawn_snackbar(
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
+                BorderRadius::all(Val::Px(CornerRadius::FULL)),
             ))
             .with_children(move |btn| {
-                let mut text_font = TextFont {
-                    font_size: 20.0,
-                    ..default()
-                };
-                if let Some(font) = close_font {
-                    text_font.font = font;
-                }
-                btn.spawn((
-                    Text::new(close_text),
-                    text_font,
-                    TextColor(inverse_on_surface),
+                let mut icon_cmd = btn.spawn((
+                    MaterialIcon::new(ICON_CLOSE),
+                    IconStyle::outlined().with_color(inverse_on_surface).with_size(24.0),
                 ));
+
+                // If the icon font is available, eagerly provide render components so the
+                // close icon appears immediately (even if the icon sync system is not used).
+                if let Some(font) = icon_font_handle.clone() {
+                    icon_cmd.insert((
+                        Node {
+                            width: Val::Px(24.0),
+                            height: Val::Px(24.0),
+                            ..default()
+                        },
+                        Text::new(MaterialIcon::new(ICON_CLOSE).as_str()),
+                        TextFont {
+                            font,
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(inverse_on_surface),
+                    ));
+                }
             });
         })
         .id();
@@ -636,6 +674,22 @@ pub fn spawn_snackbar(
     commands.entity(host).add_children(&[snackbar_entity]);
     
     snackbar_entity
+}
+
+fn snackbar_close_button_style_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut buttons: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<SnackbarCloseButton>)>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (interaction, mut bg) in buttons.iter_mut() {
+        let color = match *interaction {
+            Interaction::Pressed => theme.inverse_on_surface.with_alpha(0.12),
+            Interaction::Hovered => theme.inverse_on_surface.with_alpha(0.08),
+            Interaction::None => Color::NONE,
+        };
+        *bg = BackgroundColor(color);
+    }
 }
 
 // ============================================================================
@@ -653,6 +707,14 @@ fn snackbar_queue_system(
     snackbars: Query<&Snackbar>,
 ) {
     let Some(theme) = theme else { return };
+
+    // If the previously active snackbar entity was despawned (for any reason),
+    // don't let the queue get stuck forever.
+    if let Some(active) = queue.active {
+        if snackbars.get(active).is_err() {
+            queue.active = None;
+        }
+    }
 
     // Add new events to the queue
     for event in events.read() {
@@ -791,10 +853,15 @@ fn snackbar_timeout_system(
         }
     }
 
-    // Clean up dismissed snackbars in queue
+    // If the active snackbar is dismissed or was despawned, clear the gate.
     if let Some(entity) = queue.active {
-        if let Ok(snackbar) = snackbars.get(entity) {
-            if snackbar.is_dismissed() {
+        match snackbars.get(entity) {
+            Ok(snackbar) => {
+                if snackbar.is_dismissed() {
+                    queue.active = None;
+                }
+            }
+            Err(_) => {
                 queue.active = None;
             }
         }
@@ -804,10 +871,14 @@ fn snackbar_timeout_system(
 /// System to despawn snackbars that have completed their exit animation
 fn snackbar_cleanup_system(
     mut commands: Commands,
+    mut queue: ResMut<SnackbarQueue>,
     snackbars: Query<(Entity, &Snackbar)>,
 ) {
     for (entity, snackbar) in snackbars.iter() {
         if snackbar.is_dismissed() {
+            if queue.active == Some(entity) {
+                queue.active = None;
+            }
             // In Bevy 0.17, despawn() removes the entity and all children via ChildOf relationship
             commands.entity(entity).despawn();
         }

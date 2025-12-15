@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use super::codepoints::*;
 use super::style::IconStyle;
 use super::MaterialIconFont;
+use super::EMBEDDED_MATERIAL_SYMBOLS_FONT;
 
 /// A Material Design icon component
 ///
@@ -383,7 +384,9 @@ pub struct IconPlugin;
 
 impl Plugin for IconPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, sync_icon_render_components);
+        // Run after most UI construction systems so icons become renderable
+        // in the same frame they're spawned (important for UIs that rebuild on resize).
+        app.add_systems(PostUpdate, sync_icon_render_components);
     }
 }
 
@@ -394,29 +397,72 @@ impl Plugin for IconPlugin {
 /// bridges that gap and also keeps size/color in sync when `IconStyle` changes.
 fn sync_icon_render_components(
     icon_font: Option<Res<MaterialIconFont>>,
+    mut fonts: ResMut<Assets<Font>>,
     mut commands: Commands,
     mut query: Query<
         (
             Entity,
             &MaterialIcon,
             &IconStyle,
+            Option<&Node>,
             Option<&mut Text>,
             Option<&mut TextFont>,
             Option<&mut TextColor>,
         ),
-        Or<(
-            Added<MaterialIcon>,
-            Added<IconStyle>,
-            Changed<MaterialIcon>,
-            Changed<IconStyle>,
-        )>,
     >,
 ) {
-    let Some(icon_font) = icon_font else { return };
+    // Ensure the icon font resource exists even if the user forgets to add
+    // `MaterialIconsPlugin` (or if startup order changes).
+    let mut created_icon_font_this_frame = false;
+    let ensured_font_handle: Option<Handle<Font>> = match icon_font.as_ref() {
+        Some(font) => Some(font.0.clone()),
+        None => {
+            let font = Font::try_from_bytes(EMBEDDED_MATERIAL_SYMBOLS_FONT.to_vec())
+                .expect("Failed to load embedded Material Symbols font");
+            let font_handle = fonts.add(font);
+            commands.insert_resource(MaterialIconFont(font_handle.clone()));
+            created_icon_font_this_frame = true;
+            Some(font_handle)
+        }
+    };
 
-    for (entity, icon, style, text, text_font, text_color) in query.iter_mut() {
+    let icon_font_changed = created_icon_font_this_frame
+        || icon_font
+            .as_ref()
+            .is_some_and(|font| font.is_changed());
+
+    for (entity, icon, style, node, text, text_font, text_color) in query.iter_mut() {
         let desired_text = Text::new(icon.as_str());
         let desired_size = style.effective_size();
+
+        // Fast path: skip entities that are already fully configured.
+        // We still re-run when the icon font resource changes (e.g. becomes available).
+        if !icon_font_changed && node.is_some() && text.is_some() {
+            let has_text_font = text_font.is_some();
+            let font_matches = match (&ensured_font_handle, &text_font) {
+                (Some(expected), Some(current)) => current.font == *expected,
+                // If we don't have an expected font (shouldn't happen), don't block the fast path.
+                (None, Some(_)) => true,
+                _ => false,
+            };
+
+            if has_text_font && font_matches {
+                // Color can be optional; if style has no color we don't enforce TextColor.
+                if style.color.is_none() || text_color.is_some() {
+                    continue;
+                }
+            }
+        }
+
+        // UI text entities need a `Node` component to participate in layout and render.
+        // Many widgets spawn icons as `(MaterialIcon, IconStyle)` only.
+        if node.is_none() {
+            commands.entity(entity).insert(Node {
+                width: Val::Px(desired_size),
+                height: Val::Px(desired_size),
+                ..default()
+            });
+        }
 
         match text {
             Some(mut text) => {
@@ -429,15 +475,19 @@ fn sync_icon_render_components(
 
         match text_font {
             Some(mut text_font) => {
-                text_font.font = icon_font.0.clone();
+                if let Some(icon_font) = &ensured_font_handle {
+                    text_font.font = icon_font.clone();
+                }
                 text_font.font_size = desired_size;
             }
             None => {
-                commands.entity(entity).insert(TextFont {
-                    font: icon_font.0.clone(),
-                    font_size: desired_size,
-                    ..default()
-                });
+                if let Some(icon_font) = &ensured_font_handle {
+                    commands.entity(entity).insert(TextFont {
+                        font: icon_font.clone(),
+                        font_size: desired_size,
+                        ..default()
+                    });
+                }
             }
         }
 

@@ -116,6 +116,9 @@ pub mod text_field;
 /// Progress indicators (linear and circular)
 pub mod progress;
 
+/// Loading indicator (indeterminate activity indicator)
+pub mod loading_indicator;
+
 /// Dialog component
 pub mod dialog;
 
@@ -140,6 +143,9 @@ pub mod select;
 /// Adaptive layout utilities (window size classes)
 pub mod adaptive;
 
+/// Material layout components (e.g. Scaffold)
+pub mod layout;
+
 /// Motion and animation utilities
 pub mod motion;
 
@@ -152,6 +158,9 @@ pub mod chip;
 /// App bar components (top and bottom)
 pub mod app_bar;
 
+/// Toolbar component (compact top row)
+pub mod toolbar;
+
 /// Badge component for notifications
 pub mod badge;
 
@@ -160,6 +169,12 @@ pub mod tooltip;
 
 /// Scroll container for scrollable content
 pub mod scroll;
+
+/// Search bar component
+pub mod search;
+
+/// Animation and transformation system
+pub mod animation;
 
 // ============================================================================
 // Prelude
@@ -200,6 +215,31 @@ pub mod prelude {
     pub use crate::icon_button::{
         IconButtonBuilder, IconButtonClickEvent, IconButtonPlugin, IconButtonVariant,
         MaterialIconButton, SpawnIconButtonChild, ICON_BUTTON_SIZE, ICON_SIZE,
+    };
+
+    // Toolbar
+    pub use crate::toolbar::{
+        MaterialToolbar, SpawnToolbarChild, ToolbarAction, ToolbarActionEvent,
+        ToolbarBuilder, ToolbarNavigationEvent, ToolbarPlugin,
+        TOOLBAR_HEIGHT, TOOLBAR_ICON_SIZE,
+    };
+
+    // Loading Indicator
+    pub use crate::loading_indicator::{
+        LoadingIndicatorBuilder, LoadingIndicatorPlugin, MaterialLoadingIndicator,
+        SpawnLoadingIndicatorChild, LOADING_INDICATOR_SIZE, LoadingShape,
+    };
+
+    // Search
+    pub use crate::search::{
+        MaterialSearchBar, SearchBarBuilder, SearchBarClickEvent, SearchPlugin,
+        SearchQueryEvent, SpawnSearchBarChild, SEARCH_BAR_HEIGHT,
+    };
+
+    // Animation
+    pub use crate::animation::{
+        AnimatedValue, AnimationPlugin, FabTransformation, FabTransformState,
+        MorphAnimation, SpringAnimation,
     };
 
     // FAB
@@ -315,9 +355,37 @@ pub mod prelude {
         WindowSizeClassChanged,
     };
 
+    // Layout
+    pub use crate::layout::{
+        AppBarOffsetConfig,
+        AdaptiveNavigationScaffold,
+        BottomNavigationScaffold,
+        ListDetailScaffold,
+        ModalDrawerScaffold,
+        NavigationBarScaffold,
+        NavigationRailScaffold,
+        NavigationSuiteScaffold,
+        PermanentDrawerScaffold,
+        PaneEntities,
+        PaneTestIds,
+        ScaffoldEntities,
+        ScaffoldTestIds,
+        SupportingPanesScaffold,
+        apply_app_bar_inset,
+        spawn_adaptive_navigation_scaffold,
+        spawn_bottom_navigation_scaffold,
+        spawn_list_detail_scaffold,
+        spawn_modal_drawer_scaffold,
+        spawn_navigation_bar_scaffold,
+        spawn_navigation_rail_scaffold,
+        spawn_navigation_suite_scaffold,
+        spawn_permanent_drawer_scaffold,
+        spawn_supporting_panes_scaffold,
+    };
+
     // Motion
     pub use crate::motion::{
-        AnimatedValue, MotionPlugin, SpringConfig, StateLayer,
+        MotionPlugin, SpringConfig, StateLayer,
         ease_emphasized, ease_emphasized_accelerate, ease_emphasized_decelerate,
         ease_standard, ease_standard_accelerate, ease_standard_decelerate,
     };
@@ -429,10 +497,14 @@ impl Plugin for MaterialUiPlugin {
             snackbar::SnackbarPlugin,
             chip::ChipPlugin,
             app_bar::AppBarPlugin,
+            toolbar::ToolbarPlugin,
             badge::BadgePlugin,
             tooltip::TooltipPlugin,
             scroll::ScrollPlugin,
             datetime_picker::DateTimePickerPlugin,
+            loading_indicator::LoadingIndicatorPlugin,
+            search::SearchPlugin,
+            animation::AnimationPlugin,
         ));
 
         // Adaptive layout

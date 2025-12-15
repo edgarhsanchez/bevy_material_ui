@@ -7,6 +7,8 @@ use crate::showcase::common::*;
 
 /// Spawn the icons section content
 pub fn spawn_icons_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, icon_font: Handle<Font>) {
+    let _ = icon_font;
+
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -30,17 +32,18 @@ pub fn spawn_icons_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                     ..default()
                 })
                 .with_children(|row| {
-                    // Show several icons using Unicode codepoints
                     let icons = [
-                        ("\u{e5ca}", "check"),      // check
-                        ("\u{e88a}", "home"),       // home
-                        ("\u{e8b8}", "settings"),   // settings
-                        ("\u{e87d}", "favorite"),   // favorite
-                        ("\u{e8b6}", "search"),     // search
+                        MaterialIcon::check(),
+                        MaterialIcon::home(),
+                        MaterialIcon::settings(),
+                        MaterialIcon::favorite(),
+                        MaterialIcon::search(),
                     ];
-                    
-                    for (icon_char, _name) in icons {
+
+                    for icon in icons {
                         row.spawn((
+                            icon,
+                            IconStyle::default().with_size(24.0).with_color(theme.on_surface),
                             Node {
                                 width: Val::Px(48.0),
                                 height: Val::Px(48.0),
@@ -50,17 +53,7 @@ pub fn spawn_icons_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                             },
                             BackgroundColor(theme.surface_container),
                             BorderRadius::all(Val::Px(8.0)),
-                        )).with_children(|container| {
-                            container.spawn((
-                                Text::new(icon_char),
-                                TextFont { 
-                                    font: icon_font.clone(),
-                                    font_size: 24.0, 
-                                    ..default() 
-                                },
-                                TextColor(theme.on_surface),
-                            ));
-                        });
+                        ));
                     }
                 });
 

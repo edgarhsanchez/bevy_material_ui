@@ -7,7 +7,7 @@ use bevy_material_ui::theme::ThemeMode;
 use crate::showcase::common::*;
 
 /// Spawn the theme colors section content
-pub fn spawn_theme_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+pub fn spawn_theme_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, seed_argb: u32) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -46,7 +46,10 @@ pub fn spawn_theme_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                         });
                         let label_color = button.text_color(theme);
 
+                        let test_id = format!("theme_mode_{}", label.to_lowercase());
+
                         row.spawn((
+                            TestId::new(test_id),
                             ThemeModeOption(mode),
                             Interaction::None,
                             MaterialButtonBuilder::new(label)
@@ -93,7 +96,10 @@ pub fn spawn_theme_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                         let button = MaterialButton::new(label).with_variant(ButtonVariant::Outlined);
                         let label_color = button.text_color(theme);
 
+                        let test_id = format!("theme_seed_{}", label.to_lowercase());
+
                         row.spawn((
+                            TestId::new(test_id),
                             ThemeSeedOption(seed),
                             Interaction::None,
                             MaterialButtonBuilder::new(label)
@@ -109,6 +115,42 @@ pub fn spawn_theme_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                             ));
                         });
                     }
+                });
+
+            // Custom seed input (paste/type). Applies when the value parses as hex.
+            section
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    column_gap: Val::Px(8.0),
+                    ..default()
+                })
+                .with_children(|row| {
+                    row.spawn((
+                        Text::new("Seed:"),
+                        TextFont { font_size: 12.0, ..default() },
+                        TextColor(theme.on_surface_variant),
+                    ));
+
+                    row.spawn((
+                        ThemeSeedTextFieldSlot,
+                        Node {
+                            width: Val::Px(280.0),
+                            ..default()
+                        },
+                    ))
+                    .with_children(|slot| {
+                        slot.spawn_text_field_with(
+                            theme,
+                            TextFieldBuilder::new()
+                                .label("Theme seed")
+                                .value(argb_to_hex_rgb(seed_argb))
+                                .placeholder("#RRGGBB")
+                                .supporting_text("Paste/type a hex seed")
+                                .outlined()
+                                .width(Val::Percent(100.0)),
+                        );
+                    });
                 });
 
             // Color groups
@@ -273,6 +315,13 @@ let surface = theme.surface;
 BackgroundColor(theme.primary_container)
 BorderColor(theme.outline_variant)"#);
         });
+}
+
+fn argb_to_hex_rgb(argb: u32) -> String {
+    let r = ((argb >> 16) & 0xFF) as u8;
+    let g = ((argb >> 8) & 0xFF) as u8;
+    let b = (argb & 0xFF) as u8;
+    format!("#{:02X}{:02X}{:02X}", r, g, b)
 }
 
 /// Spawn a color swatch with label

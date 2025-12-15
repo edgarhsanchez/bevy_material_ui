@@ -52,25 +52,17 @@ let card = MaterialCard::outlined();"#);
 enum CardType { Elevated, Filled, Outlined }
 
 fn spawn_card(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, title: &str, card_type: CardType) {
-    let (bg_color, border_width) = match card_type {
-        CardType::Elevated => (theme.surface_container_low, 0.0),
-        CardType::Filled => (theme.surface_container_highest, 0.0),
-        CardType::Outlined => (theme.surface, 1.0),
-    };
-    
-    parent.spawn((
-        Node {
-            width: Val::Px(160.0),
-            padding: UiRect::all(Val::Px(16.0)),
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(8.0),
-            border: UiRect::all(Val::Px(border_width)),
-            ..default()
-        },
-        BackgroundColor(bg_color),
-        BorderColor::all(theme.outline_variant),
-        BorderRadius::all(Val::Px(12.0)),
-    )).with_children(|card| {
+    let builder = match card_type {
+        CardType::Elevated => CardBuilder::new().elevated(),
+        CardType::Filled => CardBuilder::new().filled(),
+        CardType::Outlined => CardBuilder::new().outlined(),
+    }
+    .width(Val::Px(160.0))
+    .padding(16.0);
+
+    parent
+        .spawn((Interaction::None, builder.build(theme)))
+        .with_children(|card| {
         card.spawn((
             Text::new(title),
             TextFont { font_size: 16.0, ..default() },

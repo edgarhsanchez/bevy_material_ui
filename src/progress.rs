@@ -241,7 +241,7 @@ fn progress_style_system(
 /// Update the indicator (fill) element for linear progress bars.
 fn linear_progress_indicator_system(
     theme: Option<Res<MaterialTheme>>,
-    progress_bars: Query<(Entity, &MaterialLinearProgress), Changed<MaterialLinearProgress>>,
+    progress_bars: Query<(Entity, &MaterialLinearProgress)>,
     mut indicators: Query<(
         &LinearProgressIndicatorFor,
         &mut Node,
@@ -401,7 +401,9 @@ impl LinearProgressBuilder {
             self.progress,
             Node {
                 width: self.width,
+                min_width: self.width,
                 height: Val::Px(LINEAR_PROGRESS_HEIGHT),
+                min_height: Val::Px(LINEAR_PROGRESS_HEIGHT),
                 overflow: Overflow::clip(),
                 position_type: PositionType::Relative,
                 ..default()

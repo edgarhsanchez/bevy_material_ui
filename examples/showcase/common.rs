@@ -99,6 +99,10 @@ pub enum ComponentSection {
     Snackbar,
     Tooltips,
     AppBar,
+    Toolbar,
+    Layouts,
+    LoadingIndicator,
+    Search,
     ThemeColors,
 }
 
@@ -129,7 +133,47 @@ impl ComponentSection {
             Self::Snackbar => "Snackbar",
             Self::Tooltips => "Tooltips",
             Self::AppBar => "App Bar",
+            Self::Toolbar => "Toolbar",
+            Self::Layouts => "Layouts",
+            Self::LoadingIndicator => "Loading Indicator",
+            Self::Search => "Search",
             Self::ThemeColors => "Theme Colors",
+        }
+    }
+
+    /// Telemetry-friendly identifier name used by the UI automation tooling.
+    ///
+    /// This intentionally matches `tests/ui_tests/quick_test.py` expectations.
+    pub fn telemetry_name(&self) -> &'static str {
+        match self {
+            Self::Buttons => "Buttons",
+            Self::Checkboxes => "Checkboxes",
+            Self::Switches => "Switches",
+            Self::RadioButtons => "RadioButtons",
+            Self::Chips => "Chips",
+            Self::Fab => "FAB",
+            Self::Badges => "Badges",
+            Self::Progress => "Progress",
+            Self::Cards => "Cards",
+            Self::Dividers => "Dividers",
+            Self::Lists => "Lists",
+            Self::Icons => "Icons",
+            Self::IconButtons => "IconButtons",
+            Self::Sliders => "Sliders",
+            Self::TextFields => "TextFields",
+            Self::Dialogs => "Dialogs",
+            Self::DateTimePicker => "DateTimePicker",
+            Self::Menus => "Menus",
+            Self::Tabs => "Tabs",
+            Self::Select => "Select",
+            Self::Snackbar => "Snackbar",
+            Self::Tooltips => "Tooltips",
+            Self::AppBar => "AppBar",
+            Self::Toolbar => "Toolbar",
+            Self::Layouts => "Layouts",
+            Self::LoadingIndicator => "LoadingIndicator",
+            Self::Search => "Search",
+            Self::ThemeColors => "ThemeColors",
         }
     }
     
@@ -159,6 +203,10 @@ impl ComponentSection {
             Self::Snackbar,
             Self::Tooltips,
             Self::AppBar,
+            Self::Toolbar,
+            Self::Layouts,
+            Self::LoadingIndicator,
+            Self::Search,
             Self::ThemeColors,
         ]
     }
@@ -338,6 +386,15 @@ impl Default for ShowcaseThemeSelection {
 /// Marker for theme seed option buttons (ARGB).
 #[derive(Component)]
 pub struct ThemeSeedOption(pub u32);
+
+/// Slot wrapper used to locate the theme seed text field after it is spawned.
+/// (The spawn helper builds an internal hierarchy, so we attach markers in a follow-up system.)
+#[derive(Component)]
+pub struct ThemeSeedTextFieldSlot;
+
+/// Marker on the actual `MaterialTextField` entity used for pasting/typing a theme seed.
+#[derive(Component)]
+pub struct ThemeSeedTextField;
 
 /// Marker for dialog position option buttons
 #[derive(Component)]

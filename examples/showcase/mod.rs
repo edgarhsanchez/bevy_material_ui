@@ -6,13 +6,11 @@ use bevy::asset::RenderAssetUsages;
 use bevy::mesh::{Indices, PrimitiveTopology};
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
+use bevy_material_ui::loading_indicator::ShapeMorphMaterial;
 
 use common::*;
 use navigation::*;
 use views::*;
-
-#[derive(Resource, Clone)]
-struct IconFont(Handle<Font>);
 
 #[derive(Component)]
 struct SpinningDice;
@@ -44,9 +42,11 @@ fn write_telemetry(telemetry: Res<ComponentTelemetry>) {
 
 fn setup_ui(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     theme: Res<MaterialTheme>,
+    icon_font: Res<MaterialIconFont>,
     selected: Res<SelectedSection>,
+    mut materials: ResMut<Assets<ShapeMorphMaterial>>,
+    tab_cache: Res<TabStateCache>,
 ) {
     // UI camera (renders over the 3d scene)
     commands.spawn((
@@ -57,8 +57,7 @@ fn setup_ui(
         },
     ));
 
-    let icon_font = asset_server.load::<Font>("fonts/MaterialSymbolsOutlined.ttf");
-    commands.insert_resource(IconFont(icon_font.clone()));
+    let icon_font = icon_font.0.clone();
 
     // Root layout: sidebar + detail
     commands
@@ -132,7 +131,7 @@ fn setup_ui(
                 BackgroundColor(theme.surface.with_alpha(0.0)),
             ))
             .with_children(|detail| {
-                spawn_selected_section(detail, &theme, selected.current, icon_font.clone());
+                spawn_selected_section(detail, &theme, selected.current, icon_font.clone(), &mut materials, &tab_cache);
             });
         });
 }
@@ -141,7 +140,9 @@ fn update_detail_content(
     mut commands: Commands,
     theme: Res<MaterialTheme>,
     selected: Res<SelectedSection>,
-    icon_font: Res<IconFont>,
+    icon_font: Res<MaterialIconFont>,
+    mut materials: ResMut<Assets<ShapeMorphMaterial>>,
+    tab_cache: Res<TabStateCache>,
     detail: Query<Entity, With<DetailContent>>,
     children_q: Query<&Children>,
 ) {
@@ -158,7 +159,7 @@ fn update_detail_content(
     let section = selected.current;
     let icon_font = icon_font.0.clone();
     commands.entity(detail_entity).with_children(|detail| {
-        spawn_selected_section(detail, &theme, section, icon_font);
+        spawn_selected_section(detail, &theme, section, icon_font, &mut materials, &tab_cache);
     });
 }
 
@@ -167,6 +168,8 @@ fn spawn_selected_section(
     theme: &MaterialTheme,
     section: ComponentSection,
     icon_font: Handle<Font>,
+    materials: &mut Assets<ShapeMorphMaterial>,
+    tab_cache: &TabStateCache,
 ) {
     match section {
         ComponentSection::Buttons => spawn_buttons_section(parent, theme),
@@ -186,11 +189,15 @@ fn spawn_selected_section(
         ComponentSection::TextFields => spawn_text_fields_section(parent, theme),
         ComponentSection::Dialogs => spawn_dialogs_section(parent, theme),
         ComponentSection::Menus => spawn_menus_section(parent, theme, icon_font),
-        ComponentSection::Tabs => spawn_tabs_section(parent, theme),
+        ComponentSection::Tabs => spawn_tabs_section(parent, theme, tab_cache),
         ComponentSection::Select => spawn_select_section(parent, theme, icon_font),
-        ComponentSection::Snackbar => spawn_snackbar_section(parent, theme),
+        ComponentSection::Snackbar => spawn_snackbar_section(parent, theme, icon_font),
         ComponentSection::Tooltips => spawn_tooltip_section(parent, theme, icon_font),
         ComponentSection::AppBar => spawn_app_bar_section(parent, theme, icon_font),
+        ComponentSection::Toolbar => spawn_toolbar_section(parent, theme, icon_font),
+        ComponentSection::Layouts => spawn_layouts_section(parent, theme, icon_font),
+        ComponentSection::LoadingIndicator => spawn_loading_indicator_section(parent, theme, materials),
+        ComponentSection::Search => spawn_search_section(parent, theme),
         ComponentSection::ThemeColors => spawn_theme_section(parent, theme),
     }
 }

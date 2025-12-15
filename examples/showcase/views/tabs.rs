@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
+use crate::showcase::{TabStateCache, ComponentSection};
 
 /// Spawn the tabs section content.
 ///
@@ -11,7 +12,16 @@ use crate::showcase::common::*;
 /// - `MaterialTabs` owns the selected index
 /// - `MaterialTab` buttons update selection
 /// - `TabContent` panels are shown/hidden by the library based on selection
-pub fn spawn_tabs_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+pub fn spawn_tabs_section(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    tab_cache: &TabStateCache,
+) {
+    // Restore cached tab selection, default to 0
+    let selected_tab = tab_cache.selections
+        .get(&ComponentSection::Tabs)
+        .copied()
+        .unwrap_or(0);
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -40,7 +50,7 @@ pub fn spawn_tabs_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                         TestId::new("tabs_primary"),
                         MaterialTabs::new()
                             .with_variant(TabVariant::Primary)
-                            .selected(0),
+                            .selected(selected_tab),
                         Node {
                             flex_direction: FlexDirection::Row,
                             width: Val::Percent(100.0),

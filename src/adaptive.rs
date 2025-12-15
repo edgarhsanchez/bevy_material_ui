@@ -152,6 +152,9 @@ pub struct WindowSizeClassPlugin;
 impl Plugin for WindowSizeClassPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<WindowSizeClass>()
+            // Initialize once as early as possible so the first UI layout uses real
+            // window dimensions instead of the resource default (0x0).
+            .add_systems(Startup, update_window_size_class)
             .add_systems(Update, update_window_size_class);
     }
 }
@@ -166,9 +169,15 @@ fn update_window_size_class(
     };
 
     let new_class = WindowSizeClass::new(window.width(), window.height());
-    
-    // Only update if class changed to avoid unnecessary change detection
-    if size_class.width != new_class.width || size_class.height != new_class.height {
+
+    // Update whenever either the *class* or the *pixel dimensions* change.
+    // The default resource value matches a common Compact/Medium pairing, so
+    // relying only on class changes can leave `width_px`/`height_px` stuck at 0.
+    if size_class.width != new_class.width
+        || size_class.height != new_class.height
+        || (size_class.width_px - new_class.width_px).abs() > f32::EPSILON
+        || (size_class.height_px - new_class.height_px).abs() > f32::EPSILON
+    {
         *size_class = new_class;
     }
 }

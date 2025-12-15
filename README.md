@@ -1,8 +1,21 @@
-[![Bevy Material UI demo video](https://img.youtube.com/vi/l7PdTGuuqLU/hqdefault.jpg)](https://youtu.be/l7PdTGuuqLU)
-
 # bevy_material_ui
 
+[![CI](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/ci.yml/badge.svg)](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/bevy_material_ui.svg)](https://crates.io/crates/bevy_material_ui)
+[![Docs.rs](https://docs.rs/bevy_material_ui/badge.svg)](https://docs.rs/bevy_material_ui)
+[![Dependencies](https://deps.rs/repo/github/edgarhsanchez/bevy_material_ui/status.svg)](https://deps.rs/repo/github/edgarhsanchez/bevy_material_ui)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[![Bevy Material UI demo video](https://img.youtube.com/vi/l7PdTGuuqLU/hqdefault.jpg)](https://youtu.be/l7PdTGuuqLU)
+
 A Material Design 3 UI library for Bevy.
+
+## Installation
+
+```toml
+[dependencies]
+bevy_material_ui = "0.1"
+```
 
 ## Documentation
 
@@ -64,7 +77,17 @@ For the complete list of icons, see [Material Symbols](https://fonts.google.com/
 
 ## License
 
-This library is licensed under MIT/Apache-2.0.
+This library is licensed under MIT.
 
 The Material Symbols font is licensed under the Apache License 2.0 by Google.
 See `assets/fonts/LICENSE` for details.
+
+## Releases (semantic versioning)
+
+Publishing to crates.io is automated via GitHub Actions and uses tags of the form `vMAJOR.MINOR.PATCH`.
+
+1. Update `version` in `Cargo.toml`.
+2. Commit and push to `main`.
+3. Create and push a tag like `v0.1.1`.
+
+The workflow in [.github/workflows/publish.yml](.github/workflows/publish.yml) verifies the tag matches `Cargo.toml` and then runs `cargo publish`.

@@ -37,15 +37,8 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                         TextColor(theme.on_surface),
                     ));
                     
-                    // Full-width divider
-                    col.spawn((
-                        Node {
-                            width: Val::Percent(100.0),
-                            height: Val::Px(1.0),
-                            ..default()
-                        },
-                        BackgroundColor(theme.outline_variant),
-                    ));
+                    // Full-width divider (real MaterialDivider)
+                    col.spawn_horizontal_divider(theme);
                     
                     col.spawn((
                         Text::new("Content below divider"),
@@ -53,16 +46,8 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                         TextColor(theme.on_surface),
                     ));
                     
-                    // Inset divider
-                    col.spawn((
-                        Node {
-                            width: Val::Percent(100.0),
-                            height: Val::Px(1.0),
-                            margin: UiRect::left(Val::Px(16.0)),
-                            ..default()
-                        },
-                        BackgroundColor(theme.outline_variant),
-                    ));
+                    // Inset divider (real MaterialDivider)
+                    col.spawn_inset_divider(theme);
                     
                     col.spawn((
                         Text::new("After inset divider"),

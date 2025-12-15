@@ -18,6 +18,28 @@
 
 use bevy::prelude::*;
 
+/// A safe deferred command that inserts a `TestId` only if the entity still exists.
+///
+/// This avoids panics when commands are applied after an entity has been despawned
+/// (common during UI rebuilds).
+#[derive(Debug, Clone)]
+pub(crate) struct InsertTestIdIfExists {
+    pub entity: Entity,
+    pub id: String,
+}
+
+impl Command for InsertTestIdIfExists {
+    fn apply(self, world: &mut World) {
+        let Ok(mut entity_mut) = world.get_entity_mut(self.entity) else {
+            return;
+        };
+
+        if entity_mut.get::<TestId>().is_none() {
+            entity_mut.insert(TestId::new(self.id));
+        }
+    }
+}
+
 /// Plugin for telemetry support
 pub struct TelemetryPlugin;
 
