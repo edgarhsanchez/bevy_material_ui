@@ -216,7 +216,11 @@ impl SpringAnimation {
             return;
         }
 
-        let SpringConfig { stiffness, damping, mass } = self.config;
+        let SpringConfig {
+            stiffness,
+            damping,
+            mass,
+        } = self.config;
 
         // Spring force: F = -kx - cv
         let displacement = self.value - self.target;
@@ -284,10 +288,7 @@ impl Default for StateLayer {
 impl StateLayer {
     /// Create a new state layer with a specific color
     pub fn new(color: Color) -> Self {
-        Self {
-            color,
-            ..default()
-        }
+        Self { color, ..default() }
     }
 
     /// Create a state layer for primary-colored content

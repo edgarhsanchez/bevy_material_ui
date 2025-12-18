@@ -6,9 +6,7 @@
 
 use bevy::prelude::*;
 
-use crate::{
-    theme::MaterialTheme,
-};
+use crate::theme::MaterialTheme;
 
 /// Plugin for the badge component
 pub struct BadgePlugin;
@@ -264,13 +262,13 @@ impl BadgeBuilder {
 pub trait SpawnBadgeChild {
     /// Spawn a small badge (dot indicator)
     fn spawn_small_badge(&mut self, theme: &MaterialTheme);
-    
+
     /// Spawn a large badge with count
     fn spawn_badge_count(&mut self, theme: &MaterialTheme, count: u32);
-    
+
     /// Spawn a badge with text
     fn spawn_badge_text(&mut self, theme: &MaterialTheme, text: impl Into<String>);
-    
+
     /// Spawn a badge with full builder control
     fn spawn_badge_with(&mut self, theme: &MaterialTheme, builder: BadgeBuilder);
 }
@@ -280,31 +278,33 @@ impl SpawnBadgeChild for ChildSpawnerCommands<'_> {
         // Small badge is just the dot indicator without content
         self.spawn(BadgeBuilder::count(0).build(theme));
     }
-    
+
     fn spawn_badge_count(&mut self, theme: &MaterialTheme, count: u32) {
         self.spawn_badge_with(theme, BadgeBuilder::count(count));
     }
-    
+
     fn spawn_badge_text(&mut self, theme: &MaterialTheme, text: impl Into<String>) {
         self.spawn_badge_with(theme, BadgeBuilder::text(text));
     }
-    
+
     fn spawn_badge_with(&mut self, theme: &MaterialTheme, builder: BadgeBuilder) {
         let content = builder.badge.content.clone();
         let content_color = builder.badge.content_color(theme);
-        
-        self.spawn(builder.build(theme))
-            .with_children(|badge| {
-                // Content text (for large badges)
-                if let Some(ref text) = content {
-                    badge.spawn((
-                        BadgeContent,
-                        Text::new(text),
-                        TextFont { font_size: 11.0, ..default() },
-                        TextColor(content_color),
-                    ));
-                }
-            });
+
+        self.spawn(builder.build(theme)).with_children(|badge| {
+            // Content text (for large badges)
+            if let Some(ref text) = content {
+                badge.spawn((
+                    BadgeContent,
+                    Text::new(text),
+                    TextFont {
+                        font_size: 11.0,
+                        ..default()
+                    },
+                    TextColor(content_color),
+                ));
+            }
+        });
     }
 }
 
@@ -313,11 +313,7 @@ impl SpawnBadgeChild for ChildSpawnerCommands<'_> {
 // ============================================================================
 
 /// Spawn a badge with content
-pub fn spawn_badge(
-    commands: &mut Commands,
-    theme: &MaterialTheme,
-    badge: MaterialBadge,
-) -> Entity {
+pub fn spawn_badge(commands: &mut Commands, theme: &MaterialTheme, badge: MaterialBadge) -> Entity {
     let content = badge.content.clone();
     let content_color = badge.content_color(theme);
     let bg_color = badge.background_color(theme);
@@ -338,7 +334,11 @@ pub fn spawn_badge(
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             padding: UiRect::axes(Val::Px(BADGE_PADDING), Val::Px(0.0)),
-            display: if visible { Display::Flex } else { Display::None },
+            display: if visible {
+                Display::Flex
+            } else {
+                Display::None
+            },
             ..default()
         },
         BackgroundColor(bg_color),
@@ -383,7 +383,12 @@ pub fn spawn_badge_on(
 fn badge_style_system(
     theme: Option<Res<MaterialTheme>>,
     mut badges: Query<
-        (&MaterialBadge, &mut Node, &mut BackgroundColor, &mut BorderRadius),
+        (
+            &MaterialBadge,
+            &mut Node,
+            &mut BackgroundColor,
+            &mut BorderRadius,
+        ),
         Changed<MaterialBadge>,
     >,
     mut badge_texts: Query<(&ChildOf, &mut Text, &mut TextColor), With<BadgeContent>>,
@@ -398,7 +403,11 @@ fn badge_style_system(
         node.height = Val::Px(height);
         node.min_width = Val::Px(width);
         node.min_height = Val::Px(height);
-        node.display = if badge.visible { Display::Flex } else { Display::None };
+        node.display = if badge.visible {
+            Display::Flex
+        } else {
+            Display::None
+        };
 
         *bg_color = BackgroundColor(badge.background_color(&theme));
         *border_radius = BorderRadius::all(Val::Px(height / 2.0));
@@ -418,7 +427,12 @@ fn badge_style_system(
 /// Refresh badge visuals when the theme changes.
 fn badge_theme_refresh_system(
     theme: Option<Res<MaterialTheme>>,
-    mut badges: Query<(&MaterialBadge, &mut Node, &mut BackgroundColor, &mut BorderRadius)>,
+    mut badges: Query<(
+        &MaterialBadge,
+        &mut Node,
+        &mut BackgroundColor,
+        &mut BorderRadius,
+    )>,
     mut badge_texts: Query<(&ChildOf, &mut Text, &mut TextColor), With<BadgeContent>>,
 ) {
     let Some(theme) = theme else { return };
@@ -434,7 +448,11 @@ fn badge_theme_refresh_system(
         node.height = Val::Px(height);
         node.min_width = Val::Px(width);
         node.min_height = Val::Px(height);
-        node.display = if badge.visible { Display::Flex } else { Display::None };
+        node.display = if badge.visible {
+            Display::Flex
+        } else {
+            Display::None
+        };
 
         *bg_color = BackgroundColor(badge.background_color(&theme));
         *border_radius = BorderRadius::all(Val::Px(height / 2.0));

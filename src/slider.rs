@@ -36,15 +36,14 @@ pub struct SliderPlugin;
 
 impl Plugin for SliderPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<SliderChangeEvent>()
-            .add_systems(
-                Update,
-                (
-                    slider_interaction_system,
-                    slider_visual_update_system.after(slider_interaction_system),
-                    slider_theme_refresh_system.after(slider_visual_update_system),
-                ),
-            );
+        app.add_message::<SliderChangeEvent>().add_systems(
+            Update,
+            (
+                slider_interaction_system,
+                slider_visual_update_system.after(slider_interaction_system),
+                slider_theme_refresh_system.after(slider_visual_update_system),
+            ),
+        );
     }
 }
 
@@ -73,7 +72,7 @@ pub enum SliderVariant {
 }
 
 /// Material slider component
-/// 
+///
 /// Matches properties from Material iOS MDCSlider:
 /// - Track colors (background/fill) for different states
 /// - Thumb colors and elevation
@@ -391,7 +390,13 @@ pub const SLIDER_LABEL_HEIGHT: f32 = 28.0;
 /// System to handle slider interactions
 fn slider_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialSlider, &ComputedNode, &UiGlobalTransform),
+        (
+            Entity,
+            &Interaction,
+            &mut MaterialSlider,
+            &ComputedNode,
+            &UiGlobalTransform,
+        ),
         With<MaterialSlider>,
     >,
     mut change_events: MessageWriter<SliderChangeEvent>,
@@ -399,14 +404,17 @@ fn slider_interaction_system(
     mouse_button: Res<ButtonInput<MouseButton>>,
 ) {
     let Ok(window) = windows.single() else { return };
-    let Some(cursor_position) = window.cursor_position() else { return };
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
 
     // Bevy UI layout uses physical pixels for `UiGlobalTransform` and `ComputedNode`.
     // Convert the window cursor position (logical coords) into physical pixels.
     let scale_factor = window.scale_factor();
     let cursor_physical = cursor_position * scale_factor;
 
-    for (entity, interaction, mut slider, computed_node, transform) in interaction_query.iter_mut() {
+    for (entity, interaction, mut slider, computed_node, transform) in interaction_query.iter_mut()
+    {
         if slider.disabled {
             continue;
         }
@@ -474,10 +482,10 @@ fn slider_interaction_system(
             if !normalized.is_finite() {
                 continue;
             }
-            
+
             let old_value = slider.value;
             slider.set_from_normalized(normalized);
-            
+
             if (slider.value - old_value).abs() > f32::EPSILON {
                 change_events.write(SliderChangeEvent {
                     entity,
@@ -552,7 +560,7 @@ fn update_slider_visuals(
     visibilities: &mut Query<&mut Visibility>,
     ticks: &Query<&SliderTick>,
 ) {
-    let value_percent = slider.normalized_value().clamp(0.0, 1.0);
+    let _value_percent = slider.normalized_value().clamp(0.0, 1.0);
     let position_percent = slider.position_percent().clamp(0.0, 1.0);
 
     let track_height = if slider.dragging {
@@ -661,7 +669,9 @@ fn update_slider_visuals(
             };
         }
 
-        let Ok(tick) = ticks.get(tick_entity) else { continue };
+        let Ok(tick) = ticks.get(tick_entity) else {
+            continue;
+        };
         let tick_active = match slider.direction {
             SliderDirection::StartToEnd => tick.position <= position_percent,
             SliderDirection::EndToStart => tick.position >= position_percent,
@@ -745,17 +755,17 @@ pub fn spawn_slider_control_with<E: Bundle>(
     slider_ec.with_children(|slider_area| {
         // Track
         let track_node = match orientation {
-                SliderOrientation::Horizontal => Node {
-                    width: Val::Percent(100.0),
-                    height: Val::Px(track_height),
-                    ..default()
-                },
-                SliderOrientation::Vertical => Node {
-                    width: Val::Px(track_height),
-                    height: Val::Percent(100.0),
-                    ..default()
-                },
-            };
+            SliderOrientation::Horizontal => Node {
+                width: Val::Percent(100.0),
+                height: Val::Px(track_height),
+                ..default()
+            },
+            SliderOrientation::Vertical => Node {
+                width: Val::Px(track_height),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+        };
         let track_entity = slider_area
             .spawn((
                 SliderTrack,
@@ -768,45 +778,51 @@ pub fn spawn_slider_control_with<E: Bundle>(
 
         // Active track
         let active_node = match orientation {
-                SliderOrientation::Horizontal => {
-                    let (left, width) = match direction {
-                        SliderDirection::StartToEnd => (Val::Px(0.0), Val::Percent(position_percent * 100.0)),
-                        SliderDirection::EndToStart => (
-                            Val::Percent(position_percent * 100.0),
-                            Val::Percent((1.0 - position_percent) * 100.0),
-                        ),
-                    };
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left,
-                        top: Val::Px((SLIDER_HANDLE_SIZE + 8.0 - track_height) / 2.0),
-                        width,
-                        height: Val::Px(track_height),
-                        ..default()
+            SliderOrientation::Horizontal => {
+                let (left, width) = match direction {
+                    SliderDirection::StartToEnd => {
+                        (Val::Px(0.0), Val::Percent(position_percent * 100.0))
                     }
+                    SliderDirection::EndToStart => (
+                        Val::Percent(position_percent * 100.0),
+                        Val::Percent((1.0 - position_percent) * 100.0),
+                    ),
+                };
+                Node {
+                    position_type: PositionType::Absolute,
+                    left,
+                    top: Val::Px((SLIDER_HANDLE_SIZE + 8.0 - track_height) / 2.0),
+                    width,
+                    height: Val::Px(track_height),
+                    ..default()
                 }
-                SliderOrientation::Vertical => {
-                    let (top, height) = match direction {
-                        SliderDirection::StartToEnd => (Val::Px(0.0), Val::Percent(position_percent * 100.0)),
-                        SliderDirection::EndToStart => (
-                            Val::Percent(position_percent * 100.0),
-                            Val::Percent((1.0 - position_percent) * 100.0),
-                        ),
-                    };
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::Percent(50.0),
-                        margin: UiRect::left(Val::Px(-track_height / 2.0)),
-                        top,
-                        width: Val::Px(track_height),
-                        height,
-                        ..default()
+            }
+            SliderOrientation::Vertical => {
+                let (top, height) = match direction {
+                    SliderDirection::StartToEnd => {
+                        (Val::Px(0.0), Val::Percent(position_percent * 100.0))
                     }
+                    SliderDirection::EndToStart => (
+                        Val::Percent(position_percent * 100.0),
+                        Val::Percent((1.0 - position_percent) * 100.0),
+                    ),
+                };
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Percent(50.0),
+                    margin: UiRect::left(Val::Px(-track_height / 2.0)),
+                    top,
+                    width: Val::Px(track_height),
+                    height,
+                    ..default()
                 }
-            };
+            }
+        };
         let active_track_entity = slider_area
             .spawn((
-                SliderActiveTrack { track: track_entity },
+                SliderActiveTrack {
+                    track: track_entity,
+                },
                 active_node,
                 BackgroundColor(active_color),
                 BorderRadius::all(Val::Px(track_height / 2.0)),
@@ -816,29 +832,29 @@ pub fn spawn_slider_control_with<E: Bundle>(
 
         // Handle
         let handle_node = match orientation {
-                SliderOrientation::Horizontal => Node {
-                    position_type: PositionType::Absolute,
-                    left: Val::Percent(position_percent * 100.0),
-                    margin: UiRect::left(Val::Px(-thumb_radius)),
-                    width: Val::Px(thumb_radius * 2.0),
-                    height: Val::Px(thumb_radius * 2.0),
-                    ..default()
+            SliderOrientation::Horizontal => Node {
+                position_type: PositionType::Absolute,
+                left: Val::Percent(position_percent * 100.0),
+                margin: UiRect::left(Val::Px(-thumb_radius)),
+                width: Val::Px(thumb_radius * 2.0),
+                height: Val::Px(thumb_radius * 2.0),
+                ..default()
+            },
+            SliderOrientation::Vertical => Node {
+                position_type: PositionType::Absolute,
+                top: Val::Percent(position_percent * 100.0),
+                left: Val::Percent(50.0),
+                margin: UiRect {
+                    left: Val::Px(-thumb_radius),
+                    right: Val::Px(0.0),
+                    top: Val::Px(-thumb_radius),
+                    bottom: Val::Px(0.0),
                 },
-                SliderOrientation::Vertical => Node {
-                    position_type: PositionType::Absolute,
-                    top: Val::Percent(position_percent * 100.0),
-                    left: Val::Percent(50.0),
-                    margin: UiRect {
-                        left: Val::Px(-thumb_radius),
-                        right: Val::Px(0.0),
-                        top: Val::Px(-thumb_radius),
-                        bottom: Val::Px(0.0),
-                    },
-                    width: Val::Px(thumb_radius * 2.0),
-                    height: Val::Px(thumb_radius * 2.0),
-                    ..default()
-                },
-            };
+                width: Val::Px(thumb_radius * 2.0),
+                height: Val::Px(thumb_radius * 2.0),
+                ..default()
+            },
+        };
         let handle_entity = slider_area
             .spawn((
                 SliderHandle {
@@ -1039,7 +1055,7 @@ pub trait SpawnSliderChild {
         value: f32,
         label: Option<&str>,
     );
-    
+
     /// Spawn a discrete slider with tick marks
     fn spawn_discrete_slider(
         &mut self,
@@ -1050,7 +1066,7 @@ pub trait SpawnSliderChild {
         step: f32,
         label: Option<&str>,
     );
-    
+
     /// Spawn a slider using a builder for more control
     fn spawn_slider_with(
         &mut self,
@@ -1072,7 +1088,7 @@ impl SpawnSliderChild for ChildSpawnerCommands<'_> {
         let slider = MaterialSlider::new(min, max).with_value(value);
         self.spawn_slider_with(theme, slider, label);
     }
-    
+
     fn spawn_discrete_slider(
         &mut self,
         theme: &MaterialTheme,
@@ -1089,7 +1105,7 @@ impl SpawnSliderChild for ChildSpawnerCommands<'_> {
         slider.tick_visibility = TickVisibility::Always;
         self.spawn_slider_with(theme, slider, label);
     }
-    
+
     fn spawn_slider_with(
         &mut self,
         theme: &MaterialTheme,
@@ -1106,12 +1122,16 @@ impl SpawnSliderChild for ChildSpawnerCommands<'_> {
             flex_wrap: FlexWrap::Wrap,
             width: Val::Percent(100.0),
             ..default()
-        }).with_children(|row| {
+        })
+        .with_children(|row| {
             // Optional left label
             if let Some(label_text) = label {
                 row.spawn((
                     Text::new(label_text),
-                    TextFont { font_size: 14.0, ..default() },
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
                     TextColor(label_color),
                 ));
             }
@@ -1165,9 +1185,9 @@ mod tests {
             TickVisibility::WhenDragging,
             TickVisibility::Never,
         ];
-        
+
         for i in 0..modes.len() {
-            for j in (i+1)..modes.len() {
+            for j in (i + 1)..modes.len() {
                 assert_ne!(modes[i], modes[j]);
             }
         }
@@ -1434,7 +1454,7 @@ mod tests {
             .ticks()
             .label()
             .disabled(false);
-        
+
         assert_eq!(builder.slider.value, 50.0);
         assert_eq!(builder.slider.step, Some(10.0));
         assert!(builder.slider.show_ticks);

@@ -6,7 +6,11 @@ use bevy_material_ui::prelude::*;
 use crate::showcase::common::*;
 
 /// Spawn the icons section content
-pub fn spawn_icons_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, icon_font: Handle<Font>) {
+pub fn spawn_icons_section(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    icon_font: Handle<Font>,
+) {
     let _ = icon_font;
 
     parent
@@ -17,10 +21,10 @@ pub fn spawn_icons_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Material Icons",
-                "Google Material Symbols with variable font support"
+                "Google Material Symbols with variable font support",
             );
 
             section
@@ -43,7 +47,9 @@ pub fn spawn_icons_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                     for icon in icons {
                         row.spawn((
                             icon,
-                            IconStyle::default().with_size(24.0).with_color(theme.on_surface),
+                            IconStyle::default()
+                                .with_size(24.0)
+                                .with_color(theme.on_surface),
                             Node {
                                 width: Val::Px(48.0),
                                 height: Val::Px(48.0),
@@ -57,8 +63,10 @@ pub fn spawn_icons_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                     }
                 });
 
-            spawn_code_block(section, theme,
-r#"// Using Material Symbols icons
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Using Material Symbols icons
 use bevy_material_ui::icons::{ICON_CHECK, icon_by_name};
 
 // By constant
@@ -70,6 +78,7 @@ commands.spawn((
 // By name lookup
 if let Some(codepoint) = icon_by_name("home") {
     // Use codepoint...
-}"#);
+}"#,
+            );
         });
 }

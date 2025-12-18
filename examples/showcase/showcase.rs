@@ -10,9 +10,9 @@ pub mod views;
 use bevy::asset::{AssetPlugin, RenderAssetUsages};
 use bevy::mesh::{Indices, PrimitiveTopology};
 use bevy::prelude::*;
-use bevy::ui::{ComputedNode, OverflowAxis, ScrollPosition, UiGlobalTransform, PositionType};
-use bevy_material_ui::prelude::*;
+use bevy::ui::{ComputedNode, OverflowAxis, PositionType, ScrollPosition, UiGlobalTransform};
 use bevy_material_ui::loading_indicator::ShapeMorphMaterial;
+use bevy_material_ui::prelude::*;
 use bevy_material_ui::text_field::InputType;
 use bevy_material_ui::theme::ThemeMode;
 use std::collections::HashMap;
@@ -96,12 +96,10 @@ pub fn run() {
     let asset_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
 
     App::new()
-        .add_plugins(
-            DefaultPlugins.set(AssetPlugin {
-                file_path: asset_root.to_string_lossy().to_string(),
-                ..default()
-            }),
-        )
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            file_path: asset_root.to_string_lossy().to_string(),
+            ..default()
+        }))
         .add_plugins(MaterialUiPlugin)
         .init_resource::<ShowcaseThemeSelection>()
         // Default seed theme (Material You purple)
@@ -142,7 +140,13 @@ pub fn run() {
                 datetime_picker_demo_system,
             ),
         )
-        .add_systems(Update, (sidebar_scroll_telemetry_system, main_scroll_telemetry_system))
+        .add_systems(
+            Update,
+            (
+                sidebar_scroll_telemetry_system,
+                main_scroll_telemetry_system,
+            ),
+        )
         .add_systems(Update, email_validation_system)
         // Cache changes after UI input has been processed.
         .add_systems(PostUpdate, cache_showcase_text_field_changes_system)
@@ -165,7 +169,9 @@ pub fn run() {
                 theme_seed_text_field_system
                     .before(rebuild_ui_on_theme_change_system)
                     .before(rebuild_ui_on_size_class_change_system),
-                cache_tab_state_system.before(rebuild_ui_on_theme_change_system).before(rebuild_ui_on_size_class_change_system),
+                cache_tab_state_system
+                    .before(rebuild_ui_on_theme_change_system)
+                    .before(rebuild_ui_on_size_class_change_system),
                 rebuild_ui_on_theme_change_system,
                 rebuild_ui_on_size_class_change_system,
             ),
@@ -210,8 +216,14 @@ fn ensure_automation_test_ids_clickables_system(
     chips: Query<(Entity, &UiGlobalTransform), (With<MaterialChip>, Without<TestId>)>,
     fabs: Query<(Entity, &UiGlobalTransform), (With<MaterialFab>, Without<TestId>)>,
     badges: Query<(Entity, &UiGlobalTransform), (With<MaterialBadge>, Without<TestId>)>,
-    progress_linear: Query<(Entity, &UiGlobalTransform), (With<MaterialLinearProgress>, Without<TestId>)>,
-    progress_circular: Query<(Entity, &UiGlobalTransform), (With<MaterialCircularProgress>, Without<TestId>)>,
+    progress_linear: Query<
+        (Entity, &UiGlobalTransform),
+        (With<MaterialLinearProgress>, Without<TestId>),
+    >,
+    progress_circular: Query<
+        (Entity, &UiGlobalTransform),
+        (With<MaterialCircularProgress>, Without<TestId>),
+    >,
     cards: Query<(Entity, &UiGlobalTransform), (With<MaterialCard>, Without<TestId>)>,
     dividers: Query<(Entity, &UiGlobalTransform), (With<MaterialDivider>, Without<TestId>)>,
     icons: Query<(Entity, &UiGlobalTransform), (With<MaterialIcon>, Without<TestId>)>,
@@ -227,7 +239,7 @@ fn ensure_automation_test_ids_clickables_system(
                 buttons.iter().map(|(e, t)| (e, t.translation.y)).collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("button_{}", i)),
                 });
@@ -240,7 +252,7 @@ fn ensure_automation_test_ids_clickables_system(
                 .collect();
             icons.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in icons.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("app_bar_icon_{}", i)),
                 });
@@ -250,7 +262,7 @@ fn ensure_automation_test_ids_clickables_system(
                 fabs.iter().map(|(e, t)| (e, t.translation.y)).collect();
             fab_items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in fab_items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("app_bar_fab_{}", i)),
                 });
@@ -261,7 +273,7 @@ fn ensure_automation_test_ids_clickables_system(
                 chips.iter().map(|(e, t)| (e, t.translation.y)).collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("chip_{}", i)),
                 });
@@ -272,7 +284,7 @@ fn ensure_automation_test_ids_clickables_system(
                 fabs.iter().map(|(e, t)| (e, t.translation.y)).collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("fab_{}", i)),
                 });
@@ -283,7 +295,7 @@ fn ensure_automation_test_ids_clickables_system(
                 badges.iter().map(|(e, t)| (e, t.translation.y)).collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("badge_{}", i)),
                 });
@@ -296,7 +308,7 @@ fn ensure_automation_test_ids_clickables_system(
                 .collect();
             linear.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in linear.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("progress_linear_{}", i)),
                 });
@@ -308,7 +320,7 @@ fn ensure_automation_test_ids_clickables_system(
                 .collect();
             circular.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in circular.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("progress_circular_{}", i)),
                 });
@@ -319,7 +331,7 @@ fn ensure_automation_test_ids_clickables_system(
                 cards.iter().map(|(e, t)| (e, t.translation.y)).collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("card_{}", i)),
                 });
@@ -330,7 +342,7 @@ fn ensure_automation_test_ids_clickables_system(
                 dividers.iter().map(|(e, t)| (e, t.translation.y)).collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("divider_{}", i)),
                 });
@@ -341,7 +353,7 @@ fn ensure_automation_test_ids_clickables_system(
                 icons.iter().map(|(e, t)| (e, t.translation.y)).collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("icon_{}", i)),
                 });
@@ -354,7 +366,7 @@ fn ensure_automation_test_ids_clickables_system(
                 .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
-                    commands.queue(InsertTestIdIfExists {
+                commands.queue(InsertTestIdIfExists {
                     entity,
                     test_id: TestId::new(format!("icon_button_{}", i)),
                 });
@@ -429,7 +441,13 @@ fn ensure_automation_test_ids_inputs_system(
     slider_thumbs: Query<(Entity, &UiGlobalTransform), (With<SliderHandle>, Without<TestId>)>,
     text_fields: Query<(Entity, &UiGlobalTransform), (With<MaterialTextField>, Without<TestId>)>,
     selects: Query<(Entity, &UiGlobalTransform), (With<MaterialSelect>, Without<TestId>)>,
-    select_options: Query<(Entity, &UiGlobalTransform), (With<bevy_material_ui::select::SelectOptionItem>, Without<TestId>)>,
+    select_options: Query<
+        (Entity, &UiGlobalTransform),
+        (
+            With<bevy_material_ui::select::SelectOptionItem>,
+            Without<TestId>,
+        ),
+    >,
 ) {
     if !telemetry.enabled {
         return;
@@ -450,10 +468,8 @@ fn ensure_automation_test_ids_inputs_system(
             }
         }
         ComponentSection::Switches => {
-            let mut items: Vec<(Entity, f32)> = switches
-                .iter()
-                .map(|(e, t)| (e, t.translation.y))
-                .collect();
+            let mut items: Vec<(Entity, f32)> =
+                switches.iter().map(|(e, t)| (e, t.translation.y)).collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -556,17 +572,41 @@ fn ensure_automation_test_ids_overlays_system(
     selected: Res<SelectedSection>,
     telemetry: Res<ComponentTelemetry>,
     mut commands: Commands,
-    show_dialog_buttons: Query<(Entity, &UiGlobalTransform), (With<ShowDialogButton>, Without<TestId>)>,
-    dialog_containers: Query<(Entity, &UiGlobalTransform), (With<DialogContainer>, Without<TestId>)>,
-    dialog_close_buttons: Query<(Entity, &UiGlobalTransform), (With<DialogCloseButton>, Without<TestId>)>,
-    dialog_confirm_buttons: Query<(Entity, &UiGlobalTransform), (With<DialogConfirmButton>, Without<TestId>)>,
-    datetime_open_buttons: Query<(Entity, &UiGlobalTransform), (With<DateTimePickerOpenButton>, Without<TestId>)>,
-    datetime_pickers: Query<(Entity, &UiGlobalTransform), (With<MaterialDateTimePicker>, Without<TestId>)>,
+    show_dialog_buttons: Query<
+        (Entity, &UiGlobalTransform),
+        (With<ShowDialogButton>, Without<TestId>),
+    >,
+    dialog_containers: Query<
+        (Entity, &UiGlobalTransform),
+        (With<DialogContainer>, Without<TestId>),
+    >,
+    dialog_close_buttons: Query<
+        (Entity, &UiGlobalTransform),
+        (With<DialogCloseButton>, Without<TestId>),
+    >,
+    dialog_confirm_buttons: Query<
+        (Entity, &UiGlobalTransform),
+        (With<DialogConfirmButton>, Without<TestId>),
+    >,
+    datetime_open_buttons: Query<
+        (Entity, &UiGlobalTransform),
+        (With<DateTimePickerOpenButton>, Without<TestId>),
+    >,
+    datetime_pickers: Query<
+        (Entity, &UiGlobalTransform),
+        (With<MaterialDateTimePicker>, Without<TestId>),
+    >,
     menu_triggers: Query<(Entity, &UiGlobalTransform), (With<MenuTrigger>, Without<TestId>)>,
     menu_dropdowns: Query<(Entity, &UiGlobalTransform), (With<MenuDropdown>, Without<TestId>)>,
     menu_items: Query<(Entity, &UiGlobalTransform), (With<MenuItemMarker>, Without<TestId>)>,
-    snackbar_triggers: Query<(Entity, &UiGlobalTransform), (With<SnackbarTrigger>, Without<TestId>)>,
-    tooltip_demo_buttons: Query<(Entity, &UiGlobalTransform), (With<TooltipDemoButton>, Without<TestId>)>,
+    snackbar_triggers: Query<
+        (Entity, &UiGlobalTransform),
+        (With<SnackbarTrigger>, Without<TestId>),
+    >,
+    tooltip_demo_buttons: Query<
+        (Entity, &UiGlobalTransform),
+        (With<TooltipDemoButton>, Without<TestId>),
+    >,
 ) {
     if !telemetry.enabled {
         return;
@@ -672,8 +712,10 @@ fn ensure_automation_test_ids_overlays_system(
                 });
             }
 
-            let mut items: Vec<(Entity, f32)> =
-                menu_items.iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = menu_items
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -729,13 +771,18 @@ fn telemetry_from_component_events_system(
         telemetry.log_event(&format!("Checkbox changed: {:?}", ev.entity));
     }
     for ev in switch_events.read() {
-        telemetry.log_event(&format!("Switch changed: {:?} -> {}", ev.entity, ev.selected));
+        telemetry.log_event(&format!(
+            "Switch changed: {:?} -> {}",
+            ev.entity, ev.selected
+        ));
     }
     for ev in radio_events.read() {
         telemetry.log_event(&format!("Radio changed: {:?}", ev.entity));
     }
     for ev in tab_events.read() {
-        telemetry.states.insert("tab_selected".to_string(), ev.index.to_string());
+        telemetry
+            .states
+            .insert("tab_selected".to_string(), ev.index.to_string());
         telemetry.log_event(&format!("Tab changed: {}", ev.index));
     }
     for ev in slider_events.read() {
@@ -746,7 +793,10 @@ fn telemetry_from_component_events_system(
                     .insert(format!("slider_{}_value", idx), format!("{:.2}", ev.value));
             }
         }
-        telemetry.log_event(&format!("Slider changed: {:?} -> {:.2}", ev.entity, ev.value));
+        telemetry.log_event(&format!(
+            "Slider changed: {:?} -> {:.2}",
+            ev.entity, ev.value
+        ));
     }
 }
 
@@ -765,7 +815,8 @@ fn telemetry_list_selection_state_system(
     }
 
     // Only recompute when something changed OR if the key is missing (first entry).
-    let needs_update = !items_changed.is_empty() || !telemetry.states.contains_key("list_selected_items");
+    let needs_update =
+        !items_changed.is_empty() || !telemetry.states.contains_key("list_selected_items");
     if !needs_update {
         return;
     }
@@ -793,7 +844,12 @@ fn telemetry_snapshot_system(
     windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
     selected: Res<SelectedSection>,
     tabs: Query<&MaterialTabs>,
-    nodes: Query<(&TestId, &ComputedNode, Option<&UiGlobalTransform>, &GlobalTransform)>,
+    nodes: Query<(
+        &TestId,
+        &ComputedNode,
+        Option<&UiGlobalTransform>,
+        &GlobalTransform,
+    )>,
     mut telemetry: ResMut<ComponentTelemetry>,
     mut timer: Local<Timer>,
 ) {
@@ -1153,73 +1209,78 @@ fn spawn_ui_root(
                         },
                     ))
                     .with_children(|sidebar| {
-                if use_bottom_nav {
-                    // Compact: bottom navigation surface. Use horizontal scrolling so all sections
-                    // remain reachable and the automation can drag the horizontal thumb.
-                    sidebar
-                        .spawn((
-                            SidebarNavScroll,
-                            TestId::new("sidebar_scroll_container"),
-                            ScrollContainerBuilder::new().horizontal().build(),
-                            ScrollPosition::default(),
-                            Node {
-                                width: Val::Percent(100.0),
-                                height: Val::Percent(100.0),
-                                // Important for scroll containers inside flex parents
-                                min_width: Val::Px(0.0),
-                                flex_direction: FlexDirection::Row,
-                                column_gap: Val::Px(4.0),
-                                align_items: AlignItems::Center,
-                                overflow: Overflow::scroll_x(),
-                                ..default()
-                            },
-                        ))
-                        .with_children(|nav| {
-                            for section in ComponentSection::all() {
-                                spawn_nav_item_horizontal(nav, theme, *section, *section == selected);
-                            }
-                            spawn_scrollbars(nav, theme, ScrollDirection::Horizontal);
-                        });
-                } else {
-                    sidebar.spawn((
-                        Text::new("Material UI Showcase"),
-                        TextFont {
-                            font_size: 18.0,
-                            ..default()
-                        },
-                        TextColor(theme.on_surface),
-                        Node {
-                            margin: UiRect::bottom(Val::Px(8.0)),
-                            ..default()
-                        },
-                    ));
+                        if use_bottom_nav {
+                            // Compact: bottom navigation surface. Use horizontal scrolling so all sections
+                            // remain reachable and the automation can drag the horizontal thumb.
+                            sidebar
+                                .spawn((
+                                    SidebarNavScroll,
+                                    TestId::new("sidebar_scroll_container"),
+                                    ScrollContainerBuilder::new().horizontal().build(),
+                                    ScrollPosition::default(),
+                                    Node {
+                                        width: Val::Percent(100.0),
+                                        height: Val::Percent(100.0),
+                                        // Important for scroll containers inside flex parents
+                                        min_width: Val::Px(0.0),
+                                        flex_direction: FlexDirection::Row,
+                                        column_gap: Val::Px(4.0),
+                                        align_items: AlignItems::Center,
+                                        overflow: Overflow::scroll_x(),
+                                        ..default()
+                                    },
+                                ))
+                                .with_children(|nav| {
+                                    for section in ComponentSection::all() {
+                                        spawn_nav_item_horizontal(
+                                            nav,
+                                            theme,
+                                            *section,
+                                            *section == selected,
+                                        );
+                                    }
+                                    spawn_scrollbars(nav, theme, ScrollDirection::Horizontal);
+                                });
+                        } else {
+                            sidebar.spawn((
+                                Text::new("Material UI Showcase"),
+                                TextFont {
+                                    font_size: 18.0,
+                                    ..default()
+                                },
+                                TextColor(theme.on_surface),
+                                Node {
+                                    margin: UiRect::bottom(Val::Px(8.0)),
+                                    ..default()
+                                },
+                            ));
 
-                    // Scrollable navigation list (real MaterialList + ScrollContainer)
-                    sidebar
-                        .spawn(ListBuilder::new().build_scrollable())
-                        .insert(SidebarNavScroll)
-                        .insert(TestId::new("sidebar_scroll_container"))
-                        .insert(Node {
-                            flex_grow: 1.0,
-                            width: Val::Percent(100.0),
-                            // Important for scroll containers inside flex columns
-                            min_height: Val::Px(0.0),
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(4.0),
-                            overflow: Overflow::scroll_y(),
-                            ..default()
-                        })
-                        .with_children(|nav| {
-                            for section in ComponentSection::all() {
-                                spawn_nav_item(nav, theme, *section, *section == selected);
-                            }
-                            spawn_scrollbars(nav, theme, ScrollDirection::Vertical);
-                        });
-                }
+                            // Scrollable navigation list (real MaterialList + ScrollContainer)
+                            sidebar
+                                .spawn(ListBuilder::new().build_scrollable())
+                                .insert(SidebarNavScroll)
+                                .insert(TestId::new("sidebar_scroll_container"))
+                                .insert(Node {
+                                    flex_grow: 1.0,
+                                    width: Val::Percent(100.0),
+                                    // Important for scroll containers inside flex columns
+                                    min_height: Val::Px(0.0),
+                                    flex_direction: FlexDirection::Column,
+                                    row_gap: Val::Px(4.0),
+                                    overflow: Overflow::scroll_y(),
+                                    ..default()
+                                })
+                                .with_children(|nav| {
+                                    for section in ComponentSection::all() {
+                                        spawn_nav_item(nav, theme, *section, *section == selected);
+                                    }
+                                    spawn_scrollbars(nav, theme, ScrollDirection::Vertical);
+                                });
+                        }
                     });
             };
 
-            let mut content_slot = |content: &mut ChildSpawnerCommands| {
+            let content_slot = |content: &mut ChildSpawnerCommands| {
                 content
                     .spawn((
                         TestId::new("scaffold_content"),
@@ -1252,12 +1313,7 @@ fn spawn_ui_root(
                             ))
                             .with_children(|detail| {
                                 spawn_detail_scroller(
-                                    detail,
-                                    theme,
-                                    selected,
-                                    seed_argb,
-                                    icon_font,
-                                    materials,
+                                    detail, theme, selected, seed_argb, icon_font, materials,
                                     tab_cache,
                                 );
                             });
@@ -1287,7 +1343,14 @@ fn spawn_ui_root(
                 },
             };
 
-            spawn_adaptive_navigation_scaffold(root, theme, &size_class, &scaffold, nav_slot, content_slot);
+            spawn_adaptive_navigation_scaffold(
+                root,
+                theme,
+                &size_class,
+                &scaffold,
+                nav_slot,
+                content_slot,
+            );
         });
 }
 
@@ -1475,7 +1538,9 @@ fn attach_theme_seed_text_field_system(
         };
 
         commands.entity(field_entity).insert(ThemeSeedTextField);
-        commands.entity(slot_entity).remove::<ThemeSeedTextFieldSlot>();
+        commands
+            .entity(slot_entity)
+            .remove::<ThemeSeedTextFieldSlot>();
     }
 }
 
@@ -1780,7 +1845,9 @@ fn cache_tab_state_system(
     // Only cache if we're on the Tabs section
     if selected.current == ComponentSection::Tabs {
         if let Some(tabs_component) = tabs.iter().next() {
-            tab_cache.selections.insert(ComponentSection::Tabs, tabs_component.selected);
+            tab_cache
+                .selections
+                .insert(ComponentSection::Tabs, tabs_component.selected);
         }
     }
 }
@@ -1829,8 +1896,14 @@ fn snackbar_demo_trigger_system(
 fn snackbar_demo_style_system(
     theme: Res<MaterialTheme>,
     options: Res<SnackbarDemoOptions>,
-    mut duration_chips: Query<(&SnackbarDurationOption, &mut MaterialChip), Without<SnackbarActionToggle>>,
-    mut action_toggle_chip: Query<&mut MaterialChip, (With<SnackbarActionToggle>, Without<SnackbarDurationOption>)>,
+    mut duration_chips: Query<
+        (&SnackbarDurationOption, &mut MaterialChip),
+        Without<SnackbarActionToggle>,
+    >,
+    mut action_toggle_chip: Query<
+        &mut MaterialChip,
+        (With<SnackbarActionToggle>, Without<SnackbarDurationOption>),
+    >,
 ) {
     if !theme.is_changed() && !options.is_changed() {
         return;
@@ -1900,8 +1973,19 @@ fn tooltip_demo_apply_system(
 fn tooltip_demo_style_system(
     theme: Res<MaterialTheme>,
     options: Res<TooltipDemoOptions>,
-    mut position_buttons: Query<(Entity, &TooltipPositionOption, &mut MaterialButton, &Children), Without<TooltipDelayOption>>,
-    mut delay_buttons: Query<(Entity, &TooltipDelayOption, &mut MaterialButton, &Children), Without<TooltipPositionOption>>,
+    mut position_buttons: Query<
+        (
+            Entity,
+            &TooltipPositionOption,
+            &mut MaterialButton,
+            &Children,
+        ),
+        Without<TooltipDelayOption>,
+    >,
+    mut delay_buttons: Query<
+        (Entity, &TooltipDelayOption, &mut MaterialButton, &Children),
+        Without<TooltipPositionOption>,
+    >,
     mut label_colors: Query<&mut TextColor, With<ButtonLabel>>,
 ) {
     if !theme.is_changed() && !options.is_changed() {
@@ -2169,13 +2253,19 @@ fn spawn_selected_section(
         ComponentSection::AppBar => spawn_app_bar_section(parent, theme, icon_font),
         ComponentSection::Toolbar => spawn_toolbar_section(parent, theme, icon_font),
         ComponentSection::Layouts => spawn_layouts_section(parent, theme, icon_font),
-        ComponentSection::LoadingIndicator => spawn_loading_indicator_section(parent, theme, materials),
+        ComponentSection::LoadingIndicator => {
+            spawn_loading_indicator_section(parent, theme, materials)
+        }
         ComponentSection::Search => spawn_search_section(parent, theme),
         ComponentSection::ThemeColors => spawn_theme_section(parent, theme, seed_argb),
     }
 }
 
-fn clear_children_recursive(commands: &mut Commands, children_q: &Query<&Children>, entity: Entity) {
+fn clear_children_recursive(
+    commands: &mut Commands,
+    children_q: &Query<&Children>,
+    entity: Entity,
+) {
     let Ok(children) = children_q.get(entity) else {
         return;
     };
@@ -2306,10 +2396,13 @@ fn create_d10_mesh() -> Mesh {
         );
     }
 
-    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::RENDER_WORLD)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-        .with_inserted_indices(Indices::U32(indices))
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD,
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 fn add_triangle(
@@ -2337,5 +2430,3 @@ fn add_triangle(
     indices.push(start + 1);
     indices.push(start + 2);
 }
-
-

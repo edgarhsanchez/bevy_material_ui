@@ -1,8 +1,8 @@
 //! Tests for the Material Symbols Icon System
 
 use bevy_material_ui::icons::{
-    MaterialIcon, IconStyle, IconWeight, IconGrade, IconOpticalSize,
-    icon_by_name, ICON_HOME, ICON_SETTINGS, ICON_SEARCH, ICON_DELETE,
+    icon_by_name, IconGrade, IconOpticalSize, IconStyle, IconWeight, MaterialIcon, ICON_DELETE,
+    ICON_HOME, ICON_SEARCH, ICON_SETTINGS,
 };
 
 /// Test creating icons from constructors
@@ -37,16 +37,16 @@ fn test_icon_from_name() {
     assert!(MaterialIcon::from_name("home").is_some());
     assert!(MaterialIcon::from_name("settings").is_some());
     assert!(MaterialIcon::from_name("search").is_some());
-    
+
     // Alternative names
     assert!(MaterialIcon::from_name("gear").is_some()); // alias for settings
     assert!(MaterialIcon::from_name("trash").is_some()); // alias for delete
     assert!(MaterialIcon::from_name("plus").is_some()); // alias for add
-    
+
     // Case insensitive
     assert!(MaterialIcon::from_name("HOME").is_some());
     assert!(MaterialIcon::from_name("Home").is_some());
-    
+
     // Non-existent
     assert!(MaterialIcon::from_name("nonexistent_icon").is_none());
 }
@@ -63,7 +63,7 @@ fn test_icon_by_name() {
 #[test]
 fn test_icon_style_defaults() {
     let style = IconStyle::default();
-    
+
     assert!(!style.filled, "Default should be outlined");
     assert_eq!(style.weight, IconWeight::Regular);
     assert_eq!(style.grade, IconGrade::Normal);
@@ -77,19 +77,19 @@ fn test_icon_style_defaults() {
 fn test_icon_style_presets() {
     let filled = IconStyle::filled();
     assert!(filled.filled);
-    
+
     let outlined = IconStyle::outlined();
     assert!(!outlined.filled);
-    
+
     let small = IconStyle::small();
     assert_eq!(small.optical_size, IconOpticalSize::Small);
-    
+
     let large = IconStyle::large();
     assert_eq!(large.optical_size, IconOpticalSize::Large);
-    
+
     let bold = IconStyle::bold();
     assert_eq!(bold.weight, IconWeight::Bold);
-    
+
     let light = IconStyle::light();
     assert_eq!(light.weight, IconWeight::Light);
 }
@@ -103,7 +103,7 @@ fn test_icon_style_builder() {
         .with_grade(IconGrade::High)
         .with_optical_size(IconOpticalSize::Large)
         .with_size(32.0);
-    
+
     assert!(style.filled);
     assert_eq!(style.weight, IconWeight::Bold);
     assert_eq!(style.grade, IconGrade::High);
@@ -139,7 +139,7 @@ fn test_icon_optical_size_values() {
     assert_eq!(IconOpticalSize::Default.value(), 24);
     assert_eq!(IconOpticalSize::Large.value(), 40);
     assert_eq!(IconOpticalSize::ExtraLarge.value(), 48);
-    
+
     assert_eq!(IconOpticalSize::Small.size_px(), 20.0);
     assert_eq!(IconOpticalSize::Default.size_px(), 24.0);
 }
@@ -150,10 +150,10 @@ fn test_effective_size() {
     // Without custom size, uses optical size
     let style = IconStyle::default();
     assert_eq!(style.effective_size(), 24.0);
-    
+
     let style = IconStyle::small();
     assert_eq!(style.effective_size(), 20.0);
-    
+
     // With custom size, uses that
     let style = IconStyle::default().with_size(48.0);
     assert_eq!(style.effective_size(), 48.0);
@@ -164,7 +164,7 @@ fn test_effective_size() {
 fn test_fill_value() {
     let outlined = IconStyle::outlined();
     assert_eq!(outlined.fill_value(), 0.0);
-    
+
     let filled = IconStyle::filled();
     assert_eq!(filled.fill_value(), 1.0);
 }
@@ -188,7 +188,7 @@ fn test_navigation_icons() {
         MaterialIcon::chevron_left(),
         MaterialIcon::chevron_right(),
     ];
-    
+
     for icon in icons {
         assert!(icon.codepoint as u32 > 0, "Icon codepoint should be valid");
         assert!(!icon.as_str().is_empty(), "Icon string should not be empty");
@@ -213,7 +213,7 @@ fn test_action_icons() {
         MaterialIcon::download(),
         MaterialIcon::upload(),
     ];
-    
+
     for icon in icons {
         assert!(icon.codepoint as u32 > 0);
     }
@@ -235,8 +235,11 @@ fn test_game_icons() {
         MaterialIcon::mind(),
         MaterialIcon::lightbulb(),
     ];
-    
+
     for icon in icons {
-        assert!(icon.codepoint as u32 > 0, "Game icon should have valid codepoint");
+        assert!(
+            icon.codepoint as u32 > 0,
+            "Game icon should have valid codepoint"
+        );
     }
 }

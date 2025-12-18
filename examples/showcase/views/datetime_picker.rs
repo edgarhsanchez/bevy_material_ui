@@ -55,7 +55,10 @@ pub fn spawn_datetime_picker_section(parent: &mut ChildSpawnerCommands, theme: &
                         btn.spawn((
                             ButtonLabel,
                             Text::new(label),
-                            TextFont { font_size: 14.0, ..default() },
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
                             TextColor(text_color),
                         ));
                     });
@@ -63,7 +66,10 @@ pub fn spawn_datetime_picker_section(parent: &mut ChildSpawnerCommands, theme: &
                     row.spawn((
                         DateTimePickerResultDisplay(picker_entity),
                         Text::new("Result: None"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                     ));
                 });

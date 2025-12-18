@@ -33,9 +33,9 @@
 //! ```
 
 mod hct;
+mod math;
 mod palette;
 mod scheme;
-mod math;
 
 pub use hct::Hct;
 pub use palette::TonalPalette;

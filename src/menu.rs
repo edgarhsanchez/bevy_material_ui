@@ -23,12 +23,15 @@ impl Plugin for MenuPlugin {
         app.add_message::<MenuOpenEvent>()
             .add_message::<MenuCloseEvent>()
             .add_message::<MenuItemSelectEvent>()
-            .add_systems(Update, (
-                menu_visibility_system,
-                menu_shadow_system,
-                menu_item_interaction_system,
-                menu_item_style_system,
-            ));
+            .add_systems(
+                Update,
+                (
+                    menu_visibility_system,
+                    menu_shadow_system,
+                    menu_item_interaction_system,
+                    menu_item_style_system,
+                ),
+            );
     }
 }
 
@@ -230,9 +233,7 @@ pub const MENU_MAX_WIDTH: f32 = 280.0;
 pub const MENU_ITEM_HEIGHT: f32 = 48.0;
 
 /// System to handle menu visibility
-fn menu_visibility_system(
-    mut menus: Query<(&MaterialMenu, &mut Node), Changed<MaterialMenu>>,
-) {
+fn menu_visibility_system(mut menus: Query<(&MaterialMenu, &mut Node), Changed<MaterialMenu>>) {
     for (menu, mut node) in menus.iter_mut() {
         node.display = if menu.open {
             Display::Flex
@@ -243,9 +244,7 @@ fn menu_visibility_system(
 }
 
 /// System to update menu shadows using native BoxShadow
-fn menu_shadow_system(
-    mut menus: Query<(&MaterialMenu, &mut BoxShadow), Changed<MaterialMenu>>,
-) {
+fn menu_shadow_system(mut menus: Query<(&MaterialMenu, &mut BoxShadow), Changed<MaterialMenu>>) {
     for (menu, mut shadow) in menus.iter_mut() {
         // Only show shadow when menu is open
         if menu.open {
@@ -274,7 +273,7 @@ fn menu_item_interaction_system(
             Interaction::Pressed => {
                 item.pressed = true;
                 item.hovered = false;
-                
+
                 if !item.has_submenu {
                     // Find the menu ancestor
                     if let Ok(menu_entity) = menus.get(parent.parent()) {
@@ -470,17 +469,13 @@ pub trait SpawnMenuChild {
         theme: &MaterialTheme,
         with_items: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a menu item
-    fn spawn_menu_item(
-        &mut self,
-        theme: &MaterialTheme,
-        label: impl Into<String>,
-    );
-    
+    fn spawn_menu_item(&mut self, theme: &MaterialTheme, label: impl Into<String>);
+
     /// Spawn a menu item with full builder control
     fn spawn_menu_item_with(&mut self, theme: &MaterialTheme, builder: MenuItemBuilder);
-    
+
     /// Spawn a menu divider
     fn spawn_menu_divider(&mut self, theme: &MaterialTheme);
 }
@@ -491,41 +486,43 @@ impl SpawnMenuChild for ChildSpawnerCommands<'_> {
         theme: &MaterialTheme,
         with_items: impl FnOnce(&mut ChildSpawnerCommands),
     ) {
-        self.spawn(MenuBuilder::new().build(theme)).with_children(with_items);
+        self.spawn(MenuBuilder::new().build(theme))
+            .with_children(with_items);
     }
-    
-    fn spawn_menu_item(
-        &mut self,
-        theme: &MaterialTheme,
-        label: impl Into<String>,
-    ) {
+
+    fn spawn_menu_item(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
         let label_str = label.into();
         let label_color = theme.on_surface;
-        
+
         self.spawn(MenuItemBuilder::new(&label_str).build(theme))
             .with_children(|item| {
                 item.spawn((
                     Text::new(&label_str),
-                    TextFont { font_size: 14.0, ..default() },
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
                     TextColor(label_color),
                 ));
             });
     }
-    
+
     fn spawn_menu_item_with(&mut self, theme: &MaterialTheme, builder: MenuItemBuilder) {
         let label_str = builder.item.label.clone();
         let label_color = theme.on_surface;
-        
-        self.spawn(builder.build(theme))
-            .with_children(|item| {
-                item.spawn((
-                    Text::new(&label_str),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(label_color),
-                ));
-            });
+
+        self.spawn(builder.build(theme)).with_children(|item| {
+            item.spawn((
+                Text::new(&label_str),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(label_color),
+            ));
+        });
     }
-    
+
     fn spawn_menu_divider(&mut self, theme: &MaterialTheme) {
         self.spawn(create_menu_divider(theme));
     }

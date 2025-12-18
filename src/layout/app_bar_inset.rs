@@ -21,7 +21,11 @@ impl Default for AppBarOffsetConfig {
 
 /// Apply a top inset to a content root to account for a top app bar.
 pub fn apply_app_bar_inset(content: &mut EntityCommands, config: AppBarOffsetConfig) {
-    let inset = lerp(config.height_px, config.collapsed_height_px, config.collapse_factor);
+    let inset = lerp(
+        config.height_px,
+        config.collapsed_height_px,
+        config.collapse_factor,
+    );
     content.insert(Node {
         margin: UiRect::top(Val::Px(inset)),
         ..default()

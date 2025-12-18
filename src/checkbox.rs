@@ -11,7 +11,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    icons::{ICON_CHECK, ICON_REMOVE, MaterialIconFont},
+    icons::{MaterialIconFont, ICON_CHECK, ICON_REMOVE},
     motion::{ease_emphasized_decelerate, StateLayer},
     ripple::RippleHost,
     theme::MaterialTheme,
@@ -23,13 +23,16 @@ pub struct CheckboxPlugin;
 
 impl Plugin for CheckboxPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<CheckboxChangeEvent>()
-            .add_systems(Update, (
+        app.add_message::<CheckboxChangeEvent>().add_systems(
+            Update,
+            (
                 checkbox_interaction_system,
                 checkbox_visual_update_system,
                 checkbox_theme_refresh_system,
                 checkbox_animation_system,
-            ).chain());
+            )
+                .chain(),
+        );
     }
 }
 
@@ -403,22 +406,19 @@ fn checkbox_theme_refresh_system(
 }
 
 /// System to handle checkbox animations
-fn checkbox_animation_system(
-    time: Res<Time>,
-    mut checkboxes: Query<&mut MaterialCheckbox>,
-) {
+fn checkbox_animation_system(time: Res<Time>, mut checkboxes: Query<&mut MaterialCheckbox>) {
     let dt = time.delta_secs();
     let animation_duration = Duration::MEDIUM2;
 
     for mut checkbox in checkboxes.iter_mut() {
         if checkbox.animating {
             checkbox.animation_progress += dt / animation_duration;
-            
+
             if checkbox.animation_progress >= 1.0 {
                 checkbox.animation_progress = 1.0;
                 checkbox.animating = false;
             }
-            
+
             // Apply easing
             let _eased = ease_emphasized_decelerate(checkbox.animation_progress);
         }
@@ -473,7 +473,7 @@ impl CheckboxBuilder {
     }
 
     /// Build a complete checkbox with visuals
-    /// 
+    ///
     /// This spawns a fully-styled checkbox entity with:
     /// - Touch target area (48x48)
     /// - State layer for hover/press feedback
@@ -487,61 +487,68 @@ impl CheckboxBuilder {
         let icon_char = checkbox.state.icon();
         let state_layer_color = checkbox.state_layer_color(theme);
 
-        commands.spawn((
-            checkbox,
-            Button,
-            RippleHost::new(),
-            Node {
-                width: Val::Px(CHECKBOX_TOUCH_TARGET),
-                height: Val::Px(CHECKBOX_TOUCH_TARGET),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(Color::NONE),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
-        )).with_children(|parent| {
-            // State layer (for hover/press effects)
-            parent.spawn((
-                CheckboxStateLayer,
-                StateLayer::new(state_layer_color),
+        commands
+            .spawn((
+                checkbox,
+                Button,
+                RippleHost::new(),
                 Node {
-                    position_type: PositionType::Absolute,
-                    width: Val::Px(40.0),
-                    height: Val::Px(40.0),
+                    width: Val::Px(CHECKBOX_TOUCH_TARGET),
+                    height: Val::Px(CHECKBOX_TOUCH_TARGET),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(20.0)),
-            )).with_children(|state_layer_parent| {
-                // Checkbox box (visual element)
-                state_layer_parent.spawn((
-                    CheckboxBox,
-                    Node {
-                        width: Val::Px(CHECKBOX_SIZE),
-                        height: Val::Px(CHECKBOX_SIZE),
-                        border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    BackgroundColor(bg_color),
-                    BorderColor::all(border_color),
-                    BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
-                )).with_children(|box_parent| {
-                    // Checkmark icon
-                    box_parent.spawn((
-                        CheckboxIcon,
-                        Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
-                        TextFont {
-                            font_size: 14.0,
+                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+            ))
+            .with_children(|parent| {
+                // State layer (for hover/press effects)
+                parent
+                    .spawn((
+                        CheckboxStateLayer,
+                        StateLayer::new(state_layer_color),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
                             ..default()
                         },
-                        TextColor(icon_color),
-                    ));
-                });
-            });
-        }).id()
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(20.0)),
+                    ))
+                    .with_children(|state_layer_parent| {
+                        // Checkbox box (visual element)
+                        state_layer_parent
+                            .spawn((
+                                CheckboxBox,
+                                Node {
+                                    width: Val::Px(CHECKBOX_SIZE),
+                                    height: Val::Px(CHECKBOX_SIZE),
+                                    border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(bg_color),
+                                BorderColor::all(border_color),
+                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                            ))
+                            .with_children(|box_parent| {
+                                // Checkmark icon
+                                box_parent.spawn((
+                                    CheckboxIcon,
+                                    Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
+                                    TextFont {
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(icon_color),
+                                ));
+                            });
+                    });
+            })
+            .id()
     }
 }
 
@@ -583,7 +590,8 @@ impl SpawnCheckbox for Commands<'_, '_> {
             align_items: AlignItems::Center,
             column_gap: Val::Px(12.0),
             ..default()
-        }).with_children(|row| {
+        })
+        .with_children(|row| {
             // Checkbox
             row.spawn((
                 checkbox,
@@ -598,71 +606,75 @@ impl SpawnCheckbox for Commands<'_, '_> {
                 },
                 BackgroundColor(Color::NONE),
                 BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            )).with_children(|parent| {
+            ))
+            .with_children(|parent| {
                 // State layer
-                parent.spawn((
-                    CheckboxStateLayer,
-                    StateLayer::new(state_layer_color),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: Val::Px(40.0),
-                        height: Val::Px(40.0),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    BackgroundColor(Color::NONE),
-                    BorderRadius::all(Val::Px(20.0)),
-                )).with_children(|state_layer_parent| {
-                    // Checkbox box
-                    state_layer_parent.spawn((
-                        CheckboxBox,
+                parent
+                    .spawn((
+                        CheckboxStateLayer,
+                        StateLayer::new(state_layer_color),
                         Node {
-                            width: Val::Px(CHECKBOX_SIZE),
-                            height: Val::Px(CHECKBOX_SIZE),
-                            border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
+                            position_type: PositionType::Absolute,
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        BackgroundColor(bg_color),
-                        BorderColor::all(border_color),
-                        BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
-                    )).with_children(|box_parent| {
-                        // Checkmark
-                        box_parent.spawn((
-                            CheckboxIcon,
-                            Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
-                            TextFont {
-                                font_size: 14.0,
-                                ..default()
-                            },
-                            TextColor(icon_color),
-                        ));
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(20.0)),
+                    ))
+                    .with_children(|state_layer_parent| {
+                        // Checkbox box
+                        state_layer_parent
+                            .spawn((
+                                CheckboxBox,
+                                Node {
+                                    width: Val::Px(CHECKBOX_SIZE),
+                                    height: Val::Px(CHECKBOX_SIZE),
+                                    border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(bg_color),
+                                BorderColor::all(border_color),
+                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                            ))
+                            .with_children(|box_parent| {
+                                // Checkmark
+                                box_parent.spawn((
+                                    CheckboxIcon,
+                                    Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
+                                    TextFont {
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(icon_color),
+                                ));
+                            });
                     });
-                });
             });
 
             // Label
             row.spawn((
                 Text::new(label_text),
-                TextFont { font_size: 14.0, ..default() },
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
-        }).id()
+        })
+        .id()
     }
 }
 
 /// Extension trait to spawn checkboxes within a ChildSpawnerCommands context
 pub trait SpawnCheckboxChild {
     /// Spawn a checkbox with a label
-    fn spawn_checkbox(
-        &mut self,
-        theme: &MaterialTheme,
-        state: CheckboxState,
-        label: &str,
-    );
-    
+    fn spawn_checkbox(&mut self, theme: &MaterialTheme, state: CheckboxState, label: &str);
+
     /// Spawn a checkbox using a builder for more control
     fn spawn_checkbox_with(
         &mut self,
@@ -673,16 +685,11 @@ pub trait SpawnCheckboxChild {
 }
 
 impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
-    fn spawn_checkbox(
-        &mut self,
-        theme: &MaterialTheme,
-        state: CheckboxState,
-        label: &str,
-    ) {
+    fn spawn_checkbox(&mut self, theme: &MaterialTheme, state: CheckboxState, label: &str) {
         let checkbox = CheckboxBuilder::new().state(state).build();
         self.spawn_checkbox_with(theme, checkbox, label);
     }
-    
+
     fn spawn_checkbox_with(
         &mut self,
         theme: &MaterialTheme,
@@ -702,7 +709,8 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
             align_items: AlignItems::Center,
             column_gap: Val::Px(12.0),
             ..default()
-        }).with_children(|row| {
+        })
+        .with_children(|row| {
             // Checkbox
             row.spawn((
                 checkbox,
@@ -718,55 +726,63 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                 },
                 BackgroundColor(Color::NONE),
                 BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            )).with_children(|parent| {
+            ))
+            .with_children(|parent| {
                 // State layer
-                parent.spawn((
-                    CheckboxStateLayer,
-                    StateLayer::new(state_layer_color),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: Val::Px(40.0),
-                        height: Val::Px(40.0),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    BackgroundColor(Color::NONE),
-                    BorderRadius::all(Val::Px(20.0)),
-                )).with_children(|state_layer_parent| {
-                    // Checkbox box
-                    state_layer_parent.spawn((
-                        CheckboxBox,
+                parent
+                    .spawn((
+                        CheckboxStateLayer,
+                        StateLayer::new(state_layer_color),
                         Node {
-                            width: Val::Px(CHECKBOX_SIZE),
-                            height: Val::Px(CHECKBOX_SIZE),
-                            border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
+                            position_type: PositionType::Absolute,
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        BackgroundColor(bg_color),
-                        BorderColor::all(border_color),
-                        BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
-                    )).with_children(|box_parent| {
-                        // Checkmark
-                        box_parent.spawn((
-                            CheckboxIcon,
-                            Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
-                            TextFont {
-                                font_size: 14.0,
-                                ..default()
-                            },
-                            TextColor(icon_color),
-                        ));
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(20.0)),
+                    ))
+                    .with_children(|state_layer_parent| {
+                        // Checkbox box
+                        state_layer_parent
+                            .spawn((
+                                CheckboxBox,
+                                Node {
+                                    width: Val::Px(CHECKBOX_SIZE),
+                                    height: Val::Px(CHECKBOX_SIZE),
+                                    border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(bg_color),
+                                BorderColor::all(border_color),
+                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                            ))
+                            .with_children(|box_parent| {
+                                // Checkmark
+                                box_parent.spawn((
+                                    CheckboxIcon,
+                                    Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
+                                    TextFont {
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(icon_color),
+                                ));
+                            });
                     });
-                });
             });
 
             // Label
             row.spawn((
                 Text::new(label_text),
-                TextFont { font_size: 14.0, ..default() },
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
         });
@@ -798,7 +814,10 @@ mod tests {
 
     #[test]
     fn test_checkbox_state_toggle_indeterminate_to_checked() {
-        assert_eq!(CheckboxState::Indeterminate.toggle(), CheckboxState::Checked);
+        assert_eq!(
+            CheckboxState::Indeterminate.toggle(),
+            CheckboxState::Checked
+        );
     }
 
     #[test]
@@ -894,11 +913,8 @@ mod tests {
 
     #[test]
     fn test_checkbox_builder_chain() {
-        let checkbox = MaterialCheckbox::new()
-            .checked()
-            .disabled(true)
-            .error(true);
-        
+        let checkbox = MaterialCheckbox::new().checked().disabled(true).error(true);
+
         assert!(checkbox.state.is_checked());
         assert!(checkbox.disabled);
         assert!(checkbox.error);
@@ -908,9 +924,9 @@ mod tests {
     fn test_checkbox_start_animation() {
         let mut checkbox = MaterialCheckbox::new();
         assert_eq!(checkbox.state, CheckboxState::Unchecked);
-        
+
         checkbox.start_animation(CheckboxState::Checked);
-        
+
         assert_eq!(checkbox.state, CheckboxState::Checked);
         assert_eq!(checkbox.previous_state, CheckboxState::Unchecked);
         assert_eq!(checkbox.animation_progress, 0.0);
@@ -921,10 +937,10 @@ mod tests {
     fn test_checkbox_start_animation_same_state() {
         let mut checkbox = MaterialCheckbox::new().checked();
         let original_progress = checkbox.animation_progress;
-        
+
         // Animating to same state should not start animation
         checkbox.start_animation(CheckboxState::Checked);
-        
+
         assert_eq!(checkbox.animation_progress, original_progress);
         assert!(!checkbox.animating);
     }
@@ -981,7 +997,7 @@ mod tests {
             .disabled(true)
             .error(true)
             .build();
-        
+
         assert_eq!(checkbox.state, CheckboxState::Checked);
         assert!(checkbox.disabled);
         assert!(checkbox.error);

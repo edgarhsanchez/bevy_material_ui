@@ -64,12 +64,8 @@ fn bench_entity_spawning(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("switches", count), count, |b, &count| {
             b.iter(|| {
                 let mut app = setup_app();
-                app.world_mut().spawn_batch((0..count).map(|_| {
-                    (
-                        MaterialSwitch::new(),
-                        Node::default(),
-                    )
-                }));
+                app.world_mut()
+                    .spawn_batch((0..count).map(|_| (MaterialSwitch::new(), Node::default())));
                 black_box(app.world().entities().len())
             })
         });
@@ -100,27 +96,31 @@ fn bench_component_queries(c: &mut Criterion) {
 
     // Query buttons
     for count in [100, 500, 1000, 5000].iter() {
-        group.bench_with_input(BenchmarkId::new("query_buttons", count), count, |b, &count| {
-            let mut app = setup_app();
-            // Spawn entities
-            app.world_mut().spawn_batch((0..count).map(|i| {
-                (
-                    MaterialButton::new(format!("Button {}", i)),
-                    Node::default(),
-                )
-            }));
+        group.bench_with_input(
+            BenchmarkId::new("query_buttons", count),
+            count,
+            |b, &count| {
+                let mut app = setup_app();
+                // Spawn entities
+                app.world_mut().spawn_batch((0..count).map(|i| {
+                    (
+                        MaterialButton::new(format!("Button {}", i)),
+                        Node::default(),
+                    )
+                }));
 
-            b.iter(|| {
-                let mut query_count = 0;
-                let world = app.world_mut();
-                let mut query = world.query::<&MaterialButton>();
-                for button in query.iter(world) {
-                    black_box(button);
-                    query_count += 1;
-                }
-                black_box(query_count)
-            })
-        });
+                b.iter(|| {
+                    let mut query_count = 0;
+                    let world = app.world_mut();
+                    let mut query = world.query::<&MaterialButton>();
+                    for button in query.iter(world) {
+                        black_box(button);
+                        query_count += 1;
+                    }
+                    black_box(query_count)
+                })
+            },
+        );
     }
 
     // Query with filters
@@ -133,12 +133,11 @@ fn bench_component_queries(c: &mut Criterion) {
                 // Spawn entities, half with different variants
                 app.world_mut().spawn_batch((0..count).map(|i| {
                     (
-                        MaterialButton::new(format!("Button {}", i))
-                            .with_variant(if i % 2 == 0 {
-                                ButtonVariant::Filled
-                            } else {
-                                ButtonVariant::Outlined
-                            }),
+                        MaterialButton::new(format!("Button {}", i)).with_variant(if i % 2 == 0 {
+                            ButtonVariant::Filled
+                        } else {
+                            ButtonVariant::Outlined
+                        }),
                         Node::default(),
                     )
                 }));
@@ -165,30 +164,34 @@ fn bench_ripple_updates(c: &mut Criterion) {
     let mut group = c.benchmark_group("Ripple Updates");
 
     for count in [10, 50, 100, 500].iter() {
-        group.bench_with_input(BenchmarkId::new("update_ripples", count), count, |b, &count| {
-            let mut app = setup_app();
-            // Spawn entities with ripples
-            app.world_mut().spawn_batch((0..count).map(|_| {
-                (
-                    Ripple::new(Vec2::ZERO, 100.0, Color::WHITE),
-                    Node::default(),
-                )
-            }));
+        group.bench_with_input(
+            BenchmarkId::new("update_ripples", count),
+            count,
+            |b, &count| {
+                let mut app = setup_app();
+                // Spawn entities with ripples
+                app.world_mut().spawn_batch((0..count).map(|_| {
+                    (
+                        Ripple::new(Vec2::ZERO, 100.0, Color::WHITE),
+                        Node::default(),
+                    )
+                }));
 
-            b.iter(|| {
-                // Simulate ripple update system
-                let world = app.world_mut();
-                let mut query = world.query::<&mut Ripple>();
-                for mut ripple in query.iter_mut(world) {
-                    // Simulate animation progress
-                    ripple.scale = (ripple.scale + 0.016).min(1.0);
-                    if ripple.scale >= 1.0 && !ripple.fading_out {
-                        ripple.start_fade_out();
+                b.iter(|| {
+                    // Simulate ripple update system
+                    let world = app.world_mut();
+                    let mut query = world.query::<&mut Ripple>();
+                    for mut ripple in query.iter_mut(world) {
+                        // Simulate animation progress
+                        ripple.scale = (ripple.scale + 0.016).min(1.0);
+                        if ripple.scale >= 1.0 && !ripple.fading_out {
+                            ripple.start_fade_out();
+                        }
+                        black_box(&ripple);
                     }
-                    black_box(&ripple);
-                }
-            })
-        });
+                })
+            },
+        );
     }
 
     group.finish();
@@ -199,27 +202,27 @@ fn bench_focus_updates(c: &mut Criterion) {
     let mut group = c.benchmark_group("Focus Updates");
 
     for count in [10, 50, 100, 500].iter() {
-        group.bench_with_input(BenchmarkId::new("update_focus", count), count, |b, &count| {
-            let mut app = setup_app();
-            // Spawn entities with focusable components
-            app.world_mut().spawn_batch((0..count).map(|_| {
-                (
-                    Focusable::new(),
-                    Node::default(),
-                )
-            }));
+        group.bench_with_input(
+            BenchmarkId::new("update_focus", count),
+            count,
+            |b, &count| {
+                let mut app = setup_app();
+                // Spawn entities with focusable components
+                app.world_mut()
+                    .spawn_batch((0..count).map(|_| (Focusable::new(), Node::default())));
 
-            b.iter(|| {
-                let world = app.world_mut();
-                let mut query = world.query::<&mut Focusable>();
-                for mut focusable in query.iter_mut(world) {
-                    // Simulate focus toggle
-                    focusable.focused = !focusable.focused;
-                    focusable.focus_visible = focusable.focused;
-                    black_box(&focusable);
-                }
-            })
-        });
+                b.iter(|| {
+                    let world = app.world_mut();
+                    let mut query = world.query::<&mut Focusable>();
+                    for mut focusable in query.iter_mut(world) {
+                        // Simulate focus toggle
+                        focusable.focused = !focusable.focused;
+                        focusable.focus_visible = focusable.focused;
+                        black_box(&focusable);
+                    }
+                })
+            },
+        );
     }
 
     group.finish();
@@ -308,12 +311,8 @@ fn bench_mixed_workload(c: &mut Criterion) {
             }));
 
             // 10 switches
-            app.world_mut().spawn_batch((0..10).map(|_| {
-                (
-                    MaterialSwitch::new(),
-                    Node::default(),
-                )
-            }));
+            app.world_mut()
+                .spawn_batch((0..10).map(|_| (MaterialSwitch::new(), Node::default())));
 
             // 20 sliders
             app.world_mut().spawn_batch((0..20).map(|i| {
@@ -324,12 +323,8 @@ fn bench_mixed_workload(c: &mut Criterion) {
             }));
 
             // 20 focusables
-            app.world_mut().spawn_batch((0..20).map(|_| {
-                (
-                    Focusable::new(),
-                    Node::default(),
-                )
-            }));
+            app.world_mut()
+                .spawn_batch((0..20).map(|_| (Focusable::new(), Node::default())));
 
             black_box(app.world().entities().len())
         })

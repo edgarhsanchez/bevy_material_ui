@@ -5,8 +5,8 @@
 //!
 //! Reference: <https://m3.material.io/components/dialogs/overview>
 
-use bevy::prelude::*;
 use bevy::picking::Pickable;
+use bevy::prelude::*;
 use bevy::ui::BoxShadow;
 
 use crate::{
@@ -320,16 +320,36 @@ impl DialogBuilder {
             Node {
                 display: Display::None, // Hidden by default
                 position_type: PositionType::Absolute,
-                width: if is_full_screen { Val::Percent(100.0) } else { Val::Auto },
-                height: if is_full_screen { Val::Percent(100.0) } else { Val::Auto },
-                min_width: if is_full_screen { Val::Auto } else { Val::Px(DIALOG_MIN_WIDTH) },
-                max_width: if is_full_screen { Val::Auto } else { Val::Px(DIALOG_MAX_WIDTH) },
+                width: if is_full_screen {
+                    Val::Percent(100.0)
+                } else {
+                    Val::Auto
+                },
+                height: if is_full_screen {
+                    Val::Percent(100.0)
+                } else {
+                    Val::Auto
+                },
+                min_width: if is_full_screen {
+                    Val::Auto
+                } else {
+                    Val::Px(DIALOG_MIN_WIDTH)
+                },
+                max_width: if is_full_screen {
+                    Val::Auto
+                } else {
+                    Val::Px(DIALOG_MAX_WIDTH)
+                },
                 padding: UiRect::all(Val::Px(Spacing::EXTRA_LARGE)),
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(if is_full_screen { 0.0 } else { CornerRadius::EXTRA_LARGE })),
+            BorderRadius::all(Val::Px(if is_full_screen {
+                0.0
+            } else {
+                CornerRadius::EXTRA_LARGE
+            })),
             // Native Bevy 0.17 shadow support (starts hidden since dialog is closed)
             BoxShadow::default(),
         )
@@ -426,9 +446,9 @@ pub fn create_dialog_scrim_for(
 // ============================================================================
 
 /// Extension trait to spawn Material dialogs as children
-/// 
+///
 /// This trait provides a clean API for spawning dialogs within UI hierarchies.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// parent.spawn(Node::default()).with_children(|children| {
@@ -445,7 +465,7 @@ pub trait SpawnDialogChild {
         headline: impl Into<String>,
         with_content: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a dialog with full builder control
     fn spawn_dialog_with(
         &mut self,
@@ -453,7 +473,7 @@ pub trait SpawnDialogChild {
         builder: DialogBuilder,
         with_content: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a dialog scrim overlay
     fn spawn_dialog_scrim(&mut self, theme: &MaterialTheme);
 }
@@ -467,7 +487,7 @@ impl SpawnDialogChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_dialog_with(theme, DialogBuilder::new().title(headline), with_content);
     }
-    
+
     fn spawn_dialog_with(
         &mut self,
         theme: &MaterialTheme,
@@ -476,32 +496,39 @@ impl SpawnDialogChild for ChildSpawnerCommands<'_> {
     ) {
         let title_text: Option<String> = builder.dialog.title.clone();
         let headline_color = theme.on_surface;
-        
-        self.spawn(builder.build(theme))
-            .with_children(|dialog| {
-                // Headline/Title
-                if let Some(ref title) = title_text {
-                    dialog.spawn((
-                        DialogHeadline,
-                        Text::new(title.as_str()),
-                        TextFont { font_size: 24.0, ..default() },
-                        TextColor(headline_color),
-                        Node { margin: UiRect::bottom(Val::Px(16.0)), ..default() },
-                    ));
-                }
-                
-                // Content area
+
+        self.spawn(builder.build(theme)).with_children(|dialog| {
+            // Headline/Title
+            if let Some(ref title) = title_text {
                 dialog.spawn((
+                    DialogHeadline,
+                    Text::new(title.as_str()),
+                    TextFont {
+                        font_size: 24.0,
+                        ..default()
+                    },
+                    TextColor(headline_color),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(16.0)),
+                        ..default()
+                    },
+                ));
+            }
+
+            // Content area
+            dialog
+                .spawn((
                     DialogContent,
                     Node {
                         flex_direction: FlexDirection::Column,
                         flex_grow: 1.0,
                         ..default()
                     },
-                )).with_children(with_content);
-            });
+                ))
+                .with_children(with_content);
+        });
     }
-    
+
     fn spawn_dialog_scrim(&mut self, theme: &MaterialTheme) {
         self.spawn(create_dialog_scrim(theme));
     }

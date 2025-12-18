@@ -17,16 +17,15 @@ pub struct IconButtonPlugin;
 
 impl Plugin for IconButtonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<IconButtonClickEvent>()
-            .add_systems(
-                Update,
-                (
-                    icon_button_interaction_system,
-                    icon_button_style_system,
-                    icon_button_content_style_system,
-                    icon_button_theme_refresh_system,
-                ),
-            );
+        app.add_message::<IconButtonClickEvent>().add_systems(
+            Update,
+            (
+                icon_button_interaction_system,
+                icon_button_style_system,
+                icon_button_content_style_system,
+                icon_button_theme_refresh_system,
+            ),
+        );
     }
 }
 
@@ -137,7 +136,7 @@ impl MaterialIconButton {
                 }
             }
         };
-        
+
         // Apply state layer
         let state_opacity = self.state_layer_opacity();
         if state_opacity > 0.0 {
@@ -151,7 +150,7 @@ impl MaterialIconButton {
             base
         }
     }
-    
+
     /// Get the state layer opacity
     fn state_layer_opacity(&self) -> f32 {
         if self.disabled {
@@ -245,11 +244,11 @@ fn icon_button_interaction_system(
             Interaction::Pressed => {
                 button.pressed = true;
                 button.hovered = false;
-                
+
                 if button.toggle {
                     button.selected = !button.selected;
                 }
-                
+
                 click_events.write(IconButtonClickEvent {
                     entity,
                     selected: button.selected,
@@ -293,7 +292,9 @@ fn icon_button_content_style_system(
     let Some(theme) = theme else { return };
 
     for (entity, button) in buttons.iter() {
-        let Ok(children) = children_q.get(entity) else { continue };
+        let Ok(children) = children_q.get(entity) else {
+            continue;
+        };
         let icon_color = button.icon_color(&theme);
         for child in children.iter() {
             if let Ok(mut style) = icon_styles.get_mut(child) {
@@ -324,7 +325,9 @@ fn icon_button_theme_refresh_system(
         *bg_color = BackgroundColor(button.background_color(&theme));
         *border_color = BorderColor::all(button.border_color(&theme));
 
-        let Ok(children) = children_q.get(entity) else { continue };
+        let Ok(children) = children_q.get(entity) else {
+            continue;
+        };
         let icon_color = button.icon_color(&theme);
         for child in children.iter() {
             if let Ok(mut style) = icon_styles.get_mut(child) {
@@ -432,9 +435,9 @@ impl IconButtonBuilder {
 use crate::icons::MaterialIcon;
 
 /// Extension trait to spawn Material icon buttons as children
-/// 
+///
 /// This trait provides a clean API for spawning icon buttons within UI hierarchies.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// parent.spawn(Node::default()).with_children(|children| {
@@ -466,7 +469,7 @@ pub trait SpawnIconButtonChild {
         codepoint: char,
         variant: IconButtonVariant,
     );
-    
+
     /// Spawn a standard icon button
     fn spawn_standard_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
 
@@ -475,7 +478,7 @@ pub trait SpawnIconButtonChild {
 
     /// Spawn a standard icon button using a raw icon codepoint.
     fn spawn_standard_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char);
-    
+
     /// Spawn a filled icon button
     fn spawn_filled_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
 
@@ -484,7 +487,7 @@ pub trait SpawnIconButtonChild {
 
     /// Spawn a filled icon button using a raw icon codepoint.
     fn spawn_filled_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char);
-    
+
     /// Spawn an outlined icon button
     fn spawn_outlined_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
 
@@ -493,7 +496,7 @@ pub trait SpawnIconButtonChild {
 
     /// Spawn an outlined icon button using a raw icon codepoint.
     fn spawn_outlined_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char);
-    
+
     /// Spawn an icon button with full builder control
     fn spawn_icon_button_with(&mut self, theme: &MaterialTheme, button: MaterialIconButton);
 }
@@ -508,16 +511,17 @@ impl SpawnIconButtonChild for ChildSpawnerCommands<'_> {
         let icon_name = icon.into();
         let builder = IconButtonBuilder::new(icon_name.clone()).variant(variant);
         let icon_color = builder.button.icon_color(theme);
-        
-        self.spawn(builder.build(theme))
-            .with_children(|button| {
-                if let Some(icon) = MaterialIcon::from_name(&icon_name) {
-                    button.spawn((
-                        icon,
-                        IconStyle::outlined().with_color(icon_color).with_size(ICON_SIZE),
-                    ));
-                }
-            });
+
+        self.spawn(builder.build(theme)).with_children(|button| {
+            if let Some(icon) = MaterialIcon::from_name(&icon_name) {
+                button.spawn((
+                    icon,
+                    IconStyle::outlined()
+                        .with_color(icon_color)
+                        .with_size(ICON_SIZE),
+                ));
+            }
+        });
     }
 
     fn spawn_icon_button_icon(
@@ -533,7 +537,9 @@ impl SpawnIconButtonChild for ChildSpawnerCommands<'_> {
         self.spawn(builder.build(theme)).with_children(|button| {
             button.spawn((
                 icon,
-                IconStyle::outlined().with_color(icon_color).with_size(ICON_SIZE),
+                IconStyle::outlined()
+                    .with_color(icon_color)
+                    .with_size(ICON_SIZE),
             ));
         });
     }
@@ -546,7 +552,7 @@ impl SpawnIconButtonChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_icon_button_icon(theme, MaterialIcon::new(codepoint), variant);
     }
-    
+
     fn spawn_standard_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_icon_button(theme, icon, IconButtonVariant::Standard);
     }
@@ -558,7 +564,7 @@ impl SpawnIconButtonChild for ChildSpawnerCommands<'_> {
     fn spawn_standard_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char) {
         self.spawn_icon_button_codepoint(theme, codepoint, IconButtonVariant::Standard);
     }
-    
+
     fn spawn_filled_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_icon_button(theme, icon, IconButtonVariant::Filled);
     }
@@ -570,7 +576,7 @@ impl SpawnIconButtonChild for ChildSpawnerCommands<'_> {
     fn spawn_filled_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char) {
         self.spawn_icon_button_codepoint(theme, codepoint, IconButtonVariant::Filled);
     }
-    
+
     fn spawn_outlined_icon_button(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_icon_button(theme, icon, IconButtonVariant::Outlined);
     }
@@ -582,20 +588,21 @@ impl SpawnIconButtonChild for ChildSpawnerCommands<'_> {
     fn spawn_outlined_icon_button_codepoint(&mut self, theme: &MaterialTheme, codepoint: char) {
         self.spawn_icon_button_codepoint(theme, codepoint, IconButtonVariant::Outlined);
     }
-    
+
     fn spawn_icon_button_with(&mut self, theme: &MaterialTheme, button: MaterialIconButton) {
         let icon_color = button.icon_color(theme);
         let icon_name = button.icon.clone();
         let builder = IconButtonBuilder { button };
-        
-        self.spawn(builder.build(theme))
-            .with_children(|btn| {
-                if let Some(icon) = MaterialIcon::from_name(&icon_name) {
-                    btn.spawn((
-                        icon,
-                        IconStyle::outlined().with_color(icon_color).with_size(ICON_SIZE),
-                    ));
-                }
-            });
+
+        self.spawn(builder.build(theme)).with_children(|btn| {
+            if let Some(icon) = MaterialIcon::from_name(&icon_name) {
+                btn.spawn((
+                    icon,
+                    IconStyle::outlined()
+                        .with_color(icon_color)
+                        .with_size(ICON_SIZE),
+                ));
+            }
+        });
     }
 }

@@ -5,8 +5,8 @@
 //! configuration options.
 
 use bevy::prelude::*;
-use bevy_material_ui::prelude::*;
 use bevy_material_ui::checkbox::SpawnCheckboxChild;
+use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
 
@@ -24,10 +24,10 @@ pub fn spawn_checkboxes_section(
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Checkboxes",
-                "Toggle selection with visual checkmark feedback"
+                "Toggle selection with visual checkmark feedback",
             );
 
             section
@@ -44,8 +44,10 @@ pub fn spawn_checkboxes_section(
                     col.spawn_checkbox(theme, CheckboxState::Unchecked, "Option 3");
                 });
 
-            spawn_code_block(section, theme,
-r#"// Create checkboxes with the simple spawn API
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Create checkboxes with the simple spawn API
 parent.spawn_checkbox(&theme, CheckboxState::Unchecked, "Accept terms");
 parent.spawn_checkbox(&theme, CheckboxState::Checked, "Remember me");
 
@@ -65,6 +67,7 @@ fn handle_checkbox_changes(
     for event in events.read() {
         info!("Checkbox {:?} -> {:?}", event.entity, event.state);
     }
-}"#);
+}"#,
+            );
         });
 }

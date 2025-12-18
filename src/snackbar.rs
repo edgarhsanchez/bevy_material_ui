@@ -6,13 +6,13 @@
 //!
 //! Reference: <https://m3.material.io/components/snackbar/overview>
 
-use bevy::prelude::*;
 use bevy::picking::Pickable;
+use bevy::prelude::*;
 
 use crate::{
     elevation::Elevation,
     icons::{IconStyle, MaterialIcon, MaterialIconFont, ICON_CLOSE},
-    motion::{ease_standard_decelerate, ease_standard_accelerate},
+    motion::{ease_standard_accelerate, ease_standard_decelerate},
     theme::MaterialTheme,
     tokens::{CornerRadius, Duration, Spacing},
 };
@@ -26,15 +26,18 @@ impl Plugin for SnackbarPlugin {
             .add_message::<DismissSnackbar>()
             .add_message::<SnackbarActionEvent>()
             .init_resource::<SnackbarQueue>()
-            .add_systems(Update, (
-                snackbar_queue_system,
-                snackbar_animation_system,
-                snackbar_timeout_system,
-                snackbar_action_system,
-                snackbar_close_system,
-                snackbar_close_button_style_system,
-                snackbar_cleanup_system,
-            ));
+            .add_systems(
+                Update,
+                (
+                    snackbar_queue_system,
+                    snackbar_animation_system,
+                    snackbar_timeout_system,
+                    snackbar_action_system,
+                    snackbar_close_system,
+                    snackbar_close_button_style_system,
+                    snackbar_cleanup_system,
+                ),
+            );
     }
 }
 
@@ -113,33 +116,33 @@ impl ShowSnackbar {
         self.dismissible = dismissible;
         self
     }
-    
+
     /// Set position
     pub fn position(mut self, position: SnackbarPosition) -> Self {
         self.position = position;
         self
     }
-    
+
     /// Position at bottom left
     pub fn bottom_left(self) -> Self {
         self.position(SnackbarPosition::BottomLeft)
     }
-    
+
     /// Position at bottom right
     pub fn bottom_right(self) -> Self {
         self.position(SnackbarPosition::BottomRight)
     }
-    
+
     /// Position at top center
     pub fn top_center(self) -> Self {
         self.position(SnackbarPosition::TopCenter)
     }
-    
+
     /// Position at top left
     pub fn top_left(self) -> Self {
         self.position(SnackbarPosition::TopLeft)
     }
-    
+
     /// Position at top right
     pub fn top_right(self) -> Self {
         self.position(SnackbarPosition::TopRight)
@@ -297,7 +300,7 @@ impl SnackbarHostBuilder {
     pub fn build() -> impl Bundle {
         Self::build_with_position(SnackbarPosition::BottomCenter)
     }
-    
+
     /// Build the snackbar host with a specific default position
     pub fn build_with_position(position: SnackbarPosition) -> impl Bundle {
         // For Column flex direction:
@@ -305,22 +308,32 @@ impl SnackbarHostBuilder {
         // - align_items controls horizontal (cross axis) - Center = centered, FlexStart = left, FlexEnd = right
         let (justify, align, flex_direction, padding) = match position {
             SnackbarPosition::BottomCenter => (
-                JustifyContent::FlexEnd,  // Bottom
-                AlignItems::Center,       // Horizontally centered
+                JustifyContent::FlexEnd, // Bottom
+                AlignItems::Center,      // Horizontally centered
                 FlexDirection::Column,
                 UiRect::bottom(Val::Px(SNACKBAR_MARGIN_BOTTOM)),
             ),
             SnackbarPosition::BottomLeft => (
-                JustifyContent::FlexEnd,  // Bottom
-                AlignItems::FlexStart,    // Left
+                JustifyContent::FlexEnd, // Bottom
+                AlignItems::FlexStart,   // Left
                 FlexDirection::Column,
-                UiRect::new(Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+                UiRect::new(
+                    Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                    Val::Auto,
+                    Val::Auto,
+                    Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                ),
             ),
             SnackbarPosition::BottomRight => (
-                JustifyContent::FlexEnd,  // Bottom
-                AlignItems::FlexEnd,      // Right
+                JustifyContent::FlexEnd, // Bottom
+                AlignItems::FlexEnd,     // Right
                 FlexDirection::Column,
-                UiRect::new(Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+                UiRect::new(
+                    Val::Auto,
+                    Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                    Val::Auto,
+                    Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                ),
             ),
             SnackbarPosition::TopCenter => (
                 JustifyContent::FlexStart, // Top
@@ -332,16 +345,26 @@ impl SnackbarHostBuilder {
                 JustifyContent::FlexStart, // Top
                 AlignItems::FlexStart,     // Left
                 FlexDirection::Column,
-                UiRect::new(Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto),
+                UiRect::new(
+                    Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                    Val::Auto,
+                    Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                    Val::Auto,
+                ),
             ),
             SnackbarPosition::TopRight => (
                 JustifyContent::FlexStart, // Top
                 AlignItems::FlexEnd,       // Right
                 FlexDirection::Column,
-                UiRect::new(Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto),
+                UiRect::new(
+                    Val::Auto,
+                    Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                    Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                    Val::Auto,
+                ),
             ),
         };
-        
+
         (
             SnackbarHost,
             SnackbarHostPosition(position),
@@ -447,10 +470,10 @@ impl SnackbarBuilder {
 pub trait SpawnSnackbarChild {
     /// Spawn a snackbar host container
     fn spawn_snackbar_host(&mut self, position: SnackbarPosition);
-    
+
     /// Spawn a snackbar with message
     fn spawn_snackbar_message(&mut self, theme: &MaterialTheme, message: impl Into<String>);
-    
+
     /// Spawn a snackbar with message and action
     fn spawn_snackbar_with_action(
         &mut self,
@@ -458,7 +481,7 @@ pub trait SpawnSnackbarChild {
         message: impl Into<String>,
         action: impl Into<String>,
     );
-    
+
     /// Spawn a snackbar with full builder control
     fn spawn_snackbar_with(&mut self, theme: &MaterialTheme, builder: SnackbarBuilder);
 }
@@ -467,12 +490,12 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
     fn spawn_snackbar_host(&mut self, position: SnackbarPosition) {
         self.spawn(SnackbarHostBuilder::build_with_position(position));
     }
-    
+
     fn spawn_snackbar_message(&mut self, theme: &MaterialTheme, message: impl Into<String>) {
         let msg = message.into();
         self.spawn_snackbar_with(theme, SnackbarBuilder::new(msg));
     }
-    
+
     fn spawn_snackbar_with_action(
         &mut self,
         theme: &MaterialTheme,
@@ -483,68 +506,83 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
         let act = action.into();
         self.spawn_snackbar_with(theme, SnackbarBuilder::new(msg).action(act));
     }
-    
+
     fn spawn_snackbar_with(&mut self, theme: &MaterialTheme, builder: SnackbarBuilder) {
         let message_text = builder.snackbar.message.clone();
         let action_text = builder.snackbar.action.clone();
         let message_color = theme.inverse_on_surface;
         let action_color = theme.inverse_primary;
         let close_color = theme.inverse_on_surface;
-        
-        self.spawn(builder.build(theme))
-            .with_children(|snackbar| {
-                // Message
-                snackbar.spawn((
-                    SnackbarMessage,
-                    Text::new(&message_text),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(message_color),
-                    Node { flex_grow: 1.0, ..default() },
-                ));
-                
-                // Action button (if present)
-                if let Some(ref action) = action_text {
-                    snackbar.spawn((
+
+        self.spawn(builder.build(theme)).with_children(|snackbar| {
+            // Message
+            snackbar.spawn((
+                SnackbarMessage,
+                Text::new(&message_text),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(message_color),
+                Node {
+                    flex_grow: 1.0,
+                    ..default()
+                },
+            ));
+
+            // Action button (if present)
+            if let Some(ref action) = action_text {
+                snackbar
+                    .spawn((
                         SnackbarAction,
                         Button,
                         Node {
-                            padding: UiRect::axes(Val::Px(Spacing::SMALL), Val::Px(Spacing::EXTRA_SMALL)),
+                            padding: UiRect::axes(
+                                Val::Px(Spacing::SMALL),
+                                Val::Px(Spacing::EXTRA_SMALL),
+                            ),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                    )).with_children(|btn| {
-                        btn.spawn((
-                            Text::new(action),
-                            TextFont { font_size: 14.0, ..default() },
-                            TextColor(action_color),
-                        ));
-                    });
-                }
-
-                // Close button (X icon)
-                snackbar
-                    .spawn((
-                        SnackbarCloseButton,
-                        Button,
-                        Interaction::None,
-                        Node {
-                            width: Val::Px(32.0),
-                            height: Val::Px(32.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            margin: UiRect::left(Val::Px(Spacing::SMALL)),
-                            ..default()
-                        },
-                        BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
                         btn.spawn((
-                            MaterialIcon::new(ICON_CLOSE),
-                            IconStyle::outlined().with_color(close_color).with_size(24.0),
+                            Text::new(action),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(action_color),
                         ));
                     });
-            });
+            }
+
+            // Close button (X icon)
+            snackbar
+                .spawn((
+                    SnackbarCloseButton,
+                    Button,
+                    Interaction::None,
+                    Node {
+                        width: Val::Px(32.0),
+                        height: Val::Px(32.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::left(Val::Px(Spacing::SMALL)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::NONE),
+                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                ))
+                .with_children(|btn| {
+                    btn.spawn((
+                        MaterialIcon::new(ICON_CLOSE),
+                        IconStyle::outlined()
+                            .with_color(close_color)
+                            .with_size(24.0),
+                    ));
+                });
+        });
     }
 }
 
@@ -578,7 +616,7 @@ pub fn spawn_snackbar(
                 column_gap: Val::Px(Spacing::SMALL),
                 ..default()
             },
-            Transform::default(),  // Required for animation system
+            Transform::default(), // Required for animation system
             BackgroundColor(theme.inverse_surface),
             BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             // Native Bevy 0.17 shadow support
@@ -603,82 +641,92 @@ pub fn spawn_snackbar(
 
             // Action button (if provided)
             if let Some(action_text) = &action {
-                parent.spawn((
-                    SnackbarAction,
-                    Button,
-                    Node {
-                        padding: UiRect::axes(Val::Px(Spacing::SMALL), Val::Px(Spacing::EXTRA_SMALL)),
-                        ..default()
-                    },
-                    BackgroundColor(Color::NONE),
-                ))
-                .with_children(|btn| {
-                    btn.spawn((
-                        Text::new(action_text),
-                        TextFont {
-                            font_size: 14.0,
+                parent
+                    .spawn((
+                        SnackbarAction,
+                        Button,
+                        Node {
+                            padding: UiRect::axes(
+                                Val::Px(Spacing::SMALL),
+                                Val::Px(Spacing::EXTRA_SMALL),
+                            ),
                             ..default()
                         },
-                        TextColor(theme.inverse_primary),
-                    ));
-                });
+                        BackgroundColor(Color::NONE),
+                    ))
+                    .with_children(|btn| {
+                        btn.spawn((
+                            Text::new(action_text),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(theme.inverse_primary),
+                        ));
+                    });
             }
-            
+
             // Close button (X icon) - always shown for easy dismissal
             let inverse_on_surface = theme.inverse_on_surface;
             let icon_font_handle = icon_font.map(|f| f.0.clone());
-            parent.spawn((
-                SnackbarCloseButton,
-                Button,
-                Interaction::None,
-                Node {
-                    width: Val::Px(32.0),
-                    height: Val::Px(32.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    margin: UiRect::left(Val::Px(Spacing::SMALL)),
-                    ..default()
-                },
-                BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
-            .with_children(move |btn| {
-                let mut icon_cmd = btn.spawn((
-                    MaterialIcon::new(ICON_CLOSE),
-                    IconStyle::outlined().with_color(inverse_on_surface).with_size(24.0),
-                ));
-
-                // If the icon font is available, eagerly provide render components so the
-                // close icon appears immediately (even if the icon sync system is not used).
-                if let Some(font) = icon_font_handle.clone() {
-                    icon_cmd.insert((
-                        Node {
-                            width: Val::Px(24.0),
-                            height: Val::Px(24.0),
-                            ..default()
-                        },
-                        Text::new(MaterialIcon::new(ICON_CLOSE).as_str()),
-                        TextFont {
-                            font,
-                            font_size: 24.0,
-                            ..default()
-                        },
-                        TextColor(inverse_on_surface),
+            parent
+                .spawn((
+                    SnackbarCloseButton,
+                    Button,
+                    Interaction::None,
+                    Node {
+                        width: Val::Px(32.0),
+                        height: Val::Px(32.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::left(Val::Px(Spacing::SMALL)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::NONE),
+                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                ))
+                .with_children(move |btn| {
+                    let mut icon_cmd = btn.spawn((
+                        MaterialIcon::new(ICON_CLOSE),
+                        IconStyle::outlined()
+                            .with_color(inverse_on_surface)
+                            .with_size(24.0),
                     ));
-                }
-            });
+
+                    // If the icon font is available, eagerly provide render components so the
+                    // close icon appears immediately (even if the icon sync system is not used).
+                    if let Some(font) = icon_font_handle.clone() {
+                        icon_cmd.insert((
+                            Node {
+                                width: Val::Px(24.0),
+                                height: Val::Px(24.0),
+                                ..default()
+                            },
+                            Text::new(MaterialIcon::new(ICON_CLOSE).as_str()),
+                            TextFont {
+                                font,
+                                font_size: 24.0,
+                                ..default()
+                            },
+                            TextColor(inverse_on_surface),
+                        ));
+                    }
+                });
         })
         .id();
-    
+
     // Make the snackbar a child of the host for proper z-ordering
     commands.entity(host).add_children(&[snackbar_entity]);
-    
+
     snackbar_entity
 }
 
 fn snackbar_close_button_style_system(
     theme: Option<Res<MaterialTheme>>,
-    mut buttons: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<SnackbarCloseButton>)>,
+    mut buttons: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<SnackbarCloseButton>),
+    >,
 ) {
     let Some(theme) = theme else { return };
 
@@ -742,22 +790,32 @@ fn snackbar_queue_system(
                     // - align_items controls horizontal (cross axis) - Center = centered, FlexStart = left, FlexEnd = right
                     let (justify, align, flex_direction, padding) = match event.position {
                         SnackbarPosition::BottomCenter => (
-                            JustifyContent::FlexEnd,  // Bottom
-                            AlignItems::Center,       // Horizontally centered
+                            JustifyContent::FlexEnd, // Bottom
+                            AlignItems::Center,      // Horizontally centered
                             FlexDirection::Column,
                             UiRect::bottom(Val::Px(SNACKBAR_MARGIN_BOTTOM)),
                         ),
                         SnackbarPosition::BottomLeft => (
-                            JustifyContent::FlexEnd,  // Bottom
-                            AlignItems::FlexStart,    // Left
+                            JustifyContent::FlexEnd, // Bottom
+                            AlignItems::FlexStart,   // Left
                             FlexDirection::Column,
-                            UiRect::new(Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+                            UiRect::new(
+                                Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                                Val::Auto,
+                                Val::Auto,
+                                Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                            ),
                         ),
                         SnackbarPosition::BottomRight => (
-                            JustifyContent::FlexEnd,  // Bottom
-                            AlignItems::FlexEnd,      // Right
+                            JustifyContent::FlexEnd, // Bottom
+                            AlignItems::FlexEnd,     // Right
                             FlexDirection::Column,
-                            UiRect::new(Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+                            UiRect::new(
+                                Val::Auto,
+                                Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                                Val::Auto,
+                                Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                            ),
                         ),
                         SnackbarPosition::TopCenter => (
                             JustifyContent::FlexStart, // Top
@@ -769,13 +827,23 @@ fn snackbar_queue_system(
                             JustifyContent::FlexStart, // Top
                             AlignItems::FlexStart,     // Left
                             FlexDirection::Column,
-                            UiRect::new(Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto),
+                            UiRect::new(
+                                Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                                Val::Auto,
+                                Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                                Val::Auto,
+                            ),
                         ),
                         SnackbarPosition::TopRight => (
                             JustifyContent::FlexStart, // Top
                             AlignItems::FlexEnd,       // Right
                             FlexDirection::Column,
-                            UiRect::new(Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto),
+                            UiRect::new(
+                                Val::Auto,
+                                Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                                Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                                Val::Auto,
+                            ),
                         ),
                     };
                     host_node.justify_content = justify;
@@ -783,8 +851,9 @@ fn snackbar_queue_system(
                     host_node.flex_direction = flex_direction;
                     host_node.padding = padding;
                 }
-                
-                let entity = spawn_snackbar(&mut commands, &theme, &event, host, icon_font.as_deref());
+
+                let entity =
+                    spawn_snackbar(&mut commands, &theme, &event, host, icon_font.as_deref());
                 queue.active = Some(entity);
                 queue.queue.remove(0);
             }
@@ -908,18 +977,24 @@ fn snackbar_action_system(
 
 /// System to handle snackbar close button clicks
 fn snackbar_close_system(
-    interactions: Query<(&Interaction, &ChildOf), (Changed<Interaction>, With<SnackbarCloseButton>)>,
+    interactions: Query<
+        (&Interaction, &ChildOf),
+        (Changed<Interaction>, With<SnackbarCloseButton>),
+    >,
     mut snackbars: Query<&mut Snackbar>,
 ) {
     for (interaction, child_of) in interactions.iter() {
         #[cfg(debug_assertions)]
         bevy::log::debug!("Snackbar close button interaction: {:?}", interaction);
-        
+
         if *interaction == Interaction::Pressed {
             let parent_entity = child_of.parent();
             #[cfg(debug_assertions)]
-            bevy::log::debug!("Snackbar close button pressed, looking for parent: {:?}", parent_entity);
-            
+            bevy::log::debug!(
+                "Snackbar close button pressed, looking for parent: {:?}",
+                parent_entity
+            );
+
             if let Ok(mut snackbar) = snackbars.get_mut(parent_entity) {
                 #[cfg(debug_assertions)]
                 bevy::log::info!("Dismissing snackbar via close button");
@@ -988,7 +1063,7 @@ mod tests {
         let mut snackbar = Snackbar::from_event(&ShowSnackbar::message("Test"));
         snackbar.dismiss();
         assert_eq!(snackbar.animation_state, SnackbarAnimationState::Exiting);
-        
+
         // Second dismiss should not change state
         snackbar.dismiss();
         assert_eq!(snackbar.animation_state, SnackbarAnimationState::Exiting);

@@ -160,10 +160,7 @@ impl Plugin for WindowSizeClassPlugin {
 }
 
 /// System that updates the window size class resource when window resizes
-fn update_window_size_class(
-    windows: Query<&Window>,
-    mut size_class: ResMut<WindowSizeClass>,
-) {
+fn update_window_size_class(windows: Query<&Window>, mut size_class: ResMut<WindowSizeClass>) {
     let Ok(window) = windows.single() else {
         return;
     };

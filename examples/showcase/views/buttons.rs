@@ -15,10 +15,10 @@ pub fn spawn_buttons_section(parent: &mut ChildSpawnerCommands, theme: &Material
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Buttons",
-                "MD3 buttons with 5 variants: Filled, Outlined, Text, Elevated, and Tonal"
+                "MD3 buttons with 5 variants: Filled, Outlined, Text, Elevated, and Tonal",
             );
 
             section
@@ -37,8 +37,10 @@ pub fn spawn_buttons_section(parent: &mut ChildSpawnerCommands, theme: &Material
                     spawn_interactive_button(row, theme, "Tonal", ButtonVariant::FilledTonal);
                 });
 
-            spawn_code_block(section, theme, 
-r#"// Create a filled button
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Create a filled button
 let button = MaterialButton::new("Click Me")
     .with_variant(ButtonVariant::Filled);
 
@@ -49,7 +51,8 @@ commands.spawn((
     Node { padding: UiRect::axes(Val::Px(24.0), Val::Px(10.0)), ..default() },
     BackgroundColor(theme.primary),
     BorderRadius::all(Val::Px(20.0)),
-));"#);
+));"#,
+            );
         });
 }
 
@@ -69,7 +72,7 @@ fn spawn_interactive_button(
     parent
         .spawn((
             button,
-            Button, // This is key - Bevy's Button component enables interaction
+            Button,            // This is key - Bevy's Button component enables interaction
             Interaction::None, // Ensure interaction is initialized
             RippleHost::new(),
             Node {
@@ -87,7 +90,10 @@ fn spawn_interactive_button(
         .with_children(|btn| {
             btn.spawn((
                 Text::new(label),
-                TextFont { font_size: 14.0, ..default() },
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
                 TextColor(text_color),
             ));
         });

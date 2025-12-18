@@ -1,8 +1,8 @@
 //! Search bar view for the showcase application.
 
 use bevy::prelude::*;
+use bevy_material_ui::icons::{ICON_ARROW_BACK, ICON_MENU};
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::icons::{ICON_MENU, ICON_ARROW_BACK};
 
 use crate::showcase::common::*;
 
@@ -36,7 +36,10 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     // Default search bar
                     col.spawn((
                         Text::new("Default search bar"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                     ));
                     col.spawn_search_bar(theme, "Search...");
@@ -44,7 +47,10 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     // Search bar with navigation
                     col.spawn((
                         Text::new("With navigation icon"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                         Node {
                             margin: UiRect::top(Val::Px(16.0)),
@@ -60,7 +66,10 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     // Search bar with text
                     col.spawn((
                         Text::new("With search text"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                         Node {
                             margin: UiRect::top(Val::Px(16.0)),

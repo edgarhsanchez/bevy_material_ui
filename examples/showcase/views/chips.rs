@@ -6,7 +6,11 @@ use bevy_material_ui::prelude::*;
 use crate::showcase::common::*;
 
 /// Spawn the chips section content
-pub fn spawn_chips_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, _icon_font: Handle<Font>) {
+pub fn spawn_chips_section(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    _icon_font: Handle<Font>,
+) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -15,10 +19,10 @@ pub fn spawn_chips_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Chips",
-                "Compact elements for filters, selections, and actions"
+                "Compact elements for filters, selections, and actions",
             );
 
             section
@@ -36,8 +40,10 @@ pub fn spawn_chips_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                     spawn_chip(row, theme, "Action", false);
                 });
 
-            spawn_code_block(section, theme,
-r#"// Create an assist chip
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Create an assist chip
 let chip = MaterialChip::assist("Label");
 
 // Create a filter chip (toggleable)
@@ -45,11 +51,17 @@ let chip = MaterialChip::filter("Category")
     .selected(true);
 
 // Create an input chip (with close button)
-let chip = MaterialChip::input("User Input");"#);
+let chip = MaterialChip::input("User Input");"#,
+            );
         });
 }
 
-fn spawn_chip(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, label: &str, selected: bool) {
+fn spawn_chip(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    label: &str,
+    selected: bool,
+) {
     let chip_for_color = MaterialChip::filter(label).with_selected(selected);
     let label_color = chip_for_color.label_color(theme);
 
@@ -62,7 +74,10 @@ fn spawn_chip(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, label: &
             chip.spawn((
                 ChipLabel,
                 Text::new(label),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
         });

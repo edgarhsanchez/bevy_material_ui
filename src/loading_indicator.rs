@@ -3,17 +3,12 @@
 //! The MD3 LoadingIndicator is an indeterminate activity indicator with morphing shapes.
 //! Reference: <https://m3.material.io/components/loading-indicator/overview>
 
-use bevy::{
-    prelude::*,
-    render::render_resource::AsBindGroup,
-    shader::ShaderRef,
-};
+use bevy::{prelude::*, render::render_resource::AsBindGroup, shader::ShaderRef};
 
 use crate::theme::MaterialTheme;
 
-pub const SHAPE_MORPH_SHADER_HANDLE: Handle<Shader> = bevy::asset::uuid_handle!(
-    "5a0d5e7c-4d3d-4a0e-a2b9-8b26e5f31b2d"
-);
+pub const SHAPE_MORPH_SHADER_HANDLE: Handle<Shader> =
+    bevy::asset::uuid_handle!("5a0d5e7c-4d3d-4a0e-a2b9-8b26e5f31b2d");
 
 /// Custom UI material for shape morphing using SDF shaders
 #[derive(AsBindGroup, Asset, TypePath, Debug, Clone)]
@@ -132,6 +127,12 @@ impl MaterialLoadingIndicator {
     }
 }
 
+impl Default for MaterialLoadingIndicator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Default loading indicator size
 pub const LOADING_INDICATOR_SIZE: f32 = 48.0;
 
@@ -153,13 +154,13 @@ pub const SHAPE_COUNT: usize = 7;
 /// Shape types for morphing sequence
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum LoadingShape {
-    SoftBurst,   // 0
-    Cookie9,     // 1
-    Pentagon,    // 2
-    Pill,        // 3
-    Sunny,       // 4
-    Cookie4,     // 5
-    Oval,        // 6
+    SoftBurst, // 0
+    Cookie9,   // 1
+    Pentagon,  // 2
+    Pill,      // 3
+    Sunny,     // 4
+    Cookie4,   // 5
+    Oval,      // 6
 }
 
 impl LoadingShape {
@@ -184,11 +185,13 @@ struct LoadingIndicatorShape;
 pub const LOADING_INDICATOR_DOT_COUNT: usize = 12;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 struct LoadingIndicatorDot {
     index: usize,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 struct LoadingIndicatorDotFor(Entity);
 
 /// System to animate shape morphing
@@ -199,7 +202,7 @@ fn loading_indicator_morph_animation_system(
     for mut indicator in indicators.iter_mut() {
         // Advance morph fraction (0.0 to SHAPE_COUNT)
         indicator.morph_fraction += time.delta_secs() * indicator.speed / DURATION_PER_SHAPE;
-        
+
         // Wrap around after completing all shapes
         if indicator.morph_fraction >= SHAPE_COUNT as f32 {
             indicator.morph_fraction -= SHAPE_COUNT as f32;
@@ -216,11 +219,12 @@ fn loading_indicator_rotation_animation_system(
     for mut indicator in indicators.iter_mut() {
         let morph_factor_base = indicator.morph_fraction.floor();
         let morph_factor_per_shape = indicator.morph_fraction - morph_factor_base;
-        
+
         // Calculate rotation components
-        let constant_rotation = CONSTANT_ROTATION_PER_SHAPE * time.delta_secs() * indicator.speed / DURATION_PER_SHAPE;
-        let spring_rotation = EXTRA_ROTATION_PER_SHAPE * morph_factor_per_shape;
-        
+        let constant_rotation =
+            CONSTANT_ROTATION_PER_SHAPE * time.delta_secs() * indicator.speed / DURATION_PER_SHAPE;
+        let _spring_rotation = EXTRA_ROTATION_PER_SHAPE * morph_factor_per_shape;
+
         indicator.rotation += constant_rotation;
         indicator.rotation %= 360.0;
     }
@@ -255,7 +259,7 @@ fn loading_indicator_material_update_system(
                     // Calculate current and next shapes
                     let shape_index = indicator.morph_fraction.floor() as u32;
                     let morph_t = indicator.morph_fraction.fract();
-                    
+
                     material.shape_from = shape_index % 7;
                     material.shape_to = (shape_index + 1) % 7;
                     material.morph_t = morph_t;
@@ -268,6 +272,7 @@ fn loading_indicator_material_update_system(
 }
 
 /// Interpolate between two border radii
+#[allow(dead_code)]
 fn interpolate_border_radius(from: BorderRadius, to: BorderRadius, t: f32) -> BorderRadius {
     BorderRadius {
         top_left: interpolate_val(from.top_left, to.top_left, t),
@@ -277,6 +282,7 @@ fn interpolate_border_radius(from: BorderRadius, to: BorderRadius, t: f32) -> Bo
     }
 }
 
+#[allow(dead_code)]
 fn interpolate_val(from: Val, to: Val, t: f32) -> Val {
     match (from, to) {
         (Val::Px(a), Val::Px(b)) => Val::Px(a + (b - a) * t),
@@ -287,8 +293,11 @@ fn interpolate_val(from: Val, to: Val, t: f32) -> Val {
 /// System to refresh loading indicator colors when theme changes
 fn loading_indicator_theme_refresh_system(
     theme: Option<Res<MaterialTheme>>,
-    mut indicators: Query<(&MaterialLoadingIndicator, &mut BackgroundColor), Without<LoadingIndicatorShape>>,
-    mut shapes: Query<&mut BackgroundColor, With<LoadingIndicatorShape>>,
+    mut indicators: Query<
+        (&MaterialLoadingIndicator, &mut BackgroundColor),
+        Without<LoadingIndicatorShape>,
+    >,
+    _shapes: Query<&mut BackgroundColor, With<LoadingIndicatorShape>>,
 ) {
     let Some(theme) = theme else { return };
     if !theme.is_changed() {
@@ -411,16 +420,12 @@ impl<'a> SpawnLoadingIndicatorChild<'a> for ChildSpawnerCommands<'a> {
         materials: &mut Assets<ShapeMorphMaterial>,
         builder: LoadingIndicatorBuilder,
     ) {
-        let color = if builder.indicator.multi_color {
-            theme.primary
-        } else {
-            theme.primary
-        };
-        
+        let color = theme.primary;
+
         let fill_parent = builder.indicator.fill_parent;
         let shape_size = LOADING_INDICATOR_SHAPE_SIZE;
         let container_size = builder.indicator.size;
-        
+
         // Create material handle
         let material_handle = materials.add(ShapeMorphMaterial {
             shape_from: 0,
@@ -429,7 +434,7 @@ impl<'a> SpawnLoadingIndicatorChild<'a> for ChildSpawnerCommands<'a> {
             rotation: 0.0,
             color: LinearRgba::from(color),
         });
-        
+
         self.spawn(builder.build(theme)).with_children(|parent| {
             if fill_parent {
                 // Fill entire parent container

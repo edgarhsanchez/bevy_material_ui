@@ -9,8 +9,8 @@ use crate::button::{ButtonLabel, ButtonVariant, MaterialButton, MaterialButtonBu
 use crate::icon_button::{IconButtonBuilder, IconButtonVariant, MaterialIconButton, ICON_SIZE};
 use crate::icons::{IconStyle, MaterialIcon};
 use crate::scroll::{spawn_scrollbars, ScrollContainerBuilder, ScrollDirection};
-use crate::tokens::{CornerRadius, Spacing};
 use crate::theme::MaterialTheme;
+use crate::tokens::{CornerRadius, Spacing};
 
 /// Plugin for the DateTime picker component.
 pub struct DateTimePickerPlugin;
@@ -347,7 +347,16 @@ impl DateTimePickerBuilder {
         self
     }
 
-    fn build_root(&self, _theme: &MaterialTheme) -> (MaterialDateTimePicker, Node, Visibility, GlobalZIndex, BackgroundColor) {
+    fn build_root(
+        &self,
+        _theme: &MaterialTheme,
+    ) -> (
+        MaterialDateTimePicker,
+        Node,
+        Visibility,
+        GlobalZIndex,
+        BackgroundColor,
+    ) {
         (
             self.picker.clone(),
             Node {
@@ -417,6 +426,7 @@ struct DateTimePickerScrim {
 
 #[derive(Component)]
 struct DateTimePickerDialog {
+    #[allow(dead_code)]
     picker: Entity,
 }
 
@@ -520,7 +530,11 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
         let _ = self.spawn_datetime_picker_entity_with(theme, DateTimePickerBuilder::new());
     }
 
-    fn spawn_datetime_picker_with(&mut self, theme: &MaterialTheme, builder: DateTimePickerBuilder) {
+    fn spawn_datetime_picker_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: DateTimePickerBuilder,
+    ) {
         let _ = self.spawn_datetime_picker_entity_with(theme, builder);
     }
 
@@ -540,7 +554,9 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
         overlay.with_children(|overlay| {
             // Scrim
             overlay.spawn((
-                DateTimePickerScrim { picker: picker_entity },
+                DateTimePickerScrim {
+                    picker: picker_entity,
+                },
                 Button,
                 Interaction::None,
                 Node {
@@ -557,7 +573,9 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
             // Dialog
             overlay
                 .spawn((
-                    DateTimePickerDialog { picker: picker_entity },
+                    DateTimePickerDialog {
+                        picker: picker_entity,
+                    },
                     Node {
                         width: dialog_width,
                         flex_direction: FlexDirection::Column,
@@ -571,7 +589,10 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                 .with_children(|dialog| {
                     dialog.spawn((
                         Text::new(title),
-                        TextFont { font_size: 20.0, ..default() },
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface),
                     ));
 
@@ -581,7 +602,10 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                             kind: PickerLabelKind::Selected,
                         },
                         Text::new("Result"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                     ));
 
@@ -622,7 +646,9 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
 
                             // Center label acts as toggle between DAY/YEAR selector (like MDC).
                             row.spawn((
-                                DateTimePickerSelectorToggle { picker: picker_entity },
+                                DateTimePickerSelectorToggle {
+                                    picker: picker_entity,
+                                },
                                 Button,
                                 Interaction::None,
                                 Node {
@@ -641,7 +667,10 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                                         kind: PickerLabelKind::Month,
                                     },
                                     Text::new(""),
-                                    TextFont { font_size: 14.0, ..default() },
+                                    TextFont {
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
                                     TextColor(theme.on_surface),
                                 ));
 
@@ -694,9 +723,15 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                             for wd in Weekday::all_starting_from(first_dow) {
                                 row.spawn((
                                     Text::new(wd.short_name()),
-                                    TextFont { font_size: 12.0, ..default() },
+                                    TextFont {
+                                        font_size: 12.0,
+                                        ..default()
+                                    },
                                     TextColor(theme.on_surface_variant),
-                                    Node { width: Val::Px(40.0), ..default() },
+                                    Node {
+                                        width: Val::Px(40.0),
+                                        ..default()
+                                    },
                                 ));
                             }
                         });
@@ -704,7 +739,9 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                     // Day grid
                     dialog
                         .spawn((
-                            DateTimePickerDayGrid { picker: picker_entity },
+                            DateTimePickerDayGrid {
+                                picker: picker_entity,
+                            },
                             Node {
                                 flex_direction: FlexDirection::Row,
                                 flex_wrap: FlexWrap::Wrap,
@@ -736,7 +773,10 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                                     cell.spawn((
                                         DateTimePickerDayCellText,
                                         Text::new(""),
-                                        TextFont { font_size: 14.0, ..default() },
+                                        TextFont {
+                                            font_size: 14.0,
+                                            ..default()
+                                        },
                                         TextColor(theme.on_surface),
                                     ));
                                 });
@@ -747,8 +787,13 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                     // Starts hidden and is toggled by clicking the month/year header.
                     dialog
                         .spawn((
-                            DateTimePickerYearGrid { picker: picker_entity },
-                            ScrollContainerBuilder::new().vertical().with_scrollbars(true).build(),
+                            DateTimePickerYearGrid {
+                                picker: picker_entity,
+                            },
+                            ScrollContainerBuilder::new()
+                                .vertical()
+                                .with_scrollbars(true)
+                                .build(),
                             ScrollPosition::default(),
                             Node {
                                 width: Val::Percent(100.0),
@@ -795,14 +840,19 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                                             BackgroundColor(Color::NONE),
                                             BorderRadius::all(Val::Px(20.0)),
                                         ))
-                                        .with_children(|cell| {
-                                            cell.spawn((
-                                                DateTimePickerYearCellText,
-                                                Text::new(""),
-                                                TextFont { font_size: 14.0, ..default() },
-                                                TextColor(theme.on_surface),
-                                            ));
-                                        });
+                                        .with_children(
+                                            |cell| {
+                                                cell.spawn((
+                                                    DateTimePickerYearCellText,
+                                                    Text::new(""),
+                                                    TextFont {
+                                                        font_size: 14.0,
+                                                        ..default()
+                                                    },
+                                                    TextColor(theme.on_surface),
+                                                ));
+                                            },
+                                        );
                                     }
                                 });
                         });
@@ -817,7 +867,10 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                         .with_children(|col| {
                             col.spawn((
                                 Text::new("Time"),
-                                TextFont { font_size: 12.0, ..default() },
+                                TextFont {
+                                    font_size: 12.0,
+                                    ..default()
+                                },
                                 TextColor(theme.on_surface_variant),
                             ));
 
@@ -835,14 +888,20 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                                         kind: PickerLabelKind::Hour,
                                     },
                                     Text::new("00"),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(theme.on_surface),
                                 ));
                                 spawn_time_adjust(row, theme, picker_entity, TimeField::Hour, 1);
 
                                 row.spawn((
                                     Text::new(":"),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(theme.on_surface),
                                 ));
 
@@ -853,7 +912,10 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                                         kind: PickerLabelKind::Minute,
                                     },
                                     Text::new("00"),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(theme.on_surface),
                                 ));
                                 spawn_time_adjust(row, theme, picker_entity, TimeField::Minute, 1);
@@ -869,7 +931,13 @@ impl SpawnDateTimePickerChild for ChildSpawnerCommands<'_> {
                             ..default()
                         })
                         .with_children(|row| {
-                            spawn_action_button(row, theme, picker_entity, PickerAction::Cancel, "Cancel");
+                            spawn_action_button(
+                                row,
+                                theme,
+                                picker_entity,
+                                PickerAction::Cancel,
+                                "Cancel",
+                            );
                             spawn_action_button(row, theme, picker_entity, PickerAction::Ok, "OK");
                         });
                 });
@@ -934,7 +1002,10 @@ fn spawn_action_button(
             btn.spawn((
                 ButtonLabel,
                 Text::new(label),
-                TextFont { font_size: 14.0, ..default() },
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
                 TextColor(text_color),
             ));
         });
@@ -944,7 +1015,9 @@ fn spawn_action_button(
 // Systems
 // ============================================================================
 
-fn datetime_picker_visibility_system(mut pickers: Query<(&MaterialDateTimePicker, &mut Visibility), Changed<MaterialDateTimePicker>>) {
+fn datetime_picker_visibility_system(
+    mut pickers: Query<(&MaterialDateTimePicker, &mut Visibility), Changed<MaterialDateTimePicker>>,
+) {
     for (picker, mut vis) in pickers.iter_mut() {
         *vis = if picker.open {
             Visibility::Visible
@@ -1098,7 +1171,8 @@ fn datetime_picker_day_interaction_system(
 
         let first = Date::new(picker.display_year, picker.display_month, 1);
         let first_wd = weekday_for_date(first);
-        let offset = (weekday_index(first_wd) - weekday_index(picker.first_day_of_week)).rem_euclid(7);
+        let offset =
+            (weekday_index(first_wd) - weekday_index(picker.first_day_of_week)).rem_euclid(7);
         let day_number = cell.index as i32 - offset + 1;
 
         let dim = days_in_month(picker.display_year, picker.display_month) as i32;
@@ -1346,7 +1420,8 @@ fn datetime_picker_day_grid_render_system(
 
         let first = Date::new(picker.display_year, picker.display_month, 1);
         let first_wd = weekday_for_date(first);
-        let offset = (weekday_index(first_wd) - weekday_index(picker.first_day_of_week)).rem_euclid(7);
+        let offset =
+            (weekday_index(first_wd) - weekday_index(picker.first_day_of_week)).rem_euclid(7);
         let day_number = cell.index as i32 - offset + 1;
 
         let dim = days_in_month(picker.display_year, picker.display_month) as i32;

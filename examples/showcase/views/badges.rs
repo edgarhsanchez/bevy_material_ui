@@ -1,13 +1,17 @@
 //! Badges view for the showcase application.
 
 use bevy::prelude::*;
-use bevy_material_ui::prelude::*;
 use bevy_material_ui::icons::ICON_NOTIFICATIONS;
+use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
 
 /// Spawn the badges section content
-pub fn spawn_badges_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, icon_font: Handle<Font>) {
+pub fn spawn_badges_section(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    icon_font: Handle<Font>,
+) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -16,10 +20,10 @@ pub fn spawn_badges_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Badges",
-                "Notification indicators for counts and status"
+                "Notification indicators for counts and status",
             );
 
             let icon_font_clone = icon_font.clone();
@@ -40,49 +44,63 @@ pub fn spawn_badges_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     spawn_badge_example(row, theme, &icon_font_clone, Some("99+"));
                 });
 
-            spawn_code_block(section, theme,
-r#"// Dot badge (no text)
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Dot badge (no text)
 let badge = MaterialBadge::dot();
 
 // Count badge
 let badge = MaterialBadge::count(5);
 
 // Count badge with max
-let badge = MaterialBadge::count(150).max(99); // Shows "99+""#);
+let badge = MaterialBadge::count(150).max(99); // Shows "99+""#,
+            );
         });
 }
 
-fn spawn_badge_example(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, icon_font: &Handle<Font>, count: Option<&str>) {
-    parent.spawn((
-        Node {
-            width: Val::Px(48.0),
-            height: Val::Px(48.0),
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            ..default()
-        },
-        BackgroundColor(theme.surface_container),
-        BorderRadius::all(Val::Px(8.0)),
-    )).with_children(|container| {
-        // Notification icon with proper font
-        container.spawn((
-            Text::new(ICON_NOTIFICATIONS.to_string()),
-            TextFont { font: icon_font.clone(), font_size: 24.0, ..default() },
-            TextColor(theme.on_surface),
-        ));
-        
-        // Badge (real MaterialBadge component)
-        match count {
-            None => {
-                container.spawn_small_badge(theme);
+fn spawn_badge_example(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    icon_font: &Handle<Font>,
+    count: Option<&str>,
+) {
+    parent
+        .spawn((
+            Node {
+                width: Val::Px(48.0),
+                height: Val::Px(48.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(theme.surface_container),
+            BorderRadius::all(Val::Px(8.0)),
+        ))
+        .with_children(|container| {
+            // Notification icon with proper font
+            container.spawn((
+                Text::new(ICON_NOTIFICATIONS.to_string()),
+                TextFont {
+                    font: icon_font.clone(),
+                    font_size: 24.0,
+                    ..default()
+                },
+                TextColor(theme.on_surface),
+            ));
+
+            // Badge (real MaterialBadge component)
+            match count {
+                None => {
+                    container.spawn_small_badge(theme);
+                }
+                Some("99+") => {
+                    container.spawn_badge_with(theme, BadgeBuilder::count(150).max(99));
+                }
+                Some(c) => {
+                    let parsed = c.parse::<u32>().unwrap_or(0);
+                    container.spawn_badge_count(theme, parsed);
+                }
             }
-            Some("99+") => {
-                container.spawn_badge_with(theme, BadgeBuilder::count(150).max(99));
-            }
-            Some(c) => {
-                let parsed = c.parse::<u32>().unwrap_or(0);
-                container.spawn_badge_count(theme, parsed);
-            }
-        }
-    });
+        });
 }

@@ -5,11 +5,7 @@
 
 use bevy::prelude::*;
 
-use crate::{
-    ripple::RippleHost,
-    theme::MaterialTheme,
-    tokens::Spacing,
-};
+use crate::{ripple::RippleHost, theme::MaterialTheme, tokens::Spacing};
 
 /// Plugin for the tabs component
 pub struct TabsPlugin;
@@ -196,7 +192,7 @@ fn tab_interaction_system(
             Interaction::Pressed => {
                 tab.pressed = true;
                 tab.hovered = false;
-                
+
                 let tab_index = tab.index;
 
                 // Update tabs container
@@ -291,7 +287,9 @@ fn tab_label_and_indicator_system(
     let Some(theme) = theme else { return };
 
     for (tab_entity, tab, children, parent) in tab_query.iter_mut() {
-        let Ok(tabs) = tabs_query.get(parent.parent()) else { continue };
+        let Ok(tabs) = tabs_query.get(parent.parent()) else {
+            continue;
+        };
         let label_color = tab.content_color(&theme, tabs.variant);
 
         let mut has_indicator = false;
@@ -318,7 +316,7 @@ fn tab_label_and_indicator_system(
 }
 
 /// System to update tab content visibility based on selected tab
-/// 
+///
 /// This system looks for `TabContent` components that are siblings of `MaterialTab` components
 /// within a `MaterialTabs` container, or content panels that are children of the tabs container.
 fn tab_content_visibility_system(
@@ -479,9 +477,9 @@ impl TabBuilder {
 pub struct TabIndicator;
 
 /// Tab content panel that shows/hides based on tab selection
-/// 
+///
 /// Add this to content containers that should be shown/hidden when tabs change.
-/// The content's visibility will be managed automatically based on the parent 
+/// The content's visibility will be managed automatically based on the parent
 /// `MaterialTabs` container's selected tab.
 #[derive(Component)]
 pub struct TabContent {
@@ -529,15 +527,10 @@ pub trait SpawnTabsChild {
         variant: TabVariant,
         with_tabs: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a single tab
-    fn spawn_tab(
-        &mut self,
-        theme: &MaterialTheme,
-        label: impl Into<String>,
-        selected: bool,
-    );
-    
+    fn spawn_tab(&mut self, theme: &MaterialTheme, label: impl Into<String>, selected: bool);
+
     /// Spawn a tab with full builder control
     fn spawn_tab_with(&mut self, theme: &MaterialTheme, builder: TabBuilder);
 }
@@ -552,50 +545,49 @@ impl SpawnTabsChild for ChildSpawnerCommands<'_> {
         self.spawn(TabsBuilder::new().variant(variant).build(theme))
             .with_children(with_tabs);
     }
-    
-    fn spawn_tab(
-        &mut self,
-        theme: &MaterialTheme,
-        label: impl Into<String>,
-        selected: bool,
-    ) {
+
+    fn spawn_tab(&mut self, theme: &MaterialTheme, label: impl Into<String>, selected: bool) {
         let label_str = label.into();
         let builder = TabBuilder::new(0, &label_str).selected(selected);
         let content_color = builder.tab.content_color(theme, builder.variant);
-        
-        self.spawn(builder.build(theme))
-            .with_children(|tab| {
-                tab.spawn((
-                    TabLabelText,
-                    Text::new(&label_str),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(content_color),
-                ));
-                
-                if selected {
-                    tab.spawn(create_tab_indicator(theme, TabVariant::Primary));
-                }
-            });
+
+        self.spawn(builder.build(theme)).with_children(|tab| {
+            tab.spawn((
+                TabLabelText,
+                Text::new(&label_str),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(content_color),
+            ));
+
+            if selected {
+                tab.spawn(create_tab_indicator(theme, TabVariant::Primary));
+            }
+        });
     }
-    
+
     fn spawn_tab_with(&mut self, theme: &MaterialTheme, builder: TabBuilder) {
         let label_str = builder.tab.label.clone();
         let selected = builder.tab.selected;
         let variant = builder.variant;
         let content_color = builder.tab.content_color(theme, variant);
-        
-        self.spawn(builder.build(theme))
-            .with_children(|tab| {
-                tab.spawn((
-                    TabLabelText,
-                    Text::new(&label_str),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(content_color),
-                ));
-                
-                if selected {
-                    tab.spawn(create_tab_indicator(theme, variant));
-                }
-            });
+
+        self.spawn(builder.build(theme)).with_children(|tab| {
+            tab.spawn((
+                TabLabelText,
+                Text::new(&label_str),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(content_color),
+            ));
+
+            if selected {
+                tab.spawn(create_tab_indicator(theme, variant));
+            }
+        });
     }
 }

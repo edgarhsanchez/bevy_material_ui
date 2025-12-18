@@ -122,9 +122,9 @@ impl SearchBarBuilder {
     }
 
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
-        let hint = self.search_bar.hint.clone();
+        let _hint = self.search_bar.hint.clone();
         let text = self.search_bar.text.clone();
-        let has_text = !text.is_empty();
+        let _has_text = !text.is_empty();
 
         (
             self.search_bar,
@@ -152,12 +152,8 @@ impl SearchBarBuilder {
 
 pub trait SpawnSearchBarChild {
     fn spawn_search_bar(&mut self, theme: &MaterialTheme, hint: impl Into<String>);
-    
-    fn spawn_search_bar_with(
-        &mut self,
-        theme: &MaterialTheme,
-        builder: SearchBarBuilder,
-    );
+
+    fn spawn_search_bar_with(&mut self, theme: &MaterialTheme, builder: SearchBarBuilder);
 }
 
 impl SpawnSearchBarChild for ChildSpawnerCommands<'_> {
@@ -165,73 +161,17 @@ impl SpawnSearchBarChild for ChildSpawnerCommands<'_> {
         self.spawn_search_bar_with(theme, SearchBarBuilder::new(hint));
     }
 
-    fn spawn_search_bar_with(
-        &mut self,
-        theme: &MaterialTheme,
-        builder: SearchBarBuilder,
-    ) {
+    fn spawn_search_bar_with(&mut self, theme: &MaterialTheme, builder: SearchBarBuilder) {
         let hint = builder.search_bar.hint.clone();
         let text = builder.search_bar.text.clone();
         let nav_icon = builder.search_bar.navigation_icon;
         let has_text = !text.is_empty();
 
-        self.spawn(builder.build(theme))
-            .with_children(|bar| {
-                // Navigation icon
-                if let Some(icon) = nav_icon {
-                    bar.spawn((
-                        SearchBarNavigation,
-                        Button,
-                        RippleHost::new(),
-                        Node {
-                            width: Val::Px(48.0),
-                            height: Val::Px(48.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                    ))
-                    .with_children(|btn| {
-                        btn.spawn((
-                            icon,
-                            IconStyle::outlined()
-                                .with_color(theme.on_surface)
-                                .with_size(24.0),
-                        ));
-                    });
-                }
-
-                // Text container
+        self.spawn(builder.build(theme)).with_children(|bar| {
+            // Navigation icon
+            if let Some(icon) = nav_icon {
                 bar.spawn((
-                    SearchBarTextContainer,
-                    Node {
-                        flex_grow: 1.0,
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                ))
-                .with_children(|container| {
-                    if has_text {
-                        container.spawn((
-                            Text::new(&text),
-                            TextFont { font_size: 16.0, ..default() },
-                            TextColor(theme.on_surface),
-                        ));
-                    } else {
-                        container.spawn((
-                            Text::new(&hint),
-                            TextFont { font_size: 16.0, ..default() },
-                            TextColor(theme.on_surface_variant),
-                        ));
-                    }
-                });
-
-                // Trailing action (search icon)
-                bar.spawn((
-                    SearchBarAction,
+                    SearchBarNavigation,
                     Button,
                     RippleHost::new(),
                     Node {
@@ -245,16 +185,73 @@ impl SpawnSearchBarChild for ChildSpawnerCommands<'_> {
                     BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ))
                 .with_children(|btn| {
-                    if let Some(icon) = MaterialIcon::from_name("search") {
-                        btn.spawn((
-                            icon,
-                            IconStyle::outlined()
-                                .with_color(theme.on_surface_variant)
-                                .with_size(24.0),
-                        ));
-                    }
+                    btn.spawn((
+                        icon,
+                        IconStyle::outlined()
+                            .with_color(theme.on_surface)
+                            .with_size(24.0),
+                    ));
                 });
+            }
+
+            // Text container
+            bar.spawn((
+                SearchBarTextContainer,
+                Node {
+                    flex_grow: 1.0,
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+            ))
+            .with_children(|container| {
+                if has_text {
+                    container.spawn((
+                        Text::new(&text),
+                        TextFont {
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                    ));
+                } else {
+                    container.spawn((
+                        Text::new(&hint),
+                        TextFont {
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface_variant),
+                    ));
+                }
             });
+
+            // Trailing action (search icon)
+            bar.spawn((
+                SearchBarAction,
+                Button,
+                RippleHost::new(),
+                Node {
+                    width: Val::Px(48.0),
+                    height: Val::Px(48.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::NONE),
+                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+            ))
+            .with_children(|btn| {
+                if let Some(icon) = MaterialIcon::from_name("search") {
+                    btn.spawn((
+                        icon,
+                        IconStyle::outlined()
+                            .with_color(theme.on_surface_variant)
+                            .with_size(24.0),
+                    ));
+                }
+            });
+        });
     }
 }
 

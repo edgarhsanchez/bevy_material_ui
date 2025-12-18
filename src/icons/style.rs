@@ -177,7 +177,11 @@ impl IconStyle {
 
     /// Get the fill value for font variation (0.0 or 1.0)
     pub fn fill_value(&self) -> f32 {
-        if self.filled { 1.0 } else { 0.0 }
+        if self.filled {
+            1.0
+        } else {
+            0.0
+        }
     }
 
     /// Create style for small icons (20dp)
@@ -262,7 +266,7 @@ mod tests {
             .with_fill(true)
             .with_weight(IconWeight::Bold)
             .with_size(32.0);
-        
+
         assert!(style.filled);
         assert_eq!(style.weight, IconWeight::Bold);
         assert_eq!(style.effective_size(), 32.0);

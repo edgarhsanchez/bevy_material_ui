@@ -1,15 +1,19 @@
 //! Lists view for the showcase application.
 
 use bevy::prelude::*;
-use bevy_material_ui::prelude::*;
-use bevy_material_ui::list::ListItemBuilder;
-use bevy_material_ui::icons::ICON_EMAIL;
 use bevy_material_ui::chip::{ChipBuilder, ChipLabel};
+use bevy_material_ui::icons::ICON_EMAIL;
+use bevy_material_ui::list::ListItemBuilder;
+use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
 
 /// Spawn the list section content
-pub fn spawn_list_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, icon_font: Handle<Font>) {
+pub fn spawn_list_section(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    icon_font: Handle<Font>,
+) {
     let theme_clone = theme.clone();
     parent
         .spawn(Node {
@@ -19,28 +23,48 @@ pub fn spawn_list_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                &theme_clone, 
+                section,
+                &theme_clone,
                 "Lists (with Selection)",
-                "Scrollable list with single or multi-select - click items to select"
+                "Scrollable list with single or multi-select - click items to select",
             );
 
             // Selection mode options
-            section.spawn(Node {
-                flex_direction: FlexDirection::Row,
-                column_gap: Val::Px(8.0),
-                margin: UiRect::bottom(Val::Px(8.0)),
-                ..default()
-            }).with_children(|row| {
-                row.spawn((
-                    Text::new("Selection Mode:"),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(theme_clone.on_surface),
-                    Node { margin: UiRect::right(Val::Px(8.0)), ..default() },
-                ));
-                spawn_list_mode_option(row, &theme_clone, "Single", ListSelectionMode::Single, true);
-                spawn_list_mode_option(row, &theme_clone, "Multi", ListSelectionMode::Multi, false);
-            });
+            section
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    column_gap: Val::Px(8.0),
+                    margin: UiRect::bottom(Val::Px(8.0)),
+                    ..default()
+                })
+                .with_children(|row| {
+                    row.spawn((
+                        Text::new("Selection Mode:"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(theme_clone.on_surface),
+                        Node {
+                            margin: UiRect::right(Val::Px(8.0)),
+                            ..default()
+                        },
+                    ));
+                    spawn_list_mode_option(
+                        row,
+                        &theme_clone,
+                        "Single",
+                        ListSelectionMode::Single,
+                        true,
+                    );
+                    spawn_list_mode_option(
+                        row,
+                        &theme_clone,
+                        "Multi",
+                        ListSelectionMode::Multi,
+                        false,
+                    );
+                });
 
             let icon_font_clone = icon_font.clone();
             // Container for list with scrollbar
@@ -59,7 +83,10 @@ pub fn spawn_list_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                             ListDemoRoot,
                             TestId::new("list_scroll_area"),
                             bevy_material_ui::list::ListBuilder::new()
-                                .max_visible_items_variant(4, bevy_material_ui::list::ListItemVariant::TwoLine)
+                                .max_visible_items_variant(
+                                    4,
+                                    bevy_material_ui::list::ListItemVariant::TwoLine,
+                                )
                                 .build_scrollable(),
                             BackgroundColor(theme_clone.surface_container_low),
                             BorderRadius::all(Val::Px(12.0)),
@@ -94,11 +121,18 @@ pub fn spawn_list_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                                     // Leading icon with proper font
                                     item.spawn((
                                         Text::new(ICON_EMAIL.to_string()),
-                                        TextFont { font: icon_for_item, font_size: 24.0, ..default() },
+                                        TextFont {
+                                            font: icon_for_item,
+                                            font_size: 24.0,
+                                            ..default()
+                                        },
                                         TextColor(theme_clone.on_surface_variant),
-                                        Node { margin: UiRect::right(Val::Px(16.0)), ..default() },
+                                        Node {
+                                            margin: UiRect::right(Val::Px(16.0)),
+                                            ..default()
+                                        },
                                     ));
-                                    
+
                                     // Body with text
                                     item.spawn(Node {
                                         flex_direction: FlexDirection::Column,
@@ -108,12 +142,18 @@ pub fn spawn_list_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                                     .with_children(|body| {
                                         body.spawn((
                                             Text::new(*headline),
-                                            TextFont { font_size: 16.0, ..default() },
+                                            TextFont {
+                                                font_size: 16.0,
+                                                ..default()
+                                            },
                                             TextColor(theme_clone.on_surface),
                                         ));
                                         body.spawn((
                                             Text::new(*supporting),
-                                            TextFont { font_size: 14.0, ..default() },
+                                            TextFont {
+                                                font_size: 14.0,
+                                                ..default()
+                                            },
                                             TextColor(theme_clone.on_surface_variant),
                                         ));
                                     });
@@ -129,8 +169,10 @@ pub fn spawn_list_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                     let _ = scroll_area_id;
                 });
 
-            spawn_code_block(section, &theme_clone,
-r#"// Scrollable list with selection modes
+            spawn_code_block(
+                section,
+                &theme_clone,
+                r#"// Scrollable list with selection modes
 // Single select clears previous selection
 // Multi select allows multiple items to be selected
 commands.spawn((
@@ -149,7 +191,8 @@ commands.spawn((
                 .build(&theme)
         ));
     }
-});"#);
+});"#,
+            );
         });
 }
 
@@ -167,13 +210,18 @@ fn spawn_list_mode_option(
         .spawn((
             ListSelectionModeOption(mode),
             Interaction::None,
-            ChipBuilder::filter(label).selected(is_selected).build(theme),
+            ChipBuilder::filter(label)
+                .selected(is_selected)
+                .build(theme),
         ))
         .with_children(|chip| {
             chip.spawn((
                 ChipLabel,
                 Text::new(label),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
         });

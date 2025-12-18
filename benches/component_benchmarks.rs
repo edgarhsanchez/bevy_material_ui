@@ -8,11 +8,11 @@ use bevy_material_ui::{
     checkbox::{CheckboxState, MaterialCheckbox},
     chip::{ChipVariant, MaterialChip},
     elevation::Elevation,
-    progress::{MaterialLinearProgress, MaterialCircularProgress},
+    progress::{MaterialCircularProgress, MaterialLinearProgress},
     radio::MaterialRadio,
     slider::MaterialSlider,
     switch::MaterialSwitch,
-    tokens::{CornerRadius, Duration, Spacing, Easing},
+    tokens::{CornerRadius, Duration, Easing, Spacing},
 };
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
@@ -31,8 +31,7 @@ fn bench_button_creation(c: &mut Criterion) {
     group.bench_function("create_outlined", |b| {
         b.iter(|| {
             black_box(
-                MaterialButton::new(black_box("Click Me"))
-                    .with_variant(ButtonVariant::Outlined),
+                MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Outlined),
             )
         })
     });
@@ -40,8 +39,7 @@ fn bench_button_creation(c: &mut Criterion) {
     group.bench_function("create_elevated", |b| {
         b.iter(|| {
             black_box(
-                MaterialButton::new(black_box("Click Me"))
-                    .with_variant(ButtonVariant::Elevated),
+                MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Elevated),
             )
         })
     });
@@ -49,17 +47,14 @@ fn bench_button_creation(c: &mut Criterion) {
     group.bench_function("create_tonal", |b| {
         b.iter(|| {
             black_box(
-                MaterialButton::new(black_box("Click Me"))
-                    .with_variant(ButtonVariant::FilledTonal),
+                MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::FilledTonal),
             )
         })
     });
 
     group.bench_function("create_text", |b| {
         b.iter(|| {
-            black_box(
-                MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Text),
-            )
+            black_box(MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Text))
         })
     });
 
@@ -94,23 +89,17 @@ fn bench_checkbox(c: &mut Criterion) {
 
     group.bench_function("create_unchecked", |b| {
         b.iter(|| {
-            black_box(
-                MaterialCheckbox::new().with_state(black_box(CheckboxState::Unchecked)),
-            )
+            black_box(MaterialCheckbox::new().with_state(black_box(CheckboxState::Unchecked)))
         })
     });
 
     group.bench_function("create_checked", |b| {
-        b.iter(|| {
-            black_box(MaterialCheckbox::new().with_state(black_box(CheckboxState::Checked)))
-        })
+        b.iter(|| black_box(MaterialCheckbox::new().with_state(black_box(CheckboxState::Checked))))
     });
 
     group.bench_function("create_indeterminate", |b| {
         b.iter(|| {
-            black_box(
-                MaterialCheckbox::new().with_state(black_box(CheckboxState::Indeterminate)),
-            )
+            black_box(MaterialCheckbox::new().with_state(black_box(CheckboxState::Indeterminate)))
         })
     });
 
@@ -138,9 +127,7 @@ fn bench_switch(c: &mut Criterion) {
     });
 
     group.bench_function("create_with_icon", |b| {
-        b.iter(|| {
-            black_box(MaterialSwitch::new().with_icon().selected(black_box(true)))
-        })
+        b.iter(|| black_box(MaterialSwitch::new().with_icon().selected(black_box(true))))
     });
 
     group.finish();
@@ -171,16 +158,13 @@ fn bench_slider(c: &mut Criterion) {
     let mut group = c.benchmark_group("Slider Component");
 
     group.bench_function("create_default", |b| {
-        b.iter(|| {
-            black_box(MaterialSlider::new(black_box(0.0), black_box(100.0)))
-        })
+        b.iter(|| black_box(MaterialSlider::new(black_box(0.0), black_box(100.0))))
     });
 
     group.bench_function("create_with_value", |b| {
         b.iter(|| {
             black_box(
-                MaterialSlider::new(black_box(0.0), black_box(100.0))
-                    .with_value(black_box(50.0)),
+                MaterialSlider::new(black_box(0.0), black_box(100.0)).with_value(black_box(50.0)),
             )
         })
     });
@@ -221,9 +205,7 @@ fn bench_progress(c: &mut Criterion) {
     let mut group = c.benchmark_group("Progress Component");
 
     group.bench_function("create_linear_determinate", |b| {
-        b.iter(|| {
-            black_box(MaterialLinearProgress::new().with_progress(black_box(0.5)))
-        })
+        b.iter(|| black_box(MaterialLinearProgress::new().with_progress(black_box(0.5))))
     });
 
     group.bench_function("create_linear_indeterminate", |b| {
@@ -231,9 +213,7 @@ fn bench_progress(c: &mut Criterion) {
     });
 
     group.bench_function("create_circular", |b| {
-        b.iter(|| {
-            black_box(MaterialCircularProgress::new().with_progress(black_box(0.75)))
-        })
+        b.iter(|| black_box(MaterialCircularProgress::new().with_progress(black_box(0.75))))
     });
 
     group.finish();
@@ -244,37 +224,32 @@ fn bench_chip(c: &mut Criterion) {
     let mut group = c.benchmark_group("Chip Component");
 
     group.bench_function("create_assist", |b| {
-        b.iter(|| {
-            black_box(MaterialChip::new(black_box("Help")).with_variant(ChipVariant::Assist))
-        })
+        b.iter(|| black_box(MaterialChip::new(black_box("Help")).with_variant(ChipVariant::Assist)))
     });
 
     group.bench_function("create_filter", |b| {
         b.iter(|| {
-            black_box(
-                MaterialChip::new(black_box("Category")).with_variant(ChipVariant::Filter),
-            )
+            black_box(MaterialChip::new(black_box("Category")).with_variant(ChipVariant::Filter))
         })
     });
 
     group.bench_function("create_input", |b| {
-        b.iter(|| {
-            black_box(MaterialChip::new(black_box("Tag")).with_variant(ChipVariant::Input))
-        })
+        b.iter(|| black_box(MaterialChip::new(black_box("Tag")).with_variant(ChipVariant::Input)))
     });
 
     group.bench_function("create_suggestion", |b| {
         b.iter(|| {
             black_box(
-                MaterialChip::new(black_box("Recommended"))
-                    .with_variant(ChipVariant::Suggestion),
+                MaterialChip::new(black_box("Recommended")).with_variant(ChipVariant::Suggestion),
             )
         })
     });
 
     // Chip group
     group.bench_function("create_filter_group_8", |b| {
-        let labels = ["All", "Recent", "Starred", "Shared", "Archived", "Drafts", "Sent", "Trash"];
+        let labels = [
+            "All", "Recent", "Starred", "Shared", "Archived", "Drafts", "Sent", "Trash",
+        ];
         b.iter(|| {
             let chips: Vec<_> = labels
                 .iter()
@@ -362,9 +337,7 @@ fn bench_state_changes(c: &mut Criterion) {
 
     // Checkbox state toggles
     group.bench_function("checkbox_state_toggle_100", |b| {
-        let mut states: Vec<CheckboxState> = (0..100)
-            .map(|_| CheckboxState::Unchecked)
-            .collect();
+        let mut states: Vec<CheckboxState> = (0..100).map(|_| CheckboxState::Unchecked).collect();
         b.iter(|| {
             for state in states.iter_mut() {
                 *state = state.toggle();

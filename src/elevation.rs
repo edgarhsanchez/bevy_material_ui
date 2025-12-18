@@ -99,7 +99,7 @@ impl Elevation {
     }
 
     /// Convert this elevation to a Bevy `BoxShadow` component
-    /// 
+    ///
     /// This leverages Bevy 0.17's native shadow rendering for better performance.
     pub fn to_box_shadow(&self) -> BoxShadow {
         if *self == Elevation::Level0 {
@@ -116,7 +116,7 @@ impl Elevation {
     }
 
     /// Create a `ShadowStyle` for this elevation level
-    /// 
+    ///
     /// Useful when you need more control over the shadow styling.
     pub fn to_shadow_style(&self) -> ShadowStyle {
         ShadowStyle {
@@ -130,7 +130,7 @@ impl Elevation {
 }
 
 /// Shadow styling based on elevation
-/// 
+///
 /// **Note**: Consider using `Elevation::to_box_shadow()` for native Bevy shadow rendering,
 /// which offers better performance. This struct is retained for backwards compatibility.
 #[derive(Debug, Clone)]
@@ -151,7 +151,7 @@ impl ElevationShadow {
     /// Create shadow styling for an elevation level
     pub fn from_elevation(elevation: Elevation) -> Self {
         let base_color = Color::srgba(0.0, 0.0, 0.0, elevation.shadow_opacity());
-        
+
         Self {
             color: base_color,
             offset_x: 0.0,

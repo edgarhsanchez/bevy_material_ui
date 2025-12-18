@@ -15,10 +15,10 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Progress Indicators",
-                "Visual feedback for loading and progress states"
+                "Visual feedback for loading and progress states",
             );
 
             section
@@ -45,9 +45,15 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     .with_children(|row| {
                         row.spawn((
                             Text::new("Indeterminate"),
-                            TextFont { font_size: 12.0, ..default() },
+                            TextFont {
+                                font_size: 12.0,
+                                ..default()
+                            },
                             TextColor(theme.on_surface_variant),
-                            Node { width: Val::Px(90.0), ..default() },
+                            Node {
+                                width: Val::Px(90.0),
+                                ..default()
+                            },
                         ));
 
                         row.spawn(
@@ -59,15 +65,18 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     });
                 });
 
-            spawn_code_block(section, theme,
-r#"// Linear progress (determinate)
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Linear progress (determinate)
 let progress = LinearProgress::new(0.5); // 50%
 
 // Indeterminate progress
 let progress = LinearProgress::indeterminate();
 
 // Circular progress
-let progress = CircularProgress::new(0.75);"#);
+let progress = CircularProgress::new(0.75);"#,
+            );
         });
 }
 
@@ -95,10 +104,19 @@ fn spawn_animated_linear_progress(
         .with_children(|row| {
             let label_entity = row
                 .spawn((
-                    Text::new(format!("{:>3}%", (initial.clamp(0.0, 1.0) * 100.0).round() as i32)),
-                    TextFont { font_size: 12.0, ..default() },
+                    Text::new(format!(
+                        "{:>3}%",
+                        (initial.clamp(0.0, 1.0) * 100.0).round() as i32
+                    )),
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
                     TextColor(theme.on_surface_variant),
-                    Node { width: Val::Px(48.0), ..default() },
+                    Node {
+                        width: Val::Px(48.0),
+                        ..default()
+                    },
                 ))
                 .id();
 

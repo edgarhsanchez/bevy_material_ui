@@ -79,7 +79,7 @@ impl TextFieldClipboard {
             if self.clipboard.is_none() {
                 self.clipboard = arboard::Clipboard::new().ok();
             }
-            return self.clipboard.as_mut().and_then(|c| c.get_text().ok());
+            self.clipboard.as_mut().and_then(|c| c.get_text().ok())
         }
 
         #[cfg(not(feature = "clipboard"))]
@@ -98,7 +98,6 @@ impl TextFieldClipboard {
             if let Some(c) = self.clipboard.as_mut() {
                 let _ = c.set_text(text);
             }
-            return;
         }
 
         #[cfg(not(feature = "clipboard"))]
@@ -171,7 +170,7 @@ pub enum InputType {
 }
 
 /// Material text field component
-/// 
+///
 /// Matches properties from Material Android TextInputLayout:
 /// - Box background mode (filled/outlined)
 /// - Box stroke width and colors
@@ -362,7 +361,9 @@ impl MaterialTextField {
     pub fn input_type(mut self, input_type: InputType) -> Self {
         self.input_type = input_type;
         // Auto-enable password toggle for password fields
-        if matches!(input_type, InputType::Password) && matches!(self.end_icon_mode, EndIconMode::None) {
+        if matches!(input_type, InputType::Password)
+            && matches!(self.end_icon_mode, EndIconMode::None)
+        {
             self.end_icon_mode = EndIconMode::PasswordToggle;
         }
         self
@@ -439,10 +440,18 @@ impl MaterialTextField {
         match self.end_icon_mode {
             EndIconMode::None => self.trailing_icon.as_deref(),
             EndIconMode::PasswordToggle => {
-                Some(if self.password_visible { "\u{E8F4}" } else { "\u{E8F5}" }) // visibility / visibility_off
+                Some(if self.password_visible {
+                    "\u{E8F4}"
+                } else {
+                    "\u{E8F5}"
+                }) // visibility / visibility_off
             }
             EndIconMode::ClearText => {
-                if self.has_content { Some("\u{E5CD}") } else { None } // close icon
+                if self.has_content {
+                    Some("\u{E5CD}")
+                } else {
+                    None
+                } // close icon
             }
             EndIconMode::DropdownMenu => Some("\u{E5C5}"), // arrow_drop_down
             EndIconMode::Custom => self.trailing_icon.as_deref(),
@@ -607,13 +616,10 @@ fn text_field_focus_system(
                 continue;
             }
 
-            let text: Option<&str> = ev
-                .text
-                .as_deref()
-                .or_else(|| match &ev.logical_key {
-                    bevy::input::keyboard::Key::Character(s) => Some(s.as_str()),
-                    _ => None,
-                });
+            let text: Option<&str> = ev.text.as_deref().or_else(|| match &ev.logical_key {
+                bevy::input::keyboard::Key::Character(s) => Some(s.as_str()),
+                _ => None,
+            });
 
             let Some(text) = text else {
                 continue;
@@ -746,13 +752,10 @@ fn text_field_input_system(
             continue;
         }
 
-        let text: Option<&str> = ev
-            .text
-            .as_deref()
-            .or_else(|| match &ev.logical_key {
-                bevy::input::keyboard::Key::Character(s) => Some(s.as_str()),
-                _ => None,
-            });
+        let text: Option<&str> = ev.text.as_deref().or_else(|| match &ev.logical_key {
+            bevy::input::keyboard::Key::Character(s) => Some(s.as_str()),
+            _ => None,
+        });
 
         let Some(text) = text else {
             continue;
@@ -790,7 +793,10 @@ fn text_field_input_system(
     // Submit / newline
     if keys.just_pressed(KeyCode::Enter) {
         if field.input_type == InputType::Multiline {
-            if field.max_length.is_none_or(|max| field.value.chars().count() < max) {
+            if field
+                .max_length
+                .is_none_or(|max| field.value.chars().count() < max)
+            {
                 field.value.push('\n');
                 field.has_content = !field.value.is_empty();
                 change_events.write(TextFieldChangeEvent {
@@ -823,7 +829,7 @@ fn is_allowed_input_char(field: &MaterialTextField, ch: char) -> bool {
         }
         InputType::Phone => {
             // Keep this permissive for typical phone number formats.
-            ch.is_ascii_digit() || matches!(ch, ' ' | '+' | '-' | '(' | ')' )
+            ch.is_ascii_digit() || matches!(ch, ' ' | '+' | '-' | '(' | ')')
         }
         // For other input types we currently accept any non-control characters.
         _ => true,
@@ -901,7 +907,10 @@ fn text_field_display_system(
             };
 
             if field.focused {
-                (format!("{}{}", shown_value, caret), field.input_color(&theme))
+                (
+                    format!("{}{}", shown_value, caret),
+                    field.input_color(&theme),
+                )
             } else {
                 (shown_value, field.input_color(&theme))
             }
@@ -942,7 +951,11 @@ fn text_field_placeholder_system(
             && field.value.is_empty()
             && field.is_label_floating();
 
-        let display = if show_placeholder { Display::Flex } else { Display::None };
+        let display = if show_placeholder {
+            Display::Flex
+        } else {
+            Display::None
+        };
         let visibility = if show_placeholder {
             Visibility::Visible
         } else {
@@ -970,7 +983,11 @@ fn text_field_label_system(
     for (field_entity, field) in changed_fields.iter() {
         let color = field.label_color(&theme);
         let show_label = field.is_label_floating() && field.label.is_some();
-        let display = if show_label { Display::Flex } else { Display::None };
+        let display = if show_label {
+            Display::Flex
+        } else {
+            Display::None
+        };
 
         for (owner, mut text_color, mut node) in labels.iter_mut() {
             if owner.0 == field_entity {
@@ -984,7 +1001,10 @@ fn text_field_label_system(
 fn text_field_supporting_text_system(
     theme: Option<Res<MaterialTheme>>,
     fields: Query<&MaterialTextField>,
-    mut supporting: Query<(&TextFieldSupportingFor, &mut Text, &mut TextColor), With<TextFieldSupportingText>>,
+    mut supporting: Query<
+        (&TextFieldSupportingFor, &mut Text, &mut TextColor),
+        With<TextFieldSupportingText>,
+    >,
 ) {
     let Some(theme) = theme else { return };
 
@@ -994,10 +1014,7 @@ fn text_field_supporting_text_system(
         };
 
         let (message, message_color) = if field.error {
-            (
-                field.error_text.as_deref().unwrap_or(""),
-                theme.error,
-            )
+            (field.error_text.as_deref().unwrap_or(""), theme.error)
         } else {
             (
                 if field.value.is_empty() {
@@ -1242,7 +1259,6 @@ pub struct TextFieldEndIcon;
 #[derive(Component)]
 pub struct TextFieldEndIconFor(pub Entity);
 
-
 /// Marker for the supporting text element
 #[derive(Component)]
 pub struct TextFieldSupportingText;
@@ -1256,9 +1272,9 @@ pub struct TextFieldSupportingFor(pub Entity);
 // ============================================================================
 
 /// Extension trait to spawn Material text fields as children
-/// 
+///
 /// This trait provides a clean API for spawning text fields within UI hierarchies.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// parent.spawn(Node::default()).with_children(|children| {
@@ -1274,7 +1290,7 @@ pub trait SpawnTextFieldChild {
         label: impl Into<String>,
         value: impl Into<String>,
     );
-    
+
     /// Spawn an outlined text field
     fn spawn_outlined_text_field(
         &mut self,
@@ -1282,7 +1298,7 @@ pub trait SpawnTextFieldChild {
         label: impl Into<String>,
         value: impl Into<String>,
     );
-    
+
     /// Spawn a text field with full builder control
     fn spawn_text_field_with(&mut self, theme: &MaterialTheme, builder: TextFieldBuilder);
 }
@@ -1296,13 +1312,10 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_text_field_with(
             theme,
-            TextFieldBuilder::new()
-                .label(label)
-                .value(value)
-                .filled(),
+            TextFieldBuilder::new().label(label).value(value).filled(),
         );
     }
-    
+
     fn spawn_outlined_text_field(
         &mut self,
         theme: &MaterialTheme,
@@ -1311,13 +1324,10 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_text_field_with(
             theme,
-            TextFieldBuilder::new()
-                .label(label)
-                .value(value)
-                .outlined(),
+            TextFieldBuilder::new().label(label).value(value).outlined(),
         );
     }
-    
+
     fn spawn_text_field_with(&mut self, theme: &MaterialTheme, builder: TextFieldBuilder) {
         let label_text = builder.text_field.label.clone();
         let value_text = builder.text_field.value.clone();
@@ -1340,11 +1350,14 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
         let (supporting_display, supporting_color) = if error {
             (error_text.as_deref().unwrap_or(""), theme.error)
         } else {
-            (supporting_text.as_deref().unwrap_or(""), theme.on_surface_variant)
+            (
+                supporting_text.as_deref().unwrap_or(""),
+                theme.on_surface_variant,
+            )
         };
 
         let should_spawn_supporting = !supporting_display.is_empty();
-        
+
         // Wrapper so supporting/error text can appear below the 56px field.
         self.spawn(Node {
             width: builder.width,
@@ -1412,7 +1425,10 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                                 TextFieldLabel,
                                 TextFieldLabelFor(field_entity),
                                 Text::new(label.as_str()),
-                                TextFont { font_size: 12.0, ..default() },
+                                TextFont {
+                                    font_size: 12.0,
+                                    ..default()
+                                },
                                 TextColor(label_color),
                                 Node {
                                     display: if initial_is_label_floating {
@@ -1468,7 +1484,10 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                                     TextFieldPlaceholder,
                                     TextFieldPlaceholderFor(field_entity),
                                     Text::new(placeholder_text.as_str()),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(placeholder_color),
                                     Node {
                                         position_type: PositionType::Absolute,
@@ -1486,7 +1505,10 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                                     TextFieldInput,
                                     TextFieldInputFor(field_entity),
                                     Text::new(initial_display),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(initial_color),
                                 ));
                             });
@@ -1538,7 +1560,10 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                     TextFieldSupportingText,
                     TextFieldSupportingFor(field_entity),
                     Text::new(supporting_display),
-                    TextFont { font_size: 12.0, ..default() },
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
                     TextColor(supporting_color),
                     Node {
                         margin: UiRect::left(Val::Px(Spacing::LARGE)),
@@ -1661,7 +1686,10 @@ pub fn spawn_text_field_control(
                                 TextFieldLabel,
                                 TextFieldLabelFor(field_entity),
                                 Text::new(label.as_str()),
-                                TextFont { font_size: 12.0, ..default() },
+                                TextFont {
+                                    font_size: 12.0,
+                                    ..default()
+                                },
                                 TextColor(label_color),
                                 Node {
                                     display: if initial_is_label_floating {
@@ -1717,7 +1745,10 @@ pub fn spawn_text_field_control(
                                     TextFieldPlaceholder,
                                     TextFieldPlaceholderFor(field_entity),
                                     Text::new(placeholder_text.as_str()),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(placeholder_color),
                                     Node {
                                         position_type: PositionType::Absolute,
@@ -1735,7 +1766,10 @@ pub fn spawn_text_field_control(
                                     TextFieldInput,
                                     TextFieldInputFor(field_entity),
                                     Text::new(initial_display),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(initial_color),
                                 ));
                             });
@@ -1787,7 +1821,10 @@ pub fn spawn_text_field_control(
                     TextFieldSupportingText,
                     TextFieldSupportingFor(field_entity),
                     Text::new(supporting_display),
-                    TextFont { font_size: 12.0, ..default() },
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
                     TextColor(supporting_color),
                     Node {
                         margin: UiRect::left(Val::Px(Spacing::LARGE)),
@@ -1908,7 +1945,10 @@ pub fn spawn_text_field_control_with<M: Component>(
                                 TextFieldLabel,
                                 TextFieldLabelFor(field_entity),
                                 Text::new(label.as_str()),
-                                TextFont { font_size: 12.0, ..default() },
+                                TextFont {
+                                    font_size: 12.0,
+                                    ..default()
+                                },
                                 TextColor(label_color),
                                 Node {
                                     display: if initial_is_label_floating {
@@ -1964,7 +2004,10 @@ pub fn spawn_text_field_control_with<M: Component>(
                                     TextFieldPlaceholder,
                                     TextFieldPlaceholderFor(field_entity),
                                     Text::new(placeholder_text.as_str()),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(placeholder_color),
                                     Node {
                                         position_type: PositionType::Absolute,
@@ -1982,7 +2025,10 @@ pub fn spawn_text_field_control_with<M: Component>(
                                     TextFieldInput,
                                     TextFieldInputFor(field_entity),
                                     Text::new(initial_display),
-                                    TextFont { font_size: 16.0, ..default() },
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
                                     TextColor(initial_color),
                                 ));
                             });
@@ -2034,7 +2080,10 @@ pub fn spawn_text_field_control_with<M: Component>(
                     TextFieldSupportingText,
                     TextFieldSupportingFor(field_entity),
                     Text::new(supporting_display),
-                    TextFont { font_size: 12.0, ..default() },
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
                     TextColor(supporting_color),
                     Node {
                         margin: UiRect::left(Val::Px(Spacing::LARGE)),
@@ -2050,14 +2099,19 @@ pub fn spawn_text_field_control_with<M: Component>(
 fn text_field_end_icon_click_system(
     mut click_events: MessageWriter<TextFieldChangeEvent>,
     mut fields: Query<&mut MaterialTextField>,
-    interactions: Query<(&Interaction, &TextFieldEndIconButtonFor), (Changed<Interaction>, With<TextFieldEndIconButton>)>,
+    interactions: Query<
+        (&Interaction, &TextFieldEndIconButtonFor),
+        (Changed<Interaction>, With<TextFieldEndIconButton>),
+    >,
 ) {
     for (interaction, TextFieldEndIconButtonFor(field_entity)) in interactions.iter() {
         if *interaction != Interaction::Pressed {
             continue;
         }
 
-        let Ok(mut field) = fields.get_mut(*field_entity) else { continue };
+        let Ok(mut field) = fields.get_mut(*field_entity) else {
+            continue;
+        };
 
         match field.end_icon_mode {
             EndIconMode::PasswordToggle => {
@@ -2083,7 +2137,10 @@ fn text_field_icon_system(
     changed_fields: Query<(Entity, &MaterialTextField), Changed<MaterialTextField>>,
     mut leading_buttons: Query<
         (&TextFieldLeadingIconButtonFor, &mut Node),
-        (With<TextFieldLeadingIconButton>, Without<TextFieldEndIconButton>),
+        (
+            With<TextFieldLeadingIconButton>,
+            Without<TextFieldEndIconButton>,
+        ),
     >,
     mut leading_icons: Query<
         (&TextFieldLeadingIconFor, &mut MaterialIcon, &mut IconStyle),
@@ -2091,7 +2148,10 @@ fn text_field_icon_system(
     >,
     mut end_buttons: Query<
         (&TextFieldEndIconButtonFor, &mut Node),
-        (With<TextFieldEndIconButton>, Without<TextFieldLeadingIconButton>),
+        (
+            With<TextFieldEndIconButton>,
+            Without<TextFieldLeadingIconButton>,
+        ),
     >,
     mut end_icons: Query<
         (&TextFieldEndIconFor, &mut MaterialIcon, &mut IconStyle),

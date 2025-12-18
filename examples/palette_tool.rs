@@ -168,7 +168,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, state: Res<PaletteTo
             .with_children(|panel| {
                 panel.spawn((
                     Text::new("MD3 Palette Tool"),
-                    TextFont { font_size: 18.0, ..default() },
+                    TextFont {
+                        font_size: 18.0,
+                        ..default()
+                    },
                     TextColor(theme.on_surface),
                 ));
 
@@ -232,7 +235,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, state: Res<PaletteTo
                 // Mode toggle
                 panel.spawn((
                     Text::new("Mode"),
-                    TextFont { font_size: 12.0, ..default() },
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
                     TextColor(theme.on_surface_variant),
                 ));
 
@@ -250,7 +256,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, state: Res<PaletteTo
 
                 panel.spawn((
                     Text::new("Palette preview updates live as you adjust the seed."),
-                    TextFont { font_size: 12.0, ..default() },
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
                     TextColor(theme.on_surface_variant),
                 ));
             });
@@ -292,7 +301,10 @@ fn spawn_rgb_slider(
             col.spawn((
                 ChannelValueText { channel },
                 Text::new(format!("{label}: {initial}")),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
                 TextColor(theme.on_surface_variant),
             ));
 
@@ -310,9 +322,9 @@ fn spawn_rgb_slider(
                     ..default()
                 },
             ))
-                .with_children(|slot| {
-                    slot.spawn_slider_with(theme, slider, None);
-                });
+            .with_children(|slot| {
+                slot.spawn_slider_with(theme, slider, None);
+            });
         });
 }
 
@@ -330,8 +342,12 @@ fn spawn_mode_button(
         ButtonVariant::Outlined
     };
 
-    let btn = MaterialButtonBuilder::new(label).variant(variant).build(theme);
-    let label_color = MaterialButton::new(label).with_variant(variant).text_color(theme);
+    let btn = MaterialButtonBuilder::new(label)
+        .variant(variant)
+        .build(theme);
+    let label_color = MaterialButton::new(label)
+        .with_variant(variant)
+        .text_color(theme);
 
     parent
         .spawn((ThemeModeOption(mode), Interaction::None, btn))
@@ -339,7 +355,10 @@ fn spawn_mode_button(
             btn.spawn((
                 ButtonLabel,
                 Text::new(label),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
         });
@@ -358,7 +377,10 @@ fn spawn_scheme_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme
         .with_children(|col| {
             col.spawn((
                 Text::new("Scheme (roles)"),
-                TextFont { font_size: 16.0, ..default() },
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
                 TextColor(theme.on_surface),
             ));
 
@@ -409,14 +431,20 @@ fn spawn_role_row(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, role
 
             row.spawn((
                 Text::new(role_name(role)),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
                 TextColor(theme.on_surface),
             ));
 
             row.spawn((
                 SchemeHexText { role },
                 Text::new("#------"),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
                 TextColor(theme.on_surface_variant),
             ));
         });
@@ -432,7 +460,10 @@ fn spawn_palettes_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
         .with_children(|col| {
             col.spawn((
                 Text::new("Tonal palettes"),
-                TextFont { font_size: 16.0, ..default() },
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
                 TextColor(theme.on_surface),
             ));
 
@@ -463,7 +494,10 @@ fn spawn_palette_row(
         .with_children(|col| {
             col.spawn((
                 Text::new(label),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
                 TextColor(theme.on_surface),
             ));
 
@@ -497,7 +531,9 @@ fn handle_slider_changes_system(
     channels: Query<&SeedChannel>,
 ) {
     for ev in events.read() {
-        let Ok(channel) = channels.get(ev.entity) else { continue };
+        let Ok(channel) = channels.get(ev.entity) else {
+            continue;
+        };
         let v = ev.value.round().clamp(0.0, 255.0) as u8;
         match channel {
             SeedChannel::R => state.r = v,
@@ -521,7 +557,9 @@ fn attach_seed_hex_field_system(
         if is_field.get(root).is_ok() {
             return Some(root);
         }
-        let Ok(kids) = children_q.get(root) else { return None };
+        let Ok(kids) = children_q.get(root) else {
+            return None;
+        };
         for child in kids.iter() {
             if let Some(found) = find_field_entity(child, children_q, is_field) {
                 return Some(found);
@@ -539,7 +577,9 @@ fn attach_seed_hex_field_system(
             }
         }
 
-        let Some(field_entity) = field_entity else { continue };
+        let Some(field_entity) = field_entity else {
+            continue;
+        };
         commands.entity(field_entity).insert(SeedHexField);
         commands.entity(slot_entity).remove::<SeedHexFieldSlot>();
     }
@@ -606,7 +646,9 @@ fn handle_seed_hex_submit_system(
             continue;
         }
 
-        let Ok(mut field) = fields.get_mut(ev.entity) else { continue };
+        let Ok(mut field) = fields.get_mut(ev.entity) else {
+            continue;
+        };
 
         match parse_seed_hex_to_rgb(&ev.value) {
             Some((r, g, b)) => {
@@ -621,7 +663,8 @@ fn handle_seed_hex_submit_system(
             }
             None => {
                 field.error = true;
-                field.error_text = Some("Expected #RRGGBB, RRGGBB, 0xRRGGBB, or 0xFFRRGGBB".to_string());
+                field.error_text =
+                    Some("Expected #RRGGBB, RRGGBB, 0xRRGGBB, or 0xFFRRGGBB".to_string());
             }
         }
     }
@@ -630,8 +673,12 @@ fn handle_seed_hex_submit_system(
 fn spawn_copy_seed_button(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
     let label = "Copy";
     let variant = ButtonVariant::Outlined;
-    let btn = MaterialButtonBuilder::new(label).variant(variant).build(theme);
-    let label_color = MaterialButton::new(label).with_variant(variant).text_color(theme);
+    let btn = MaterialButtonBuilder::new(label)
+        .variant(variant)
+        .build(theme);
+    let label_color = MaterialButton::new(label)
+        .with_variant(variant)
+        .text_color(theme);
 
     parent
         .spawn((CopySeedButton, Interaction::None, btn))
@@ -639,7 +686,10 @@ fn spawn_copy_seed_button(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
             btn.spawn((
                 ButtonLabel,
                 Text::new(label),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
         });
@@ -677,7 +727,9 @@ fn attach_seed_channels_to_sliders_system(
         if is_slider.get(root).is_ok() {
             return Some(root);
         }
-        let Ok(kids) = children_q.get(root) else { return None };
+        let Ok(kids) = children_q.get(root) else {
+            return None;
+        };
         for child in kids.iter() {
             if let Some(found) = find_slider_entity(child, children_q, is_slider) {
                 return Some(found);
@@ -696,7 +748,9 @@ fn attach_seed_channels_to_sliders_system(
             }
         }
 
-        let Some(slider_entity) = slider_entity else { continue };
+        let Some(slider_entity) = slider_entity else {
+            continue;
+        };
         commands.entity(slider_entity).insert(slot.channel);
         // Once we attached, we can remove the slot marker to avoid re-walking the tree.
         commands.entity(slot_entity).remove::<SeedSliderSlot>();
@@ -735,11 +789,7 @@ fn apply_state_to_theme_system(mut commands: Commands, state: Res<PaletteToolSta
 fn refresh_palette_preview_system(
     state: Res<PaletteToolState>,
     theme: Res<MaterialTheme>,
-    mut texts: Query<(
-        &mut Text,
-        Option<&SchemeHexText>,
-        Option<&ChannelValueText>,
-    )>,
+    mut texts: Query<(&mut Text, Option<&SchemeHexText>, Option<&ChannelValueText>)>,
     mut swatches: Query<(
         &mut BackgroundColor,
         Option<&SeedSwatch>,
@@ -933,7 +983,9 @@ fn copy_to_clipboard_best_effort(text: &str) -> Result<(), String> {
 
     {
         let stdin = child.stdin.as_mut().ok_or("Failed to open clip stdin")?;
-        stdin.write_all(text.as_bytes()).map_err(|e| e.to_string())?;
+        stdin
+            .write_all(text.as_bytes())
+            .map_err(|e| e.to_string())?;
     }
 
     let status = child.wait().map_err(|e| e.to_string())?;

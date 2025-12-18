@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
-use crate::showcase::{TabStateCache, ComponentSection};
+use crate::showcase::{ComponentSection, TabStateCache};
 
 /// Spawn the tabs section content.
 ///
@@ -18,7 +18,8 @@ pub fn spawn_tabs_section(
     tab_cache: &TabStateCache,
 ) {
     // Restore cached tab selection, default to 0
-    let selected_tab = tab_cache.selections
+    let selected_tab = tab_cache
+        .selections
         .get(&ComponentSection::Tabs)
         .copied()
         .unwrap_or(0);

@@ -44,12 +44,13 @@ pub mod icon;
 mod style;
 
 pub use codepoints::*;
-pub use icon::{MaterialIcon, IconBundle};
-pub use style::{IconStyle, IconWeight, IconGrade, IconOpticalSize};
+pub use icon::{IconBundle, MaterialIcon};
+pub use style::{IconGrade, IconOpticalSize, IconStyle, IconWeight};
 
 /// Embedded Material Symbols font data (compiled into the binary)
 /// This eliminates file I/O and ensures the font is always available
-pub const EMBEDDED_MATERIAL_SYMBOLS_FONT: &[u8] = include_bytes!("../../assets/fonts/MaterialSymbolsOutlined.ttf");
+pub const EMBEDDED_MATERIAL_SYMBOLS_FONT: &[u8] =
+    include_bytes!("../../assets/fonts/MaterialSymbolsOutlined.ttf");
 
 /// Path to the Material Symbols font file (for fallback/external loading)
 pub const MATERIAL_SYMBOLS_FONT_PATH: &str = "fonts/MaterialSymbolsOutlined.ttf";
@@ -76,10 +77,7 @@ impl Plugin for MaterialIconsPlugin {
 
 /// System to load the Material Symbols font at startup
 /// Uses embedded font data for instant availability (no async loading)
-fn load_material_icons_font(
-    mut commands: Commands,
-    mut fonts: ResMut<Assets<Font>>,
-) {
+fn load_material_icons_font(mut commands: Commands, mut fonts: ResMut<Assets<Font>>) {
     // Load from embedded bytes - this is synchronous and immediately available
     let font = Font::try_from_bytes(EMBEDDED_MATERIAL_SYMBOLS_FONT.to_vec())
         .expect("Failed to load embedded Material Symbols font");

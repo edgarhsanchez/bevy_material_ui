@@ -6,7 +6,11 @@ use bevy_material_ui::prelude::*;
 use crate::showcase::common::*;
 
 /// Spawn the FAB section content
-pub fn spawn_fab_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, _icon_font: Handle<Font>) {
+pub fn spawn_fab_section(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    _icon_font: Handle<Font>,
+) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -15,10 +19,10 @@ pub fn spawn_fab_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThem
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Floating Action Buttons",
-                "Primary actions with prominent visual treatment"
+                "Primary actions with prominent visual treatment",
             );
 
             section
@@ -36,8 +40,10 @@ pub fn spawn_fab_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThem
                     row.spawn_extended_fab(theme, "add", "Create");
                 });
 
-            spawn_code_block(section, theme,
-r#"// Create a FAB
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Create a FAB
 let fab = MaterialFab::new()
     .icon("add")
     .size(FabSize::Regular);
@@ -46,6 +52,7 @@ let fab = MaterialFab::new()
 let fab = MaterialFab::new()
     .icon("add")
     .label("Create")
-    .extended(true);"#);
+    .extended(true);"#,
+            );
         });
 }

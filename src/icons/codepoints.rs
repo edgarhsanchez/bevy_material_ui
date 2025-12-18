@@ -336,7 +336,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "expand_less" | "expand-less" | "chevron_up" => Some(ICON_EXPAND_LESS),
         "chevron_left" | "chevron-left" => Some(ICON_CHEVRON_LEFT),
         "chevron_right" | "chevron-right" => Some(ICON_CHEVRON_RIGHT),
-        
+
         // Actions
         "add" | "plus" => Some(ICON_ADD),
         "remove" | "minus" => Some(ICON_REMOVE),
@@ -357,7 +357,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "cut" | "content_cut" => Some(ICON_CONTENT_CUT),
         "undo" => Some(ICON_UNDO),
         "redo" => Some(ICON_REDO),
-        
+
         // Toggles
         "checkbox" | "check_box" => Some(ICON_CHECK_BOX),
         "checkbox_blank" | "check_box_outline_blank" => Some(ICON_CHECK_BOX_OUTLINE_BLANK),
@@ -371,7 +371,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "favorite_border" | "heart_outline" => Some(ICON_FAVORITE_BORDER),
         "visibility" | "eye" | "visible" => Some(ICON_VISIBILITY),
         "visibility_off" | "eye_off" | "hidden" => Some(ICON_VISIBILITY_OFF),
-        
+
         // Alerts
         "error" => Some(ICON_ERROR),
         "warning" => Some(ICON_WARNING),
@@ -380,7 +380,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "block" | "prohibited" => Some(ICON_BLOCK),
         "notifications" | "bell" => Some(ICON_NOTIFICATIONS),
         "notifications_off" | "bell_off" => Some(ICON_NOTIFICATIONS_OFF),
-        
+
         // Content
         "folder" => Some(ICON_FOLDER),
         "folder_open" => Some(ICON_FOLDER_OPEN),
@@ -390,7 +390,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "music_note" | "music" | "audio" => Some(ICON_MUSIC_NOTE),
         "link" => Some(ICON_LINK),
         "attach_file" | "attachment" => Some(ICON_ATTACH_FILE),
-        
+
         // Person
         "person" | "user" => Some(ICON_PERSON),
         "group" | "people" | "users" => Some(ICON_GROUP),
@@ -398,14 +398,14 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "person_add" | "add_user" => Some(ICON_PERSON_ADD),
         "login" | "sign_in" => Some(ICON_LOGIN),
         "logout" | "sign_out" => Some(ICON_LOGOUT),
-        
+
         // Communication
         "email" | "mail" => Some(ICON_EMAIL),
         "chat" => Some(ICON_CHAT),
         "message" | "sms" => Some(ICON_MESSAGE),
         "phone" | "call" => Some(ICON_PHONE),
         "send" => Some(ICON_SEND),
-        
+
         // Media
         "play" | "play_arrow" => Some(ICON_PLAY_ARROW),
         "pause" => Some(ICON_PAUSE),
@@ -421,7 +421,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "volume_down" | "volume_low" => Some(ICON_VOLUME_DOWN),
         "volume_mute" => Some(ICON_VOLUME_MUTE),
         "volume_off" => Some(ICON_VOLUME_OFF),
-        
+
         // Devices
         "smartphone" | "mobile" => Some(ICON_SMARTPHONE),
         "tablet" => Some(ICON_TABLET),
@@ -434,7 +434,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "bluetooth" => Some(ICON_BLUETOOTH),
         "battery_full" | "battery" => Some(ICON_BATTERY_FULL),
         "battery_alert" | "battery_low" => Some(ICON_BATTERY_ALERT),
-        
+
         // Game/D&D
         "casino" | "dice" => Some(ICON_CASINO),
         "extension" | "puzzle" | "module" => Some(ICON_EXTENSION),
@@ -448,7 +448,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "fitness" | "strength" | "str" => Some(ICON_FITNESS_CENTER),
         "speed" | "dexterity" | "dex" => Some(ICON_SPEED),
         "healing" | "hp" | "health" => Some(ICON_HEALING),
-        
+
         // Misc
         "language" | "globe" | "world" => Some(ICON_LANGUAGE),
         "dark_mode" | "moon" | "night" => Some(ICON_DARK_MODE),
@@ -469,7 +469,7 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "schedule" | "clock" | "time" => Some(ICON_SCHEDULE),
         "event" | "calendar" => Some(ICON_EVENT),
         "today" => Some(ICON_TODAY),
-        
+
         _ => None,
     }
 }
@@ -491,12 +491,21 @@ mod tests {
     fn test_icon_codepoints_are_valid_unicode() {
         // Verify all codepoints are in the Private Use Area or standard Unicode
         let icons = [
-            ICON_HOME, ICON_MENU, ICON_CLOSE, ICON_CHECK,
-            ICON_SETTINGS, ICON_SEARCH, ICON_DELETE, ICON_ADD,
+            ICON_HOME,
+            ICON_MENU,
+            ICON_CLOSE,
+            ICON_CHECK,
+            ICON_SETTINGS,
+            ICON_SEARCH,
+            ICON_DELETE,
+            ICON_ADD,
         ];
         for icon in icons {
             assert!(icon as u32 > 0, "Icon codepoint should be non-zero");
-            assert!(icon as u32 <= 0x10FFFF, "Icon codepoint should be valid Unicode");
+            assert!(
+                icon as u32 <= 0x10FFFF,
+                "Icon codepoint should be valid Unicode"
+            );
         }
     }
 }

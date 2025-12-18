@@ -12,10 +12,7 @@ pub struct AnimationPlugin;
 
 impl Plugin for AnimationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            animation_system,
-            spring_animation_system,
-        ));
+        app.add_systems(Update, (animation_system, spring_animation_system));
     }
 }
 
@@ -116,10 +113,7 @@ impl Default for MorphAnimation {
 // Systems
 // ============================================================================
 
-fn animation_system(
-    time: Res<Time>,
-    mut animations: Query<&mut AnimatedValue<f32>>,
-) {
+fn animation_system(time: Res<Time>, mut animations: Query<&mut AnimatedValue<f32>>) {
     for mut anim in animations.iter_mut() {
         if anim.is_complete() {
             continue;
@@ -134,10 +128,7 @@ fn animation_system(
     }
 }
 
-fn spring_animation_system(
-    time: Res<Time>,
-    mut springs: Query<&mut SpringAnimation>,
-) {
+fn spring_animation_system(time: Res<Time>, mut springs: Query<&mut SpringAnimation>) {
     let dt = time.delta_secs();
 
     for mut spring in springs.iter_mut() {
@@ -158,8 +149,8 @@ fn spring_animation_system(
 }
 
 fn apply_easing(t: f32, easing: Easing) -> f32 {
-    let (c1, c2, c3, c4) = easing.control_points();
-    
+    let (_c1, c2, _c3, c4) = easing.control_points();
+
     // Simplified cubic bezier approximation
     // For production, use a proper cubic bezier solver
     let t2 = t * t;

@@ -4,7 +4,7 @@
 //! Reference: <https://m3.material.io/components/buttons/overview>
 //!
 //! ## Bevy 0.17 Improvements
-//! 
+//!
 //! This module now leverages:
 //! - Native `BoxShadow` for elevation shadows
 //! - `children!` macro for declarative child spawning
@@ -25,14 +25,16 @@ pub struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<ButtonClickEvent>()
-            .add_systems(Update, (
+        app.add_message::<ButtonClickEvent>().add_systems(
+            Update,
+            (
                 button_interaction_system,
                 button_style_system,
                 button_label_style_system,
                 button_theme_refresh_system,
                 button_shadow_system,
-            ));
+            ),
+        );
     }
 }
 
@@ -72,7 +74,7 @@ pub enum IconGravity {
 }
 
 /// Material button component
-/// 
+///
 /// Matches properties from Material Android MaterialButton:
 /// - Multiple variants (filled, outlined, text, elevated, tonal)
 /// - State-based styling (normal, pressed, hovered, focused, disabled)
@@ -262,7 +264,7 @@ impl MaterialButton {
     }
 
     /// Get the background color based on state and theme
-    /// 
+    ///
     /// MD3 uses state layers to indicate hover/pressed states.
     /// The state layer is a semi-transparent overlay of the "on" color.
     pub fn background_color(&self, theme: &MaterialTheme) -> Color {
@@ -288,7 +290,11 @@ impl MaterialButton {
             }
             ButtonVariant::FilledTonal => {
                 // State layer uses on_secondary_container color
-                blend_state_layer(theme.secondary_container, theme.on_secondary_container, state_opacity)
+                blend_state_layer(
+                    theme.secondary_container,
+                    theme.on_secondary_container,
+                    state_opacity,
+                )
             }
             ButtonVariant::Outlined => {
                 // Transparent background with primary state layer
@@ -486,13 +492,10 @@ fn button_theme_refresh_system(
 }
 
 /// System to update button shadows using Bevy's native BoxShadow
-/// 
+///
 /// This leverages Bevy 0.17's GPU-accelerated shadow rendering.
 fn button_shadow_system(
-    mut buttons: Query<
-        (&MaterialButton, &mut BoxShadow),
-        Changed<MaterialButton>,
-    >,
+    mut buttons: Query<(&MaterialButton, &mut BoxShadow), Changed<MaterialButton>>,
 ) {
     for (button, mut box_shadow) in buttons.iter_mut() {
         let elevation = button.elevation();
@@ -501,9 +504,9 @@ fn button_shadow_system(
 }
 
 /// Builder for creating Material buttons with proper styling
-/// 
+///
 /// ## Example with Bevy 0.17's `children!` macro:
-/// 
+///
 /// ```ignore
 /// commands.spawn((
 ///     MaterialButtonBuilder::new("Click Me").filled().build(&theme),
@@ -628,7 +631,7 @@ impl MaterialButtonBuilder {
 }
 
 /// Helper function to spawn a material button with a text child
-/// 
+///
 /// This function uses Bevy 0.17's native BoxShadow for elevation rendering.
 pub fn spawn_material_button(
     commands: &mut Commands,
@@ -642,7 +645,11 @@ pub fn spawn_material_button(
     let text_color = button.text_color(theme);
 
     commands
-        .spawn(MaterialButtonBuilder::new(label_text.clone()).variant(variant).build(theme))
+        .spawn(
+            MaterialButtonBuilder::new(label_text.clone())
+                .variant(variant)
+                .build(theme),
+        )
         .with_children(|parent| {
             parent.spawn((
                 Text::new(label_text),
@@ -657,14 +664,14 @@ pub fn spawn_material_button(
 }
 
 /// Spawn a material button using the `children!` macro pattern
-/// 
+///
 /// This is the recommended approach for Bevy 0.17+.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// use bevy::prelude::*;
 /// use bevy_material_ui::prelude::*;
-/// 
+///
 /// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
 ///     commands.spawn((
 ///         material_button_bundle(&theme, "Click Me", ButtonVariant::Filled),
@@ -679,7 +686,9 @@ pub fn material_button_bundle(
     label: impl Into<String>,
     variant: ButtonVariant,
 ) -> impl Bundle {
-    MaterialButtonBuilder::new(label).variant(variant).build(theme)
+    MaterialButtonBuilder::new(label)
+        .variant(variant)
+        .build(theme)
 }
 
 // ============================================================================
@@ -691,10 +700,10 @@ pub fn material_button_bundle(
 pub struct ButtonLabel;
 
 /// Extension trait to spawn Material buttons as children
-/// 
+///
 /// This trait provides a clean API for spawning buttons within UI hierarchies
 /// using Bevy 0.17's ChildSpawnerCommands pattern.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// parent.spawn(Node::default()).with_children(|children| {
@@ -712,22 +721,22 @@ pub trait SpawnButtonChild {
         label: impl Into<String>,
         variant: ButtonVariant,
     );
-    
+
     /// Spawn a filled button (primary action)
     fn spawn_filled_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
-    
+
     /// Spawn an outlined button (secondary action)
     fn spawn_outlined_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
-    
+
     /// Spawn a text button (tertiary action)
     fn spawn_text_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
-    
+
     /// Spawn a filled tonal button (medium emphasis)
     fn spawn_filled_tonal_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
-    
+
     /// Spawn an elevated button
     fn spawn_elevated_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
-    
+
     /// Spawn a button with full builder control
     fn spawn_button_with(&mut self, theme: &MaterialTheme, button: MaterialButton);
 }
@@ -742,52 +751,56 @@ impl SpawnButtonChild for ChildSpawnerCommands<'_> {
         let label_str = label.into();
         let builder = MaterialButtonBuilder::new(label_str.clone()).variant(variant);
         let text_color = builder.button.text_color(theme);
-        
-        self.spawn(builder.build(theme))
-            .with_children(|button| {
-                button.spawn((
-                    ButtonLabel,
-                    Text::new(label_str),
-                    TextColor(text_color),
-                    TextFont { font_size: 14.0, ..default() },
-                ));
-            });
+
+        self.spawn(builder.build(theme)).with_children(|button| {
+            button.spawn((
+                ButtonLabel,
+                Text::new(label_str),
+                TextColor(text_color),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+            ));
+        });
     }
-    
+
     fn spawn_filled_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
         self.spawn_button(theme, label, ButtonVariant::Filled);
     }
-    
+
     fn spawn_outlined_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
         self.spawn_button(theme, label, ButtonVariant::Outlined);
     }
-    
+
     fn spawn_text_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
         self.spawn_button(theme, label, ButtonVariant::Text);
     }
-    
+
     fn spawn_filled_tonal_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
         self.spawn_button(theme, label, ButtonVariant::FilledTonal);
     }
-    
+
     fn spawn_elevated_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
         self.spawn_button(theme, label, ButtonVariant::Elevated);
     }
-    
+
     fn spawn_button_with(&mut self, theme: &MaterialTheme, button: MaterialButton) {
         let text_color = button.text_color(theme);
         let label_str = button.label.clone();
         let builder = MaterialButtonBuilder { button };
-        
-        self.spawn(builder.build(theme))
-            .with_children(|btn| {
-                btn.spawn((
-                    ButtonLabel,
-                    Text::new(label_str),
-                    TextColor(text_color),
-                    TextFont { font_size: 14.0, ..default() },
-                ));
-            });
+
+        self.spawn(builder.build(theme)).with_children(|btn| {
+            btn.spawn((
+                ButtonLabel,
+                Text::new(label_str),
+                TextColor(text_color),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+            ));
+        });
     }
 }
 
@@ -814,9 +827,9 @@ mod tests {
             ButtonVariant::Outlined,
             ButtonVariant::Text,
         ];
-        
+
         for i in 0..variants.len() {
-            for j in (i+1)..variants.len() {
+            for j in (i + 1)..variants.len() {
                 assert_ne!(variants[i], variants[j]);
             }
         }
@@ -841,9 +854,9 @@ mod tests {
             IconGravity::Top,
             IconGravity::TextTop,
         ];
-        
+
         for i in 0..gravities.len() {
-            for j in (i+1)..gravities.len() {
+            for j in (i + 1)..gravities.len() {
                 assert_ne!(gravities[i], gravities[j]);
             }
         }
@@ -888,7 +901,7 @@ mod tests {
     fn test_button_disabled() {
         let button = MaterialButton::new("Test").disabled(true);
         assert!(button.disabled);
-        
+
         let button = MaterialButton::new("Test").disabled(false);
         assert!(!button.disabled);
     }
@@ -984,10 +997,10 @@ mod tests {
     fn test_button_toggle_when_checkable() {
         let mut button = MaterialButton::new("Test").checkable(true);
         assert!(!button.checked);
-        
+
         button.toggle();
         assert!(button.checked);
-        
+
         button.toggle();
         assert!(!button.checked);
     }
@@ -996,7 +1009,7 @@ mod tests {
     fn test_button_toggle_when_not_checkable() {
         let mut button = MaterialButton::new("Test").checkable(false);
         assert!(!button.checked);
-        
+
         button.toggle();
         assert!(!button.checked); // Should not toggle
     }

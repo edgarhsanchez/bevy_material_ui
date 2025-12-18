@@ -14,12 +14,15 @@ pub struct FocusPlugin;
 
 impl Plugin for FocusPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (update_focus_outline_system, update_focus_ring_system));
+        app.add_systems(
+            Update,
+            (update_focus_outline_system, update_focus_ring_system),
+        );
     }
 }
 
 /// Component that enables focus ring on an entity
-/// 
+///
 /// **New in Bevy 0.17**: This component now uses Bevy's native `Outline` component
 /// for rendering focus rings when `use_native_outline` is enabled (default: true).
 #[derive(Component, Default)]
@@ -78,7 +81,7 @@ impl Focusable {
     }
 
     /// Convert to a Bevy `Outline` component
-    /// 
+    ///
     /// This leverages Bevy 0.17's native outline rendering.
     pub fn to_outline(&self, default_color: Color) -> Outline {
         let color = if self.focus_visible {
@@ -115,7 +118,7 @@ pub struct FocusLost {
 }
 
 /// System to update focus using Bevy's native Outline component
-/// 
+///
 /// This is the recommended approach for Bevy 0.17+ as it leverages
 /// the engine's built-in outline rendering for better performance.
 fn update_focus_outline_system(
@@ -145,7 +148,7 @@ fn update_focus_ring_system(
         if focusable.use_native_outline {
             continue;
         }
-        
+
         for child in children.iter() {
             if let Ok(mut node) = focus_rings.get_mut(child) {
                 node.display = if focusable.focus_visible {
@@ -159,7 +162,7 @@ fn update_focus_ring_system(
 }
 
 /// Create a focus ring node bundle (legacy approach)
-/// 
+///
 /// **Note**: Consider using `Focusable::to_outline()` with Bevy's native `Outline`
 /// component for better performance. This function is retained for backwards compatibility.
 pub fn create_focus_ring(target: Entity, color: Color, offset: f32, width: f32) -> impl Bundle {
@@ -182,7 +185,7 @@ pub fn create_focus_ring(target: Entity, color: Color, offset: f32, width: f32) 
 }
 
 /// Create a native outline bundle for focus rings (recommended for Bevy 0.17+)
-/// 
+///
 /// This uses Bevy's built-in `Outline` component which is more performant
 /// than the legacy child entity approach.
 pub fn create_native_focus_outline(color: Color, offset: f32, width: f32) -> Outline {

@@ -4,7 +4,7 @@
 //! Reference: <https://m3.material.io/components/floating-action-button/overview>
 //!
 //! ## Bevy 0.17 Improvements
-//! 
+//!
 //! This module now leverages native `BoxShadow` for elevation shadows.
 
 use bevy::prelude::*;
@@ -23,14 +23,16 @@ pub struct FabPlugin;
 
 impl Plugin for FabPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<FabClickEvent>()
-            .add_systems(Update, (
+        app.add_message::<FabClickEvent>().add_systems(
+            Update,
+            (
                 fab_interaction_system,
                 fab_style_system,
                 fab_content_style_system,
                 fab_theme_refresh_system,
                 fab_shadow_system,
-            ));
+            ),
+        );
     }
 }
 
@@ -153,7 +155,7 @@ impl MaterialFab {
             FabColor::Secondary => theme.secondary_container,
             FabColor::Tertiary => theme.tertiary_container,
         };
-        
+
         // Apply state layer
         let state_opacity = self.state_layer_opacity();
         if state_opacity > 0.0 {
@@ -163,7 +165,7 @@ impl MaterialFab {
             base
         }
     }
-    
+
     /// Get the state layer opacity
     fn state_layer_opacity(&self) -> f32 {
         if self.pressed {
@@ -266,7 +268,9 @@ fn fab_content_style_system(
     let Some(theme) = theme else { return };
 
     for (entity, fab) in fabs.iter() {
-        let Ok(children) = children_q.get(entity) else { continue };
+        let Ok(children) = children_q.get(entity) else {
+            continue;
+        };
         let content_color = fab.content_color(&theme);
 
         for child in children.iter() {
@@ -296,7 +300,9 @@ fn fab_theme_refresh_system(
     for (entity, fab, mut bg_color) in fabs.iter_mut() {
         *bg_color = BackgroundColor(fab.background_color(&theme));
 
-        let Ok(children) = children_q.get(entity) else { continue };
+        let Ok(children) = children_q.get(entity) else {
+            continue;
+        };
         let content_color = fab.content_color(&theme);
         for child in children.iter() {
             if let Ok(mut style) = icon_styles.get_mut(child) {
@@ -310,9 +316,7 @@ fn fab_theme_refresh_system(
 }
 
 /// System to update FAB shadows using native BoxShadow
-fn fab_shadow_system(
-    mut fabs: Query<(&MaterialFab, &mut BoxShadow), Changed<MaterialFab>>,
-) {
+fn fab_shadow_system(mut fabs: Query<(&MaterialFab, &mut BoxShadow), Changed<MaterialFab>>) {
     for (fab, mut box_shadow) in fabs.iter_mut() {
         let elevation = fab.elevation();
         *box_shadow = elevation.to_box_shadow();
@@ -394,9 +398,17 @@ impl FabBuilder {
             Button,
             RippleHost::new(),
             Node {
-                width: if is_extended { Val::Auto } else { Val::Px(size) },
+                width: if is_extended {
+                    Val::Auto
+                } else {
+                    Val::Px(size)
+                },
                 height: Val::Px(size),
-                min_width: if is_extended { Val::Px(80.0) } else { Val::Auto },
+                min_width: if is_extended {
+                    Val::Px(80.0)
+                } else {
+                    Val::Auto
+                },
                 padding: if is_extended {
                     UiRect::axes(Val::Px(Spacing::LARGE), Val::Px(Spacing::LARGE))
                 } else {
@@ -404,7 +416,11 @@ impl FabBuilder {
                 },
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                column_gap: if is_extended { Val::Px(Spacing::SMALL) } else { Val::Px(0.0) },
+                column_gap: if is_extended {
+                    Val::Px(Spacing::SMALL)
+                } else {
+                    Val::Px(0.0)
+                },
                 ..default()
             },
             BackgroundColor(bg_color),
@@ -426,9 +442,9 @@ use crate::icons::MaterialIcon;
 pub struct FabLabel;
 
 /// Extension trait to spawn FABs as children
-/// 
+///
 /// This trait provides a clean API for spawning FABs within UI hierarchies.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// parent.spawn(Node::default()).with_children(|children| {
@@ -439,22 +455,17 @@ pub struct FabLabel;
 /// ```
 pub trait SpawnFabChild {
     /// Spawn a FAB with specified size
-    fn spawn_fab(
-        &mut self,
-        theme: &MaterialTheme,
-        icon: impl Into<String>,
-        size: FabSize,
-    );
-    
+    fn spawn_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>, size: FabSize);
+
     /// Spawn a small FAB
     fn spawn_small_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
-    
+
     /// Spawn a regular FAB
     fn spawn_regular_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
-    
+
     /// Spawn a large FAB
     fn spawn_large_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
-    
+
     /// Spawn an extended FAB with icon and label
     fn spawn_extended_fab(
         &mut self,
@@ -462,46 +473,42 @@ pub trait SpawnFabChild {
         icon: impl Into<String>,
         label: impl Into<String>,
     );
-    
+
     /// Spawn a FAB with full builder control
     fn spawn_fab_with(&mut self, theme: &MaterialTheme, fab: MaterialFab);
 }
 
 impl SpawnFabChild for ChildSpawnerCommands<'_> {
-    fn spawn_fab(
-        &mut self,
-        theme: &MaterialTheme,
-        icon: impl Into<String>,
-        size: FabSize,
-    ) {
+    fn spawn_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>, size: FabSize) {
         let icon_name = icon.into();
         let builder = FabBuilder::new(icon_name.clone()).size(size);
         let icon_color = builder.fab.content_color(theme);
         let icon_size = builder.fab.size.icon_size();
-        
-        self.spawn(builder.build(theme))
-            .with_children(|fab| {
-                if let Some(icon) = MaterialIcon::from_name(&icon_name) {
-                    fab.spawn((
-                        icon,
-                        IconStyle::outlined().with_color(icon_color).with_size(icon_size),
-                    ));
-                }
-            });
+
+        self.spawn(builder.build(theme)).with_children(|fab| {
+            if let Some(icon) = MaterialIcon::from_name(&icon_name) {
+                fab.spawn((
+                    icon,
+                    IconStyle::outlined()
+                        .with_color(icon_color)
+                        .with_size(icon_size),
+                ));
+            }
+        });
     }
-    
+
     fn spawn_small_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_fab(theme, icon, FabSize::Small);
     }
-    
+
     fn spawn_regular_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_fab(theme, icon, FabSize::Regular);
     }
-    
+
     fn spawn_large_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
         self.spawn_fab(theme, icon, FabSize::Large);
     }
-    
+
     fn spawn_extended_fab(
         &mut self,
         theme: &MaterialTheme,
@@ -514,24 +521,28 @@ impl SpawnFabChild for ChildSpawnerCommands<'_> {
         let icon_color = builder.fab.content_color(theme);
         let text_color = builder.fab.content_color(theme);
         let icon_size = builder.fab.size.icon_size();
-        
-        self.spawn(builder.build(theme))
-            .with_children(|fab| {
-                if let Some(icon) = MaterialIcon::from_name(&icon_name) {
-                    fab.spawn((
-                        icon,
-                        IconStyle::outlined().with_color(icon_color).with_size(icon_size),
-                    ));
-                }
+
+        self.spawn(builder.build(theme)).with_children(|fab| {
+            if let Some(icon) = MaterialIcon::from_name(&icon_name) {
                 fab.spawn((
-                    FabLabel,
-                    Text::new(label_str),
-                    TextColor(text_color),
-                    TextFont { font_size: 14.0, ..default() },
+                    icon,
+                    IconStyle::outlined()
+                        .with_color(icon_color)
+                        .with_size(icon_size),
                 ));
-            });
+            }
+            fab.spawn((
+                FabLabel,
+                Text::new(label_str),
+                TextColor(text_color),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+            ));
+        });
     }
-    
+
     fn spawn_fab_with(&mut self, theme: &MaterialTheme, fab: MaterialFab) {
         let icon_color = fab.content_color(theme);
         let text_color = fab.content_color(theme);
@@ -539,23 +550,27 @@ impl SpawnFabChild for ChildSpawnerCommands<'_> {
         let label_text = fab.label.clone();
         let icon_size = fab.size.icon_size();
         let builder = FabBuilder { fab };
-        
-        self.spawn(builder.build(theme))
-            .with_children(|fab_inner| {
-                if let Some(icon) = MaterialIcon::from_name(&icon_name) {
-                    fab_inner.spawn((
-                        icon,
-                        IconStyle::outlined().with_color(icon_color).with_size(icon_size),
-                    ));
-                }
-                if let Some(label) = label_text {
-                    fab_inner.spawn((
-                        FabLabel,
-                        Text::new(label),
-                        TextColor(text_color),
-                        TextFont { font_size: 14.0, ..default() },
-                    ));
-                }
-            });
+
+        self.spawn(builder.build(theme)).with_children(|fab_inner| {
+            if let Some(icon) = MaterialIcon::from_name(&icon_name) {
+                fab_inner.spawn((
+                    icon,
+                    IconStyle::outlined()
+                        .with_color(icon_color)
+                        .with_size(icon_size),
+                ));
+            }
+            if let Some(label) = label_text {
+                fab_inner.spawn((
+                    FabLabel,
+                    Text::new(label),
+                    TextColor(text_color),
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
+                ));
+            }
+        });
     }
 }

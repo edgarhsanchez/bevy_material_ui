@@ -23,10 +23,7 @@ impl Plugin for ToolbarPlugin {
             .add_message::<ToolbarActionEvent>()
             .add_systems(
                 Update,
-                (
-                    toolbar_interaction_system,
-                    toolbar_theme_refresh_system,
-                ),
+                (toolbar_interaction_system, toolbar_theme_refresh_system),
             );
     }
 }
@@ -241,7 +238,9 @@ impl SpawnToolbarChild for ChildSpawnerCommands<'_> {
                 toolbar
                     .spawn((
                         ToolbarNavigation,
-                        IconButtonBuilder::new(icon.as_str()).standard().build(theme),
+                        IconButtonBuilder::new(icon.as_str())
+                            .standard()
+                            .build(theme),
                     ))
                     .with_children(|btn| {
                         btn.spawn((
@@ -369,14 +368,16 @@ mod tests {
 
     #[test]
     fn test_toolbar_creation() {
-        let toolbar = MaterialToolbar::new("Title").with_navigation_icon(MaterialIcon::new(ICON_MENU));
+        let toolbar =
+            MaterialToolbar::new("Title").with_navigation_icon(MaterialIcon::new(ICON_MENU));
         assert_eq!(toolbar.title, "Title");
         assert!(toolbar.navigation_icon.is_some());
     }
 
     #[test]
     fn test_toolbar_actions() {
-        let toolbar = MaterialToolbar::new("Title").add_action(ToolbarAction::new(MaterialIcon::menu(), "menu"));
+        let toolbar = MaterialToolbar::new("Title")
+            .add_action(ToolbarAction::new(MaterialIcon::menu(), "menu"));
         assert_eq!(toolbar.actions.len(), 1);
         assert_eq!(toolbar.actions[0].id, "menu");
     }

@@ -32,16 +32,15 @@ pub struct ListPlugin;
 
 impl Plugin for ListPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<ListItemClickEvent>()
-            .add_systems(
-                Update,
-                (
-                    list_item_interaction_system,
-                    list_selection_system,
-                    list_item_style_system,
-                    list_item_text_style_system,
-                ),
-            );
+        app.add_message::<ListItemClickEvent>().add_systems(
+            Update,
+            (
+                list_item_interaction_system,
+                list_selection_system,
+                list_item_style_system,
+                list_item_text_style_system,
+            ),
+        );
     }
 }
 
@@ -202,7 +201,7 @@ impl MaterialListItem {
         } else {
             Color::NONE
         };
-        
+
         // Apply state layer
         let state_opacity = self.state_layer_opacity();
         if state_opacity > 0.0 {
@@ -284,8 +283,12 @@ fn list_selection_system(
             current = parents.get(e).ok().map(|p| p.0);
         }
 
-        let Some(list_entity) = list_entity else { continue };
-        let Ok(list) = lists.get(list_entity) else { continue };
+        let Some(list_entity) = list_entity else {
+            continue;
+        };
+        let Ok(list) = lists.get(list_entity) else {
+            continue;
+        };
 
         match list.selection_mode {
             ListSelectionMode::None => {}
@@ -366,7 +369,10 @@ fn list_item_text_style_system(
     theme: Option<Res<MaterialTheme>>,
     changed_items: Query<(&MaterialListItem, &Children), Changed<MaterialListItem>>,
     mut headline_texts: Query<&mut TextColor, With<ListItemHeadline>>,
-    mut supporting_texts: Query<&mut TextColor, (With<ListItemSupportingText>, Without<ListItemHeadline>)>,
+    mut supporting_texts: Query<
+        &mut TextColor,
+        (With<ListItemSupportingText>, Without<ListItemHeadline>),
+    >,
     children_query: Query<&Children>,
 ) {
     let Some(theme) = theme else { return };
@@ -374,7 +380,7 @@ fn list_item_text_style_system(
     for (item, children) in changed_items.iter() {
         let headline_color = item.headline_color(&theme);
         let supporting_color = item.supporting_text_color(&theme);
-        
+
         // Update direct children
         for child in children.iter() {
             if let Ok(mut text_color) = headline_texts.get_mut(child) {
@@ -383,7 +389,7 @@ fn list_item_text_style_system(
             if let Ok(mut text_color) = supporting_texts.get_mut(child) {
                 *text_color = TextColor(supporting_color);
             }
-            
+
             // Check nested children (for body containers)
             if let Ok(grandchildren) = children_query.get(child) {
                 for grandchild in grandchildren.iter() {
@@ -430,20 +436,20 @@ impl ListBuilder {
         self.max_height = Some(height);
         self
     }
-    
+
     /// Set maximum visible items (enables scrolling based on item count)
     /// Uses one-line item height (56px) as reference
     pub fn max_visible_items(mut self, count: usize) -> Self {
         self.max_height = Some(count as f32 * 56.0);
         self
     }
-    
+
     /// Set maximum visible items with specific variant height
     pub fn max_visible_items_variant(mut self, count: usize, variant: ListItemVariant) -> Self {
         self.max_height = Some(count as f32 * variant.height());
         self
     }
-    
+
     /// Hide the scrollbar (content still scrollable)
     pub fn hide_scrollbar(mut self) -> Self {
         self.show_scrollbar = false;
@@ -462,7 +468,7 @@ impl ListBuilder {
             },
         )
     }
-    
+
     /// Build a scrollable list bundle
     /// Uses scroll_y() for native scrolling - ensure scroll position is clamped externally
     pub fn build_scrollable(self) -> impl Bundle {
@@ -470,7 +476,10 @@ impl ListBuilder {
         (
             MaterialList::new().with_selection_mode(self.selection_mode),
             ScrollableList,
-            ScrollContainerBuilder::new().vertical().with_scrollbars(self.show_scrollbar).build(),
+            ScrollContainerBuilder::new()
+                .vertical()
+                .with_scrollbars(self.show_scrollbar)
+                .build(),
             ScrollPosition::default(),
             Node {
                 flex_direction: FlexDirection::Column,
@@ -641,9 +650,9 @@ pub fn create_list_divider(theme: &MaterialTheme, inset: bool) -> impl Bundle {
 // ============================================================================
 
 /// Extension trait to spawn Material lists and list items as children
-/// 
+///
 /// This trait provides a clean API for spawning lists within UI hierarchies.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// parent.spawn(Node::default()).with_children(|children| {
@@ -655,11 +664,8 @@ pub fn create_list_divider(theme: &MaterialTheme, inset: bool) -> impl Bundle {
 /// ```
 pub trait SpawnListChild {
     /// Spawn a list container
-    fn spawn_list(
-        &mut self,
-        with_children: impl FnOnce(&mut ChildSpawnerCommands),
-    );
-    
+    fn spawn_list(&mut self, with_children: impl FnOnce(&mut ChildSpawnerCommands));
+
     /// Spawn a list item with headline and optional supporting text
     fn spawn_list_item(
         &mut self,
@@ -667,22 +673,20 @@ pub trait SpawnListChild {
         headline: impl Into<String>,
         supporting: Option<impl Into<String>>,
     );
-    
+
     /// Spawn a list item with full builder control
     fn spawn_list_item_with(&mut self, theme: &MaterialTheme, builder: ListItemBuilder);
-    
+
     /// Spawn a list divider
     fn spawn_list_divider(&mut self, theme: &MaterialTheme, inset: bool);
 }
 
 impl SpawnListChild for ChildSpawnerCommands<'_> {
-    fn spawn_list(
-        &mut self,
-        with_children: impl FnOnce(&mut ChildSpawnerCommands),
-    ) {
-        self.spawn(ListBuilder::new().build()).with_children(with_children);
+    fn spawn_list(&mut self, with_children: impl FnOnce(&mut ChildSpawnerCommands)) {
+        self.spawn(ListBuilder::new().build())
+            .with_children(with_children);
     }
-    
+
     fn spawn_list_item(
         &mut self,
         theme: &MaterialTheme,
@@ -692,48 +696,54 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
         let headline_str = headline.into();
         let supporting_str = supporting.map(|s| s.into());
         let has_supporting = supporting_str.is_some();
-        
+
         let builder = if has_supporting {
             ListItemBuilder::new(&headline_str).two_line()
         } else {
             ListItemBuilder::new(&headline_str)
         };
-        
+
         let headline_color = theme.on_surface;
         let supporting_color = theme.on_surface_variant;
-        
-        self.spawn(builder.build(theme))
-            .with_children(|item| {
-                // Body content
-                item.spawn((
-                    ListItemBody,
-                    Node {
-                        flex_direction: FlexDirection::Column,
-                        flex_grow: 1.0,
+
+        self.spawn(builder.build(theme)).with_children(|item| {
+            // Body content
+            item.spawn((
+                ListItemBody,
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    flex_grow: 1.0,
+                    ..default()
+                },
+            ))
+            .with_children(|body| {
+                // Headline
+                body.spawn((
+                    ListItemHeadline,
+                    Text::new(&headline_str),
+                    TextFont {
+                        font_size: 16.0,
                         ..default()
                     },
-                )).with_children(|body| {
-                    // Headline
+                    TextColor(headline_color),
+                ));
+
+                // Supporting text (if provided)
+                if let Some(ref supporting) = supporting_str {
                     body.spawn((
-                        ListItemHeadline,
-                        Text::new(&headline_str),
-                        TextFont { font_size: 16.0, ..default() },
-                        TextColor(headline_color),
+                        ListItemSupportingText,
+                        Text::new(supporting),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(supporting_color),
                     ));
-                    
-                    // Supporting text (if provided)
-                    if let Some(ref supporting) = supporting_str {
-                        body.spawn((
-                            ListItemSupportingText,
-                            Text::new(supporting),
-                            TextFont { font_size: 14.0, ..default() },
-                            TextColor(supporting_color),
-                        ));
-                    }
-                });
+                }
             });
+        });
     }
-    
+
     fn spawn_list_item_with(&mut self, theme: &MaterialTheme, builder: ListItemBuilder) {
         let headline = builder.item.headline.clone();
         let supporting_text = builder.item.supporting_text.clone();
@@ -745,90 +755,98 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
         let supporting_color = builder.item.supporting_text_color(theme);
         let icon_color = builder.item.icon_color(theme);
 
-        self.spawn(builder.build(theme))
-            .with_children(|item| {
-                // Leading content
-                if let Some(icon_str) = leading_icon.as_deref() {
-                    if let Some(codepoint) = resolve_icon_codepoint(icon_str) {
-                        item.spawn((
-                            ListItemLeading,
-                            Node {
-                                width: Val::Px(56.0),
-                                height: Val::Px(56.0),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
-                        ))
-                        .with_children(|leading| {
-                            leading.spawn((
-                                MaterialIcon::new(codepoint),
-                                IconStyle::outlined().with_color(icon_color).with_size(24.0),
-                            ));
-                        });
-                    }
-                }
-
-                // Body
-                item.spawn((
-                    ListItemBody,
-                    Node {
-                        flex_direction: FlexDirection::Column,
-                        flex_grow: 1.0,
-                        ..default()
-                    },
-                ))
-                .with_children(|body| {
-                    body.spawn((
-                        ListItemHeadline,
-                        Text::new(&headline),
-                        TextFont { font_size: 16.0, ..default() },
-                        TextColor(headline_color),
-                    ));
-
-                    if let Some(ref supporting) = supporting_text {
-                        body.spawn((
-                            ListItemSupportingText,
-                            Text::new(supporting),
-                            TextFont { font_size: 14.0, ..default() },
-                            TextColor(supporting_color),
-                        ));
-                    }
-                });
-
-                // Trailing content
-                if trailing_text.is_some() || trailing_icon.is_some() {
+        self.spawn(builder.build(theme)).with_children(|item| {
+            // Leading content
+            if let Some(icon_str) = leading_icon.as_deref() {
+                if let Some(codepoint) = resolve_icon_codepoint(icon_str) {
                     item.spawn((
-                        ListItemTrailing,
+                        ListItemLeading,
                         Node {
-                            flex_direction: FlexDirection::Row,
+                            width: Val::Px(56.0),
+                            height: Val::Px(56.0),
+                            justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
-                            column_gap: Val::Px(Spacing::MEDIUM),
                             ..default()
                         },
                     ))
-                    .with_children(|trailing| {
-                        if let Some(ref text) = trailing_text {
-                            trailing.spawn((
-                                Text::new(text),
-                                TextFont { font_size: 14.0, ..default() },
-                                TextColor(supporting_color),
-                            ));
-                        }
-
-                        if let Some(icon_str) = trailing_icon.as_deref() {
-                            if let Some(codepoint) = resolve_icon_codepoint(icon_str) {
-                                trailing.spawn((
-                                    MaterialIcon::new(codepoint),
-                                    IconStyle::outlined().with_color(icon_color).with_size(24.0),
-                                ));
-                            }
-                        }
+                    .with_children(|leading| {
+                        leading.spawn((
+                            MaterialIcon::new(codepoint),
+                            IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                        ));
                     });
                 }
+            }
+
+            // Body
+            item.spawn((
+                ListItemBody,
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    flex_grow: 1.0,
+                    ..default()
+                },
+            ))
+            .with_children(|body| {
+                body.spawn((
+                    ListItemHeadline,
+                    Text::new(&headline),
+                    TextFont {
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(headline_color),
+                ));
+
+                if let Some(ref supporting) = supporting_text {
+                    body.spawn((
+                        ListItemSupportingText,
+                        Text::new(supporting),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(supporting_color),
+                    ));
+                }
             });
+
+            // Trailing content
+            if trailing_text.is_some() || trailing_icon.is_some() {
+                item.spawn((
+                    ListItemTrailing,
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        column_gap: Val::Px(Spacing::MEDIUM),
+                        ..default()
+                    },
+                ))
+                .with_children(|trailing| {
+                    if let Some(ref text) = trailing_text {
+                        trailing.spawn((
+                            Text::new(text),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(supporting_color),
+                        ));
+                    }
+
+                    if let Some(icon_str) = trailing_icon.as_deref() {
+                        if let Some(codepoint) = resolve_icon_codepoint(icon_str) {
+                            trailing.spawn((
+                                MaterialIcon::new(codepoint),
+                                IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                            ));
+                        }
+                    }
+                });
+            }
+        });
     }
-    
+
     fn spawn_list_divider(&mut self, theme: &MaterialTheme, inset: bool) {
         self.spawn(create_list_divider(theme, inset));
     }

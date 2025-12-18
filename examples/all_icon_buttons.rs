@@ -6,6 +6,9 @@
 use bevy::prelude::*;
 use bevy_material_ui::icons::EMBEDDED_MATERIAL_SYMBOLS_FONT;
 use bevy_material_ui::prelude::*;
+use std::collections::HashMap;
+
+const CODEPOINTS_RS: &str = include_str!("../src/icons/codepoints.rs");
 
 fn main() {
     App::new()
@@ -19,6 +22,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, icon_font: Res<Mater
     commands.spawn(Camera2d);
 
     let codepoints = collect_font_codepoints();
+    let codepoint_names = collect_codepoint_names();
     info!(
         "Material Symbols glyphs discovered (PUA scan): {}",
         codepoints.len()
@@ -74,22 +78,77 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, icon_font: Res<Mater
                                 .with_variant(IconButtonVariant::Standard)
                                 .icon_color(&theme);
 
-                            grid.spawn(IconButtonBuilder::new(icon_str).standard().build(&theme))
-                                .with_children(|btn| {
-                                    btn.spawn((
-                                        Text::new(ch.to_string()),
-                                        TextFont {
-                                            font: icon_font.0.clone(),
-                                            font_size: 24.0,
-                                            ..default()
-                                        },
-                                        TextColor(icon_color),
-                                    ));
-                                });
+                            let tooltip_text = codepoint_names
+                                .get(&ch)
+                                .cloned()
+                                .unwrap_or_else(|| format!("U+{:04X}", ch as u32));
+
+                            grid.spawn((
+                                IconButtonBuilder::new(icon_str).standard().build(&theme),
+                                TooltipTrigger::new(tooltip_text),
+                            ))
+                            .with_children(|btn| {
+                                btn.spawn((
+                                    Text::new(ch.to_string()),
+                                    TextFont {
+                                        font: icon_font.0.clone(),
+                                        font_size: 24.0,
+                                        ..default()
+                                    },
+                                    TextColor(icon_color),
+                                ));
+                            });
                         }
                     });
             });
         });
+}
+
+fn collect_codepoint_names() -> HashMap<char, String> {
+    // Build a best-effort map from codepoint -> icon name by parsing
+    // `src/icons/codepoints.rs` at compile time.
+    //
+    // This example renders all glyphs in the embedded font, but the crate only
+    // assigns names to a curated subset of them.
+    let mut out: HashMap<char, String> = HashMap::new();
+
+    for raw_line in CODEPOINTS_RS.lines() {
+        let line = raw_line.trim();
+
+        // Example line:
+        // pub const ICON_HOME: char = '\u{E88A}';
+        if !line.starts_with("pub const ICON_") {
+            continue;
+        }
+
+        let Some((left, right)) = line.split_once(": char = ") else {
+            continue;
+        };
+
+        let Some(const_name) = left.trim().strip_prefix("pub const ") else {
+            continue;
+        };
+
+        let Some(name) = const_name.trim().strip_prefix("ICON_") else {
+            continue;
+        };
+
+        let Some(hex) = right.split("\\u{").nth(1).and_then(|s| s.split('}').next()) else {
+            continue;
+        };
+
+        let Ok(codepoint) = u32::from_str_radix(hex, 16) else {
+            continue;
+        };
+
+        let Some(ch) = char::from_u32(codepoint) else {
+            continue;
+        };
+
+        out.insert(ch, name.to_lowercase());
+    }
+
+    out
 }
 
 fn collect_font_codepoints() -> Vec<char> {
@@ -104,7 +163,9 @@ fn collect_font_codepoints() -> Vec<char> {
 
     // Scan BMP Private Use Area.
     for u in 0xE000u32..=0xF8FFu32 {
-        let Some(ch) = char::from_u32(u) else { continue };
+        let Some(ch) = char::from_u32(u) else {
+            continue;
+        };
         if face.glyph_index(ch).is_some() {
             out.push(ch);
         }
@@ -113,7 +174,9 @@ fn collect_font_codepoints() -> Vec<char> {
     // Scan a common supplementary PUA range (Material symbols are typically BMP PUA, but
     // this keeps us honest if the font ever adds glyphs there).
     for u in 0xF0000u32..=0xF8FFFu32 {
-        let Some(ch) = char::from_u32(u) else { continue };
+        let Some(ch) = char::from_u32(u) else {
+            continue;
+        };
         if face.glyph_index(ch).is_some() {
             out.push(ch);
         }

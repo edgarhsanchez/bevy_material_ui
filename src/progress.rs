@@ -213,7 +213,7 @@ fn circular_progress_animation_system(
             if progress.animation_progress > 1.0 {
                 progress.animation_progress -= 1.0;
             }
-            
+
             // Rotate the indicator
             progress.rotation += time.delta_secs() * std::f32::consts::TAU / Duration::EXTRA_LONG4;
             if progress.rotation > std::f32::consts::TAU {
@@ -242,11 +242,10 @@ fn progress_style_system(
 fn linear_progress_indicator_system(
     theme: Option<Res<MaterialTheme>>,
     progress_bars: Query<(Entity, &MaterialLinearProgress)>,
-    mut indicators: Query<(
-        &LinearProgressIndicatorFor,
-        &mut Node,
-        &mut BackgroundColor,
-    ), With<ProgressIndicator>>,
+    mut indicators: Query<
+        (&LinearProgressIndicatorFor, &mut Node, &mut BackgroundColor),
+        With<ProgressIndicator>,
+    >,
 ) {
     let Some(theme) = theme else { return };
 
@@ -271,7 +270,8 @@ fn linear_progress_indicator_system(
                 ProgressMode::Indeterminate => {
                     let t = progress.animation_progress.clamp(0.0, 1.0);
                     // Travel from -segment_width to 100%.
-                    let left = t * (100.0 + INDETERMINATE_SEGMENT_WIDTH) - INDETERMINATE_SEGMENT_WIDTH;
+                    let left =
+                        t * (100.0 + INDETERMINATE_SEGMENT_WIDTH) - INDETERMINATE_SEGMENT_WIDTH;
                     node.left = Val::Percent(left);
                     node.width = Val::Percent(INDETERMINATE_SEGMENT_WIDTH);
                 }
@@ -491,9 +491,9 @@ pub struct ProgressIndicator;
 // ============================================================================
 
 /// Extension trait to spawn progress indicators as children
-/// 
+///
 /// This trait provides a clean API for spawning progress indicators within UI hierarchies.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// parent.spawn(Node::default()).with_children(|children| {
@@ -505,23 +505,19 @@ pub struct ProgressIndicator;
 pub trait SpawnProgressChild {
     /// Spawn a linear progress indicator with determinate progress
     fn spawn_linear_progress(&mut self, theme: &MaterialTheme, progress: f32);
-    
+
     /// Spawn an indeterminate linear progress indicator
     fn spawn_indeterminate_progress(&mut self, theme: &MaterialTheme);
-    
+
     /// Spawn a circular progress indicator with determinate progress
     fn spawn_circular_progress(&mut self, theme: &MaterialTheme, progress: f32);
-    
+
     /// Spawn an indeterminate circular progress indicator
     fn spawn_indeterminate_circular_progress(&mut self, theme: &MaterialTheme);
-    
+
     /// Spawn a linear progress indicator with full builder control
-    fn spawn_linear_progress_with(
-        &mut self,
-        theme: &MaterialTheme,
-        builder: LinearProgressBuilder,
-    );
-    
+    fn spawn_linear_progress_with(&mut self, theme: &MaterialTheme, builder: LinearProgressBuilder);
+
     /// Spawn a circular progress indicator with full builder control
     fn spawn_circular_progress_with(
         &mut self,
@@ -532,33 +528,21 @@ pub trait SpawnProgressChild {
 
 impl SpawnProgressChild for ChildSpawnerCommands<'_> {
     fn spawn_linear_progress(&mut self, theme: &MaterialTheme, progress: f32) {
-        self.spawn_linear_progress_with(
-            theme,
-            LinearProgressBuilder::new().progress(progress),
-        );
+        self.spawn_linear_progress_with(theme, LinearProgressBuilder::new().progress(progress));
     }
-    
+
     fn spawn_indeterminate_progress(&mut self, theme: &MaterialTheme) {
-        self.spawn_linear_progress_with(
-            theme,
-            LinearProgressBuilder::new().indeterminate(),
-        );
+        self.spawn_linear_progress_with(theme, LinearProgressBuilder::new().indeterminate());
     }
-    
+
     fn spawn_circular_progress(&mut self, theme: &MaterialTheme, progress: f32) {
-        self.spawn_circular_progress_with(
-            theme,
-            CircularProgressBuilder::new().progress(progress),
-        );
+        self.spawn_circular_progress_with(theme, CircularProgressBuilder::new().progress(progress));
     }
-    
+
     fn spawn_indeterminate_circular_progress(&mut self, theme: &MaterialTheme) {
-        self.spawn_circular_progress_with(
-            theme,
-            CircularProgressBuilder::new().indeterminate(),
-        );
+        self.spawn_circular_progress_with(theme, CircularProgressBuilder::new().indeterminate());
     }
-    
+
     fn spawn_linear_progress_with(
         &mut self,
         theme: &MaterialTheme,
@@ -589,7 +573,7 @@ impl SpawnProgressChild for ChildSpawnerCommands<'_> {
             ));
         });
     }
-    
+
     fn spawn_circular_progress_with(
         &mut self,
         theme: &MaterialTheme,

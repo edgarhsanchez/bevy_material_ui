@@ -72,7 +72,7 @@ impl TonalPalette {
     /// ARGB integer representing the color
     pub fn tone(&mut self, tone: u8) -> u32 {
         let tone = tone.min(100);
-        
+
         if let Some(&cached) = self.cache.get(&tone) {
             return cached;
         }
@@ -136,19 +136,19 @@ impl CorePalette {
             // Using the seed's chroma directly makes many seeds look "off" compared to the
             // reference Material algorithm.
             primary: TonalPalette::new(hue, 48.0),
-            
+
             // Secondary uses the same hue with reduced chroma (16)
             secondary: TonalPalette::new(hue, 16.0),
-            
+
             // Tertiary uses an analogous hue (60° rotation) with moderate chroma (24)
             tertiary: TonalPalette::new((hue + 60.0) % 360.0, 24.0),
-            
+
             // Neutral has very low chroma (4) from the seed hue
             neutral: TonalPalette::new(hue, 4.0),
-            
+
             // Neutral variant has slightly more chroma (8)
             neutral_variant: TonalPalette::new(hue, 8.0),
-            
+
             // Error is always red
             error: TonalPalette::new(25.0, 84.0),
         }
@@ -192,7 +192,7 @@ mod tests {
     #[test]
     fn test_tonal_palette_tones() {
         let mut palette = TonalPalette::new(270.0, 50.0);
-        
+
         // Tone 0 should be near black
         let tone_0 = palette.tone(0);
         let r = (tone_0 >> 16) & 0xFF;
@@ -205,22 +205,25 @@ mod tests {
         let r = (tone_100 >> 16) & 0xFF;
         let g = (tone_100 >> 8) & 0xFF;
         let b = tone_100 & 0xFF;
-        assert!(r > 240 && g > 240 && b > 240, "Tone 100 should be near white");
+        assert!(
+            r > 240 && g > 240 && b > 240,
+            "Tone 100 should be near white"
+        );
     }
 
     #[test]
     fn test_core_palette() {
         let palette = CorePalette::from_argb(0xFF6750A4);
-        
+
         // Primary uses the MD3 target chroma.
         assert!((palette.primary.chroma() - 48.0).abs() < 0.001);
-        
+
         // Secondary should have reduced chroma
         assert!((palette.secondary.chroma() - 16.0).abs() < 0.001);
-        
+
         // Neutral should have very low chroma
         assert!(palette.neutral.chroma() <= 8.0);
-        
+
         // Error should be red-ish hue
         assert!(palette.error.hue() < 50.0 || palette.error.hue() > 330.0);
     }
@@ -228,13 +231,13 @@ mod tests {
     #[test]
     fn test_palette_caching() {
         let mut palette = TonalPalette::new(200.0, 40.0);
-        
+
         // First call should compute
         let first = palette.tone(50);
-        
+
         // Second call should return cached value
         let second = palette.tone(50);
-        
+
         assert_eq!(first, second);
     }
 
@@ -242,7 +245,7 @@ mod tests {
     fn test_bevy_color_conversion() {
         let mut palette = TonalPalette::new(120.0, 40.0);
         let color = palette.tone_color(50);
-        
+
         // Should be a valid color
         let srgba = color.to_srgba();
         assert!(srgba.red >= 0.0 && srgba.red <= 1.0);

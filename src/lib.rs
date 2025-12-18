@@ -183,32 +183,38 @@ pub mod animation;
 /// Prelude module for convenient imports
 pub mod prelude {
     // Re-export Bevy UI types for convenience
-    pub use bevy::ui::{BoxShadow, ShadowStyle, Outline};
-    pub use bevy::ui::{BackgroundGradient, BorderGradient, Gradient, LinearGradient, RadialGradient, ConicGradient, ColorStop};
+    pub use bevy::ui::{
+        BackgroundGradient, BorderGradient, ColorStop, ConicGradient, Gradient, LinearGradient,
+        RadialGradient,
+    };
+    pub use bevy::ui::{BoxShadow, Outline, ShadowStyle};
 
     // Core
-    pub use crate::theme::{ColorScheme, MaterialTheme};
-    pub use crate::typography::Typography;
-    pub use crate::tokens::{CornerRadius, Duration, Easing, Spacing};
     pub use crate::elevation::{Elevation, ElevationShadow};
-    pub use crate::focus::{FocusGained, FocusLost, Focusable, FocusPlugin, FocusRing, create_native_focus_outline};
+    pub use crate::focus::{
+        create_native_focus_outline, FocusGained, FocusLost, FocusPlugin, FocusRing, Focusable,
+    };
     pub use crate::ripple::{Ripple, RippleHost, RipplePlugin, SpawnRipple};
-    pub use crate::telemetry::{TelemetryConfig, TelemetryPlugin, TestId, ElementBounds, InsertTestId, test_id_if_enabled};
+    pub use crate::telemetry::{
+        test_id_if_enabled, ElementBounds, InsertTestId, TelemetryConfig, TelemetryPlugin, TestId,
+    };
+    pub use crate::theme::{ColorScheme, MaterialTheme};
+    pub use crate::tokens::{CornerRadius, Duration, Easing, Spacing};
+    pub use crate::typography::Typography;
 
     // Color System
-    pub use crate::color::{Hct, TonalPalette, MaterialColorScheme};
+    pub use crate::color::{Hct, MaterialColorScheme, TonalPalette};
 
     // Icons
     pub use crate::icons::{
-        MaterialIcon, IconBundle, IconStyle, IconWeight, IconGrade, IconOpticalSize,
+        icon_by_name, IconBundle, IconGrade, IconOpticalSize, IconStyle, IconWeight, MaterialIcon,
         MaterialIconFont, MaterialIconsPlugin, MATERIAL_SYMBOLS_FONT_PATH,
-        icon_by_name,
     };
 
     // Button
     pub use crate::button::{
-        ButtonClickEvent, ButtonLabel, ButtonPlugin, ButtonVariant, MaterialButton, 
-        MaterialButtonBuilder, SpawnButtonChild, spawn_material_button, material_button_bundle,
+        material_button_bundle, spawn_material_button, ButtonClickEvent, ButtonLabel, ButtonPlugin,
+        ButtonVariant, MaterialButton, MaterialButtonBuilder, SpawnButtonChild,
     };
 
     // Icon Button
@@ -219,27 +225,26 @@ pub mod prelude {
 
     // Toolbar
     pub use crate::toolbar::{
-        MaterialToolbar, SpawnToolbarChild, ToolbarAction, ToolbarActionEvent,
-        ToolbarBuilder, ToolbarNavigationEvent, ToolbarPlugin,
-        TOOLBAR_HEIGHT, TOOLBAR_ICON_SIZE,
+        MaterialToolbar, SpawnToolbarChild, ToolbarAction, ToolbarActionEvent, ToolbarBuilder,
+        ToolbarNavigationEvent, ToolbarPlugin, TOOLBAR_HEIGHT, TOOLBAR_ICON_SIZE,
     };
 
     // Loading Indicator
     pub use crate::loading_indicator::{
-        LoadingIndicatorBuilder, LoadingIndicatorPlugin, MaterialLoadingIndicator,
-        SpawnLoadingIndicatorChild, LOADING_INDICATOR_SIZE, LoadingShape,
+        LoadingIndicatorBuilder, LoadingIndicatorPlugin, LoadingShape, MaterialLoadingIndicator,
+        SpawnLoadingIndicatorChild, LOADING_INDICATOR_SIZE,
     };
 
     // Search
     pub use crate::search::{
-        MaterialSearchBar, SearchBarBuilder, SearchBarClickEvent, SearchPlugin,
-        SearchQueryEvent, SpawnSearchBarChild, SEARCH_BAR_HEIGHT,
+        MaterialSearchBar, SearchBarBuilder, SearchBarClickEvent, SearchPlugin, SearchQueryEvent,
+        SpawnSearchBarChild, SEARCH_BAR_HEIGHT,
     };
 
     // Animation
     pub use crate::animation::{
-        AnimatedValue, AnimationPlugin, FabTransformation, FabTransformState,
-        MorphAnimation, SpringAnimation,
+        AnimatedValue, AnimationPlugin, FabTransformState, FabTransformation, MorphAnimation,
+        SpringAnimation,
     };
 
     // FAB
@@ -255,182 +260,165 @@ pub mod prelude {
 
     // Checkbox
     pub use crate::checkbox::{
-        CheckboxBuilder, CheckboxChangeEvent, CheckboxPlugin, CheckboxState, MaterialCheckbox,
-        CheckboxBox, CheckboxIcon, SpawnCheckbox, SpawnCheckboxChild,
-        CHECKBOX_SIZE, CHECKBOX_TOUCH_TARGET,
+        CheckboxBox, CheckboxBuilder, CheckboxChangeEvent, CheckboxIcon, CheckboxPlugin,
+        CheckboxState, MaterialCheckbox, SpawnCheckbox, SpawnCheckboxChild, CHECKBOX_SIZE,
+        CHECKBOX_TOUCH_TARGET,
     };
 
     // Radio
     pub use crate::radio::{
-        RadioBuilder, RadioChangeEvent, RadioGroup, RadioPlugin, MaterialRadio,
-        RadioOuter, RadioInner, RadioStateLayer, SpawnRadio, SpawnRadioChild,
-        RADIO_DOT_SIZE, RADIO_SIZE, RADIO_TOUCH_TARGET,
+        MaterialRadio, RadioBuilder, RadioChangeEvent, RadioGroup, RadioInner, RadioOuter,
+        RadioPlugin, RadioStateLayer, SpawnRadio, SpawnRadioChild, RADIO_DOT_SIZE, RADIO_SIZE,
+        RADIO_TOUCH_TARGET,
     };
 
     // Switch
     pub use crate::switch::{
-        SwitchBuilder, SwitchChangeEvent, SwitchHandle, SwitchStateLayer, SwitchPlugin, MaterialSwitch,
-        SpawnSwitch, SpawnSwitchChild,
-        SWITCH_HANDLE_SIZE_PRESSED, SWITCH_HANDLE_SIZE_SELECTED, SWITCH_HANDLE_SIZE_UNSELECTED,
-        SWITCH_TRACK_HEIGHT, SWITCH_TRACK_WIDTH,
+        MaterialSwitch, SpawnSwitch, SpawnSwitchChild, SwitchBuilder, SwitchChangeEvent,
+        SwitchHandle, SwitchPlugin, SwitchStateLayer, SWITCH_HANDLE_SIZE_PRESSED,
+        SWITCH_HANDLE_SIZE_SELECTED, SWITCH_HANDLE_SIZE_UNSELECTED, SWITCH_TRACK_HEIGHT,
+        SWITCH_TRACK_WIDTH,
     };
 
     // Slider
     pub use crate::slider::{
-        SliderActiveTrack, SliderBuilder, SliderChangeEvent, SliderHandle, SliderLabel,
-        SliderPlugin, SliderTrack, MaterialSlider, SpawnSliderChild,
-        SliderDirection, SliderOrientation, spawn_slider_control, spawn_slider_control_with,
-        SLIDER_HANDLE_SIZE, SLIDER_HANDLE_SIZE_PRESSED, SLIDER_LABEL_HEIGHT,
-        SLIDER_TICK_SIZE, SLIDER_TRACK_HEIGHT, SLIDER_TRACK_HEIGHT_ACTIVE,
+        spawn_slider_control, spawn_slider_control_with, MaterialSlider, SliderActiveTrack,
+        SliderBuilder, SliderChangeEvent, SliderDirection, SliderHandle, SliderLabel,
+        SliderOrientation, SliderPlugin, SliderTrack, SpawnSliderChild, SLIDER_HANDLE_SIZE,
+        SLIDER_HANDLE_SIZE_PRESSED, SLIDER_LABEL_HEIGHT, SLIDER_TICK_SIZE, SLIDER_TRACK_HEIGHT,
+        SLIDER_TRACK_HEIGHT_ACTIVE,
     };
 
     // Text Field
     pub use crate::text_field::{
-        TextFieldBuilder, TextFieldChangeEvent, TextFieldInput, TextFieldLabel,
-        TextFieldPlugin, TextFieldSubmitEvent, TextFieldSupportingText, TextFieldVariant,
-        MaterialTextField, SpawnTextFieldChild, spawn_text_field_control, spawn_text_field_control_with,
-        TEXT_FIELD_HEIGHT, TEXT_FIELD_MIN_WIDTH,
+        spawn_text_field_control, spawn_text_field_control_with, MaterialTextField,
+        SpawnTextFieldChild, TextFieldBuilder, TextFieldChangeEvent, TextFieldInput,
+        TextFieldLabel, TextFieldPlugin, TextFieldSubmitEvent, TextFieldSupportingText,
+        TextFieldVariant, TEXT_FIELD_HEIGHT, TEXT_FIELD_MIN_WIDTH,
     };
 
     // Progress
     pub use crate::progress::{
         CircularProgressBuilder, LinearProgressBuilder, MaterialCircularProgress,
-        MaterialLinearProgress, ProgressIndicator, ProgressMode, ProgressPlugin,
-        ProgressTrack, ProgressVariant, SpawnProgressChild, CIRCULAR_PROGRESS_SIZE,
-        CIRCULAR_PROGRESS_TRACK_WIDTH, LINEAR_PROGRESS_HEIGHT,
+        MaterialLinearProgress, ProgressIndicator, ProgressMode, ProgressPlugin, ProgressTrack,
+        ProgressVariant, SpawnProgressChild, CIRCULAR_PROGRESS_SIZE, CIRCULAR_PROGRESS_TRACK_WIDTH,
+        LINEAR_PROGRESS_HEIGHT,
     };
 
     // Dialog
     pub use crate::dialog::{
-        DialogActions, DialogBuilder, DialogCloseEvent, DialogConfirmEvent, DialogContent,
-        DialogHeadline, DialogOpenEvent, DialogPlugin, DialogScrim, DialogScrimFor, DialogType,
-        MaterialDialog, SpawnDialogChild, create_dialog_scrim, create_dialog_scrim_for, DIALOG_MAX_WIDTH, DIALOG_MIN_WIDTH,
+        create_dialog_scrim, create_dialog_scrim_for, DialogActions, DialogBuilder,
+        DialogCloseEvent, DialogConfirmEvent, DialogContent, DialogHeadline, DialogOpenEvent,
+        DialogPlugin, DialogScrim, DialogScrimFor, DialogType, MaterialDialog, SpawnDialogChild,
+        DIALOG_MAX_WIDTH, DIALOG_MIN_WIDTH,
     };
 
     // DateTime Picker
     pub use crate::datetime_picker::{
         Date, DateTimePickerBuilder, DateTimePickerCancelEvent, DateTimePickerPlugin,
-        DateTimePickerSubmitEvent, MaterialDateTimePicker, SpawnDateTimePickerChild,
-        TimeFormat, Weekday,
+        DateTimePickerSubmitEvent, MaterialDateTimePicker, SpawnDateTimePickerChild, TimeFormat,
+        Weekday,
     };
 
     // List
     pub use crate::list::{
-        ListBuilder, ListDivider, ListItemBody, ListItemBuilder, ListItemClickEvent,
-        ListItemHeadline, ListItemLeading, ListItemSupportingText, ListItemTrailing,
-        ListItemVariant, ListPlugin, ListSelectionMode, MaterialList, MaterialListItem, ScrollableList,
-        SpawnListChild, create_list_divider,
+        create_list_divider, ListBuilder, ListDivider, ListItemBody, ListItemBuilder,
+        ListItemClickEvent, ListItemHeadline, ListItemLeading, ListItemSupportingText,
+        ListItemTrailing, ListItemVariant, ListPlugin, ListSelectionMode, MaterialList,
+        MaterialListItem, ScrollableList, SpawnListChild,
     };
 
     // Menu
     pub use crate::menu::{
-        MenuAnchor, MenuBuilder, MenuCloseEvent, MenuDivider, MenuItemBuilder,
-        MenuItemSelectEvent, MenuOpenEvent, MenuPlugin, MaterialMenu, MaterialMenuItem,
-        SpawnMenuChild, create_menu_divider, MENU_ITEM_HEIGHT, MENU_MAX_WIDTH, MENU_MIN_WIDTH,
+        create_menu_divider, MaterialMenu, MaterialMenuItem, MenuAnchor, MenuBuilder,
+        MenuCloseEvent, MenuDivider, MenuItemBuilder, MenuItemSelectEvent, MenuOpenEvent,
+        MenuPlugin, SpawnMenuChild, MENU_ITEM_HEIGHT, MENU_MAX_WIDTH, MENU_MIN_WIDTH,
     };
 
     // Tabs
     pub use crate::tabs::{
-        TabBuilder, TabChangeEvent, TabContent, TabIndicator, TabLabelText, TabVariant, TabsBuilder, TabsPlugin,
-        MaterialTab, MaterialTabs, SpawnTabsChild, create_tab_indicator,
-        TAB_HEIGHT_PRIMARY, TAB_HEIGHT_PRIMARY_ICON_ONLY, TAB_HEIGHT_SECONDARY,
+        create_tab_indicator, MaterialTab, MaterialTabs, SpawnTabsChild, TabBuilder,
+        TabChangeEvent, TabContent, TabIndicator, TabLabelText, TabVariant, TabsBuilder,
+        TabsPlugin, TAB_HEIGHT_PRIMARY, TAB_HEIGHT_PRIMARY_ICON_ONLY, TAB_HEIGHT_SECONDARY,
         TAB_INDICATOR_HEIGHT,
     };
 
     // Divider
     pub use crate::divider::{
-        DividerBuilder, DividerVariant, MaterialDivider, SpawnDividerChild,
-        horizontal_divider, inset_divider, vertical_divider,
-        DIVIDER_INSET, DIVIDER_THICKNESS,
+        horizontal_divider, inset_divider, vertical_divider, DividerBuilder, DividerVariant,
+        MaterialDivider, SpawnDividerChild, DIVIDER_INSET, DIVIDER_THICKNESS,
     };
 
     // Select
     pub use crate::select::{
-        SelectBuilder, SelectChangeEvent, SelectContainer, SelectDisplayText, SelectDropdown,
-        SelectOption, SelectOptionItem, SelectPlugin, SelectTrigger, SelectVariant,
-        MaterialSelect, SpawnSelectChild, SELECT_HEIGHT, SELECT_OPTION_HEIGHT,
+        MaterialSelect, SelectBuilder, SelectChangeEvent, SelectContainer, SelectDisplayText,
+        SelectDropdown, SelectOption, SelectOptionItem, SelectPlugin, SelectTrigger, SelectVariant,
+        SpawnSelectChild, SELECT_HEIGHT, SELECT_OPTION_HEIGHT,
     };
 
     // Adaptive Layout
     pub use crate::adaptive::{
-        WindowWidthClass, WindowHeightClass, WindowSizeClass, WindowSizeClassPlugin,
-        WindowSizeClassChanged,
+        WindowHeightClass, WindowSizeClass, WindowSizeClassChanged, WindowSizeClassPlugin,
+        WindowWidthClass,
     };
 
     // Layout
     pub use crate::layout::{
-        AppBarOffsetConfig,
-        AdaptiveNavigationScaffold,
-        BottomNavigationScaffold,
-        ListDetailScaffold,
-        ModalDrawerScaffold,
-        NavigationBarScaffold,
-        NavigationRailScaffold,
-        NavigationSuiteScaffold,
-        PermanentDrawerScaffold,
-        PaneEntities,
-        PaneTestIds,
-        ScaffoldEntities,
-        ScaffoldTestIds,
-        SupportingPanesScaffold,
-        apply_app_bar_inset,
-        spawn_adaptive_navigation_scaffold,
-        spawn_bottom_navigation_scaffold,
-        spawn_list_detail_scaffold,
-        spawn_modal_drawer_scaffold,
-        spawn_navigation_bar_scaffold,
-        spawn_navigation_rail_scaffold,
-        spawn_navigation_suite_scaffold,
-        spawn_permanent_drawer_scaffold,
-        spawn_supporting_panes_scaffold,
+        apply_app_bar_inset, spawn_adaptive_navigation_scaffold, spawn_bottom_navigation_scaffold,
+        spawn_list_detail_scaffold, spawn_modal_drawer_scaffold, spawn_navigation_bar_scaffold,
+        spawn_navigation_rail_scaffold, spawn_navigation_suite_scaffold,
+        spawn_permanent_drawer_scaffold, spawn_supporting_panes_scaffold,
+        AdaptiveNavigationScaffold, AppBarOffsetConfig, BottomNavigationScaffold,
+        ListDetailScaffold, ModalDrawerScaffold, NavigationBarScaffold, NavigationRailScaffold,
+        NavigationSuiteScaffold, PaneEntities, PaneTestIds, PermanentDrawerScaffold,
+        ScaffoldEntities, ScaffoldTestIds, SupportingPanesScaffold,
     };
 
     // Motion
     pub use crate::motion::{
-        MotionPlugin, SpringConfig, StateLayer,
-        ease_emphasized, ease_emphasized_accelerate, ease_emphasized_decelerate,
-        ease_standard, ease_standard_accelerate, ease_standard_decelerate,
+        ease_emphasized, ease_emphasized_accelerate, ease_emphasized_decelerate, ease_standard,
+        ease_standard_accelerate, ease_standard_decelerate, MotionPlugin, SpringConfig, StateLayer,
     };
 
     // Snackbar
     pub use crate::snackbar::{
-        Snackbar, SnackbarAnimationState, SnackbarBuilder, SnackbarHostBuilder,
-        SnackbarPlugin, SnackbarPosition, SnackbarQueue, SpawnSnackbarChild, spawn_snackbar, 
-        ShowSnackbar, DismissSnackbar, SnackbarActionEvent, SNACKBAR_MAX_WIDTH,
+        spawn_snackbar, DismissSnackbar, ShowSnackbar, Snackbar, SnackbarActionEvent,
+        SnackbarAnimationState, SnackbarBuilder, SnackbarHostBuilder, SnackbarPlugin,
+        SnackbarPosition, SnackbarQueue, SpawnSnackbarChild, SNACKBAR_MAX_WIDTH,
     };
 
     // Chip
     pub use crate::chip::{
-        ChipBuilder, ChipClickEvent, ChipDeleteButton, ChipDeleteEvent, ChipLabel, 
-        ChipLeadingIcon, ChipPlugin, ChipVariant, MaterialChip, SpawnChipChild, CHIP_HEIGHT,
+        ChipBuilder, ChipClickEvent, ChipDeleteButton, ChipDeleteEvent, ChipLabel, ChipLeadingIcon,
+        ChipPlugin, ChipVariant, MaterialChip, SpawnChipChild, CHIP_HEIGHT,
     };
 
     // App Bar
     pub use crate::app_bar::{
-        AppBarPlugin, BottomAppBarBuilder, BottomAppBar, SpawnAppBarChild, TopAppBar,
-        TopAppBarBuilder, TopAppBarVariant, TOP_APP_BAR_HEIGHT_LARGE,
-        TOP_APP_BAR_HEIGHT_MEDIUM, TOP_APP_BAR_HEIGHT_SMALL, BOTTOM_APP_BAR_HEIGHT,
+        AppBarPlugin, BottomAppBar, BottomAppBarBuilder, SpawnAppBarChild, TopAppBar,
+        TopAppBarBuilder, TopAppBarVariant, BOTTOM_APP_BAR_HEIGHT, TOP_APP_BAR_HEIGHT_LARGE,
+        TOP_APP_BAR_HEIGHT_MEDIUM, TOP_APP_BAR_HEIGHT_SMALL,
     };
 
     // Badge
     pub use crate::badge::{
-        BadgeBuilder, BadgeContent, BadgePlugin, MaterialBadge, SpawnBadgeChild,
-        BADGE_SIZE_LARGE, BADGE_SIZE_SMALL,
+        BadgeBuilder, BadgeContent, BadgePlugin, MaterialBadge, SpawnBadgeChild, BADGE_SIZE_LARGE,
+        BADGE_SIZE_SMALL,
     };
 
     // Tooltip
     pub use crate::tooltip::{
-        RichTooltip, Tooltip, TooltipAnimationState, TooltipPlugin, TooltipPosition,
-        TooltipText, TooltipTrigger, TooltipTriggerBuilder, TooltipVariant, SpawnTooltipChild,
-        spawn_rich_tooltip, spawn_tooltip, TOOLTIP_DELAY_DEFAULT, TOOLTIP_DELAY_SHORT,
+        spawn_rich_tooltip, spawn_tooltip, RichTooltip, SpawnTooltipChild, Tooltip,
+        TooltipAnimationState, TooltipPlugin, TooltipPosition, TooltipText, TooltipTrigger,
+        TooltipTriggerBuilder, TooltipVariant, TOOLTIP_DELAY_DEFAULT, TOOLTIP_DELAY_SHORT,
         TOOLTIP_HEIGHT_PLAIN, TOOLTIP_MAX_WIDTH, TOOLTIP_OFFSET,
     };
 
     // Scroll Container
     pub use crate::scroll::{
-        ScrollContainer, ScrollContainerBuilder, ScrollContent, ScrollDirection, ScrollPlugin,
-        ScrollbarTrackVertical, ScrollbarThumbVertical, ScrollbarTrackHorizontal, ScrollbarThumbHorizontal,
-        spawn_scrollbars,
+        spawn_scrollbars, ScrollContainer, ScrollContainerBuilder, ScrollContent, ScrollDirection,
+        ScrollPlugin, ScrollbarThumbHorizontal, ScrollbarThumbVertical, ScrollbarTrackHorizontal,
+        ScrollbarTrackVertical,
     };
 
     // Main plugin
@@ -520,7 +508,6 @@ pub struct MaterialUiPlugins;
 
 impl PluginGroup for MaterialUiPlugins {
     fn build(self) -> bevy::app::PluginGroupBuilder {
-        bevy::app::PluginGroupBuilder::start::<Self>()
-            .add(MaterialUiPlugin)
+        bevy::app::PluginGroupBuilder::start::<Self>().add(MaterialUiPlugin)
     }
 }

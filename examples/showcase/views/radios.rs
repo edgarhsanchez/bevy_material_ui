@@ -20,10 +20,10 @@ pub fn spawn_radios_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Radio Buttons",
-                "Single selection within a group - only one can be selected"
+                "Single selection within a group - only one can be selected",
             );
 
             section
@@ -43,8 +43,10 @@ pub fn spawn_radios_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     col.spawn_radio(theme, false, "example_group", "Choice C");
                 });
 
-            spawn_code_block(section, theme,
-r#"// Create radios in a group - simple and clean!
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Create radios in a group - simple and clean!
 commands.spawn((
     RadioGroup::new("my_group"),
     Node { flex_direction: FlexDirection::Column, ..default() },
@@ -63,6 +65,7 @@ commands.spawn((
             .group("my_group"),
         "Disabled Option"
     );
-});"#);
+});"#,
+            );
         });
 }

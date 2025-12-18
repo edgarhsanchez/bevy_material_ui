@@ -2,8 +2,8 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::{
-    prelude::*,
     loading_indicator::{LoadingIndicatorBuilder, ShapeMorphMaterial, SpawnLoadingIndicatorChild},
+    prelude::*,
 };
 
 use crate::showcase::common::*;
@@ -14,7 +14,6 @@ pub fn spawn_loading_indicator_section(
     theme: &MaterialTheme,
     materials: &mut Assets<ShapeMorphMaterial>,
 ) {
-    
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -42,7 +41,10 @@ pub fn spawn_loading_indicator_section(
                     // Default
                     col.spawn((
                         Text::new("Loading indicator"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                     ));
                     col.spawn_loading_indicator(theme, materials);
@@ -50,7 +52,10 @@ pub fn spawn_loading_indicator_section(
                     // Contained (with container background)
                     col.spawn((
                         Text::new("Loading indicator with container"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                     ));
                     col.spawn_loading_indicator_with(
@@ -62,7 +67,10 @@ pub fn spawn_loading_indicator_section(
                     // Multiple colors
                     col.spawn((
                         Text::new("Loading indicator with multiple colors"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                     ));
                     col.spawn_loading_indicator_with(
@@ -74,7 +82,10 @@ pub fn spawn_loading_indicator_section(
                     // Small size
                     col.spawn((
                         Text::new("Small loading indicator"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                     ));
                     col.spawn_loading_indicator_with(
@@ -86,7 +97,10 @@ pub fn spawn_loading_indicator_section(
                     // Large and fast
                     col.spawn((
                         Text::new("Large loading indicator (fast)"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface_variant),
                     ));
                     col.spawn_loading_indicator_with(

@@ -2,11 +2,11 @@
 //!
 //! Tests for Motion, Snackbar, Chip, App Bar, Badge, and Tooltip components.
 
-use bevy_material_ui::prelude::*;
-use bevy_material_ui::snackbar::{ShowSnackbar, SnackbarPosition};
-use bevy_material_ui::chip::MaterialChip;
 use bevy_material_ui::app_bar::TopAppBar;
 use bevy_material_ui::badge::MaterialBadge;
+use bevy_material_ui::chip::MaterialChip;
+use bevy_material_ui::prelude::*;
+use bevy_material_ui::snackbar::{ShowSnackbar, SnackbarPosition};
 
 // ============================================================================
 // Motion Tests
@@ -20,7 +20,7 @@ mod motion_tests {
         // Standard easing should map [0, 1] to [0, 1]
         let start = ease_standard(0.0);
         let end = ease_standard(1.0);
-        
+
         assert!((start - 0.0).abs() < 0.01);
         assert!((end - 1.0).abs() < 0.01);
     }
@@ -29,7 +29,7 @@ mod motion_tests {
     fn test_emphasized_easing_bounds() {
         let start = ease_emphasized(0.0);
         let end = ease_emphasized(1.0);
-        
+
         assert!((start - 0.0).abs() < 0.01);
         assert!((end - 1.0).abs() < 0.01);
     }
@@ -40,9 +40,17 @@ mod motion_tests {
         // So at t=0.5, they should be > 0.5
         let standard_mid = ease_standard_decelerate(0.5);
         let emphasized_mid = ease_emphasized_decelerate(0.5);
-        
-        assert!(standard_mid > 0.5, "Standard decelerate at 0.5: {}", standard_mid);
-        assert!(emphasized_mid > 0.5, "Emphasized decelerate at 0.5: {}", emphasized_mid);
+
+        assert!(
+            standard_mid > 0.5,
+            "Standard decelerate at 0.5: {}",
+            standard_mid
+        );
+        assert!(
+            emphasized_mid > 0.5,
+            "Emphasized decelerate at 0.5: {}",
+            emphasized_mid
+        );
     }
 
     #[test]
@@ -51,9 +59,17 @@ mod motion_tests {
         // So at t=0.5, they should be < 0.5
         let standard_mid = ease_standard_accelerate(0.5);
         let emphasized_mid = ease_emphasized_accelerate(0.5);
-        
-        assert!(standard_mid < 0.5, "Standard accelerate at 0.5: {}", standard_mid);
-        assert!(emphasized_mid < 0.5, "Emphasized accelerate at 0.5: {}", emphasized_mid);
+
+        assert!(
+            standard_mid < 0.5,
+            "Standard accelerate at 0.5: {}",
+            standard_mid
+        );
+        assert!(
+            emphasized_mid < 0.5,
+            "Emphasized accelerate at 0.5: {}",
+            emphasized_mid
+        );
     }
 
     #[test]
@@ -81,7 +97,7 @@ mod motion_tests {
         let gentle = SpringConfig::gentle();
         let bouncy = SpringConfig::bouncy();
         let stiff = SpringConfig::stiff();
-        
+
         // Bouncy should have less damping than stiff
         assert!(bouncy.damping < stiff.damping);
         // Gentle should have less stiffness than stiff
@@ -105,7 +121,7 @@ mod snackbar_tests {
             dismissible: true,
             position: SnackbarPosition::BottomCenter,
         };
-        
+
         assert_eq!(event.message, "Test message");
         assert_eq!(event.action, Some("Undo".to_string()));
         assert_eq!(event.duration, Some(5.0));
@@ -133,7 +149,7 @@ mod snackbar_tests {
         let entering = SnackbarAnimationState::Entering;
         let visible = SnackbarAnimationState::Visible;
         let exiting = SnackbarAnimationState::Exiting;
-        
+
         assert_ne!(entering, visible);
         assert_ne!(visible, exiting);
     }
@@ -166,7 +182,7 @@ mod snackbar_tests {
             .duration(6.0)
             .position(SnackbarPosition::TopCenter)
             .dismissible(true);
-        
+
         assert_eq!(event.message, "Network Error");
         assert_eq!(event.action, Some("Retry".to_string()));
         assert_eq!(event.duration, Some(6.0));
@@ -184,7 +200,7 @@ mod snackbar_tests {
             SnackbarPosition::TopLeft,
             SnackbarPosition::TopRight,
         ];
-        
+
         for pos in positions {
             let event = ShowSnackbar::message("Test").position(pos);
             assert_eq!(event.position, pos);
@@ -211,16 +227,16 @@ mod chip_tests {
     #[test]
     fn test_chip_variants() {
         let mut chip = MaterialChip::new("Test");
-        
+
         chip.variant = ChipVariant::Assist;
         assert_eq!(chip.variant, ChipVariant::Assist);
-        
+
         chip.variant = ChipVariant::Filter;
         assert_eq!(chip.variant, ChipVariant::Filter);
-        
+
         chip.variant = ChipVariant::Input;
         assert_eq!(chip.variant, ChipVariant::Input);
-        
+
         chip.variant = ChipVariant::Suggestion;
         assert_eq!(chip.variant, ChipVariant::Suggestion);
     }
@@ -229,10 +245,10 @@ mod chip_tests {
     fn test_chip_selection() {
         let mut chip = MaterialChip::new("Toggle");
         assert!(!chip.selected);
-        
+
         chip.selected = true;
         assert!(chip.selected);
-        
+
         chip.selected = false;
         assert!(!chip.selected);
     }
@@ -268,16 +284,16 @@ mod app_bar_tests {
     #[test]
     fn test_top_app_bar_variants() {
         let mut app_bar = TopAppBar::new("Test");
-        
+
         app_bar.variant = TopAppBarVariant::CenterAligned;
         assert_eq!(app_bar.variant, TopAppBarVariant::CenterAligned);
-        
+
         app_bar.variant = TopAppBarVariant::Small;
         assert_eq!(app_bar.variant, TopAppBarVariant::Small);
-        
+
         app_bar.variant = TopAppBarVariant::Medium;
         assert_eq!(app_bar.variant, TopAppBarVariant::Medium);
-        
+
         app_bar.variant = TopAppBarVariant::Large;
         assert_eq!(app_bar.variant, TopAppBarVariant::Large);
     }
@@ -303,7 +319,7 @@ mod app_bar_tests {
 }
 
 // ============================================================================
-// Badge Tests  
+// Badge Tests
 // ============================================================================
 
 mod badge_tests {
@@ -341,7 +357,7 @@ mod badge_tests {
     fn test_badge_visibility() {
         let mut badge = MaterialBadge::dot();
         assert!(badge.visible);
-        
+
         badge.visible = false;
         assert!(!badge.visible);
     }
@@ -391,7 +407,7 @@ mod tooltip_tests {
         let bottom = TooltipTrigger::new("Test").bottom();
         let left = TooltipTrigger::new("Test").left();
         let right = TooltipTrigger::new("Test").right();
-        
+
         assert_eq!(top.position, TooltipPosition::Top);
         assert_eq!(bottom.position, TooltipPosition::Bottom);
         assert_eq!(left.position, TooltipPosition::Left);
@@ -410,7 +426,7 @@ mod tooltip_tests {
     fn test_tooltip_size_constants() {
         // MD3 spec: plain tooltip height 24dp
         assert!((TOOLTIP_HEIGHT_PLAIN - 24.0).abs() < 1.0);
-        
+
         // Max width for plain tooltip
         use std::hint::black_box;
         let max_width = black_box(TOOLTIP_MAX_WIDTH);
@@ -422,7 +438,7 @@ mod tooltip_tests {
         let rich = RichTooltip::new("Description text")
             .with_title("Title")
             .with_action("Learn more");
-        
+
         assert_eq!(rich.title, Some("Title".to_string()));
         assert_eq!(rich.supporting_text, "Description text");
         assert_eq!(rich.action, Some("Learn more".to_string()));
@@ -433,7 +449,7 @@ mod tooltip_tests {
         // Plain is default
         let plain = TooltipTrigger::new("Plain");
         let rich = TooltipTrigger::new("Rich").rich();
-        
+
         assert_eq!(plain.variant, TooltipVariant::Plain);
         assert_eq!(rich.variant, TooltipVariant::Rich);
     }
@@ -443,7 +459,7 @@ mod tooltip_tests {
         let builder = TooltipTriggerBuilder::new("Help")
             .position(TooltipPosition::Bottom)
             .delay(0.3);
-        
+
         let trigger = builder.build();
         assert_eq!(trigger.text, "Help");
         assert_eq!(trigger.position, TooltipPosition::Bottom);

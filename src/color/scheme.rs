@@ -350,61 +350,80 @@ mod tests {
     #[test]
     fn test_dark_scheme_generation() {
         let scheme = MaterialColorScheme::dark_from_argb(0xFF6750A4);
-        
+
         // Primary should be lighter in dark theme
         let primary_srgba = scheme.primary.to_srgba();
         let on_primary_srgba = scheme.on_primary.to_srgba();
-        
+
         // Primary should be brighter than on_primary in dark theme
-        let primary_lum = 0.299 * primary_srgba.red + 0.587 * primary_srgba.green + 0.114 * primary_srgba.blue;
-        let on_primary_lum = 0.299 * on_primary_srgba.red + 0.587 * on_primary_srgba.green + 0.114 * on_primary_srgba.blue;
-        assert!(primary_lum > on_primary_lum, "Primary should be lighter than on_primary in dark theme");
+        let primary_lum =
+            0.299 * primary_srgba.red + 0.587 * primary_srgba.green + 0.114 * primary_srgba.blue;
+        let on_primary_lum = 0.299 * on_primary_srgba.red
+            + 0.587 * on_primary_srgba.green
+            + 0.114 * on_primary_srgba.blue;
+        assert!(
+            primary_lum > on_primary_lum,
+            "Primary should be lighter than on_primary in dark theme"
+        );
     }
 
     #[test]
     fn test_light_scheme_generation() {
         let scheme = MaterialColorScheme::light_from_argb(0xFF6750A4);
-        
+
         // Primary should be darker in light theme
         let primary_srgba = scheme.primary.to_srgba();
         let on_primary_srgba = scheme.on_primary.to_srgba();
-        
+
         // on_primary should be brighter than primary in light theme
-        let primary_lum = 0.299 * primary_srgba.red + 0.587 * primary_srgba.green + 0.114 * primary_srgba.blue;
-        let on_primary_lum = 0.299 * on_primary_srgba.red + 0.587 * on_primary_srgba.green + 0.114 * on_primary_srgba.blue;
-        assert!(on_primary_lum > primary_lum, "on_primary should be lighter than primary in light theme");
+        let primary_lum =
+            0.299 * primary_srgba.red + 0.587 * primary_srgba.green + 0.114 * primary_srgba.blue;
+        let on_primary_lum = 0.299 * on_primary_srgba.red
+            + 0.587 * on_primary_srgba.green
+            + 0.114 * on_primary_srgba.blue;
+        assert!(
+            on_primary_lum > primary_lum,
+            "on_primary should be lighter than primary in light theme"
+        );
     }
 
     #[test]
     fn test_surface_hierarchy_dark() {
         let scheme = MaterialColorScheme::dark_from_argb(0xFF6750A4);
-        
+
         // Surface containers should increase in brightness
         fn luminance(c: Color) -> f32 {
             let srgba = c.to_srgba();
             0.299 * srgba.red + 0.587 * srgba.green + 0.114 * srgba.blue
         }
-        
-        assert!(luminance(scheme.surface_container_lowest) < luminance(scheme.surface_container_low));
+
+        assert!(
+            luminance(scheme.surface_container_lowest) < luminance(scheme.surface_container_low)
+        );
         assert!(luminance(scheme.surface_container_low) < luminance(scheme.surface_container));
         assert!(luminance(scheme.surface_container) < luminance(scheme.surface_container_high));
-        assert!(luminance(scheme.surface_container_high) < luminance(scheme.surface_container_highest));
+        assert!(
+            luminance(scheme.surface_container_high) < luminance(scheme.surface_container_highest)
+        );
     }
 
     #[test]
     fn test_error_colors() {
         let scheme = MaterialColorScheme::dark_from_argb(0xFF6750A4);
-        
+
         // Error should be reddish
         let error_srgba = scheme.error.to_srgba();
-        assert!(error_srgba.red > error_srgba.blue, "Error should be more red than blue");
+        assert!(
+            error_srgba.red > error_srgba.blue,
+            "Error should be more red than blue"
+        );
     }
 
     #[test]
     fn test_from_bevy_color() {
         let seed = Color::srgb(0.4, 0.31, 0.64);
         let scheme = MaterialColorScheme::dark_from_bevy_color(seed);
-        
+
         // Should generate valid colors
         let primary_srgba = scheme.primary.to_srgba();
         assert!(primary_srgba.red >= 0.0 && primary_srgba.red <= 1.0);

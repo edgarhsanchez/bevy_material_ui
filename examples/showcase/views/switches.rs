@@ -20,10 +20,10 @@ pub fn spawn_switches_section(parent: &mut ChildSpawnerCommands, theme: &Materia
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Switches",
-                "Toggle on/off with sliding thumb animation"
+                "Toggle on/off with sliding thumb animation",
             );
 
             section
@@ -40,8 +40,10 @@ pub fn spawn_switches_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     col.spawn_switch(theme, false, "Dark Mode");
                 });
 
-            spawn_code_block(section, theme,
-r#"// Create switches with the simple spawn API
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Create switches with the simple spawn API
 parent.spawn_switch(&theme, false, "Notifications");
 parent.spawn_switch(&theme, true, "Auto-update");
 
@@ -62,6 +64,7 @@ fn handle_switch_changes(
     for event in events.read() {
         info!("Switch {:?} -> {}", event.entity, event.selected);
     }
-}"#);
+}"#,
+            );
         });
 }

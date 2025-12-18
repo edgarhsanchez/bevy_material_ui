@@ -23,13 +23,16 @@ impl Plugin for ChipPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<ChipClickEvent>()
             .add_message::<ChipDeleteEvent>()
-            .add_systems(Update, (
-                chip_interaction_system,
-                chip_style_system,
-                chip_content_style_system,
-                chip_theme_refresh_system,
-                chip_shadow_system,
-            ));
+            .add_systems(
+                Update,
+                (
+                    chip_interaction_system,
+                    chip_style_system,
+                    chip_content_style_system,
+                    chip_theme_refresh_system,
+                    chip_shadow_system,
+                ),
+            );
     }
 }
 
@@ -221,7 +224,7 @@ impl MaterialChip {
             // Flat chips are transparent
             _ => Color::NONE,
         };
-        
+
         // Apply state layer
         let state_opacity = self.state_layer_opacity();
         let state_color = self.state_layer_color(theme);
@@ -284,7 +287,7 @@ impl MaterialChip {
             _ => theme.on_surface_variant,
         }
     }
-    
+
     /// Get the state layer opacity
     fn state_layer_opacity(&self) -> f32 {
         if self.disabled {
@@ -467,11 +470,7 @@ impl ChipBuilder {
 // ============================================================================
 
 /// Spawn a chip with its children
-pub fn spawn_chip(
-    commands: &mut Commands,
-    theme: &MaterialTheme,
-    builder: ChipBuilder,
-) -> Entity {
+pub fn spawn_chip(commands: &mut Commands, theme: &MaterialTheme, builder: ChipBuilder) -> Entity {
     let label = builder.chip.label.clone();
     let label_color = builder.chip.label_color(theme);
     let icon_color = builder.chip.icon_color(theme);
@@ -520,118 +519,8 @@ pub fn spawn_chip(
 
             // Delete button
             if deletable {
-                parent.spawn((
-                    ChipDeleteButton,
-                    Button,
-                    Node {
-                        width: Val::Px(CHIP_ICON_SIZE),
-                        height: Val::Px(CHIP_ICON_SIZE),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    BackgroundColor(Color::NONE),
-                ))
-                .with_children(|btn| {
-                    btn.spawn((
-                        ChipDeleteIcon,
-                        Text::new("✕"),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(icon_color),
-                    ));
-                });
-            }
-        })
-        .id()
-}
-
-// ============================================================================
-// Spawn Traits for ChildSpawnerCommands
-// ============================================================================
-
-/// Extension trait to spawn Material chips as children
-/// 
-/// This trait provides a clean API for spawning chips within UI hierarchies.
-/// 
-/// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_chip(&theme, ChipBuilder::assist("Help"));
-///     children.spawn_filter_chip(&theme, "Category", false);
-///     children.spawn_input_chip(&theme, "tag@example.com", true);
-/// });
-/// ```
-pub trait SpawnChipChild {
-    /// Spawn a chip using a builder
-    fn spawn_chip_with(&mut self, theme: &MaterialTheme, builder: ChipBuilder);
-    
-    /// Spawn an assist chip
-    fn spawn_assist_chip(&mut self, theme: &MaterialTheme, label: impl Into<String>);
-    
-    /// Spawn a filter chip
-    fn spawn_filter_chip(
-        &mut self,
-        theme: &MaterialTheme,
-        label: impl Into<String>,
-        selected: bool,
-    );
-    
-    /// Spawn an input chip (deletable)
-    fn spawn_input_chip(
-        &mut self,
-        theme: &MaterialTheme,
-        label: impl Into<String>,
-        deletable: bool,
-    );
-    
-    /// Spawn a suggestion chip
-    fn spawn_suggestion_chip(&mut self, theme: &MaterialTheme, label: impl Into<String>);
-}
-
-impl SpawnChipChild for ChildSpawnerCommands<'_> {
-    fn spawn_chip_with(&mut self, theme: &MaterialTheme, builder: ChipBuilder) {
-        let label = builder.chip.label.clone();
-        let label_color = builder.chip.label_color(theme);
-        let icon_color = builder.chip.icon_color(theme);
-        let deletable = builder.chip.deletable;
-        let has_leading = builder.chip.has_leading_icon;
-        let selected = builder.chip.selected;
-        let variant = builder.chip.variant;
-        let leading_icon = builder.leading_icon.clone();
-
-        self.spawn(builder.build(theme))
-            .with_children(|parent| {
-                // Leading icon (or checkmark for selected filter chips)
-                if variant == ChipVariant::Filter && selected {
-                    parent.spawn((
-                        ChipLeadingIcon,
-                        Text::new("✓"),
-                        TextFont { font_size: CHIP_ICON_SIZE, ..default() },
-                        TextColor(icon_color),
-                    ));
-                } else if has_leading {
-                    parent.spawn((
-                        ChipLeadingIcon,
-                        Text::new(leading_icon.as_deref().unwrap_or("★")),
-                        TextFont { font_size: CHIP_ICON_SIZE, ..default() },
-                        TextColor(icon_color),
-                    ));
-                }
-
-                // Label
-                parent.spawn((
-                    ChipLabel,
-                    Text::new(&label),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(label_color),
-                ));
-
-                // Delete button
-                if deletable {
-                    parent.spawn((
+                parent
+                    .spawn((
                         ChipDeleteButton,
                         Button,
                         Node {
@@ -647,18 +536,141 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
                         btn.spawn((
                             ChipDeleteIcon,
                             Text::new("✕"),
-                            TextFont { font_size: 14.0, ..default() },
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
                             TextColor(icon_color),
                         ));
                     });
-                }
-            });
+            }
+        })
+        .id()
+}
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material chips as children
+///
+/// This trait provides a clean API for spawning chips within UI hierarchies.
+///
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_chip(&theme, ChipBuilder::assist("Help"));
+///     children.spawn_filter_chip(&theme, "Category", false);
+///     children.spawn_input_chip(&theme, "tag@example.com", true);
+/// });
+/// ```
+pub trait SpawnChipChild {
+    /// Spawn a chip using a builder
+    fn spawn_chip_with(&mut self, theme: &MaterialTheme, builder: ChipBuilder);
+
+    /// Spawn an assist chip
+    fn spawn_assist_chip(&mut self, theme: &MaterialTheme, label: impl Into<String>);
+
+    /// Spawn a filter chip
+    fn spawn_filter_chip(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        selected: bool,
+    );
+
+    /// Spawn an input chip (deletable)
+    fn spawn_input_chip(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        deletable: bool,
+    );
+
+    /// Spawn a suggestion chip
+    fn spawn_suggestion_chip(&mut self, theme: &MaterialTheme, label: impl Into<String>);
+}
+
+impl SpawnChipChild for ChildSpawnerCommands<'_> {
+    fn spawn_chip_with(&mut self, theme: &MaterialTheme, builder: ChipBuilder) {
+        let label = builder.chip.label.clone();
+        let label_color = builder.chip.label_color(theme);
+        let icon_color = builder.chip.icon_color(theme);
+        let deletable = builder.chip.deletable;
+        let has_leading = builder.chip.has_leading_icon;
+        let selected = builder.chip.selected;
+        let variant = builder.chip.variant;
+        let leading_icon = builder.leading_icon.clone();
+
+        self.spawn(builder.build(theme)).with_children(|parent| {
+            // Leading icon (or checkmark for selected filter chips)
+            if variant == ChipVariant::Filter && selected {
+                parent.spawn((
+                    ChipLeadingIcon,
+                    Text::new("✓"),
+                    TextFont {
+                        font_size: CHIP_ICON_SIZE,
+                        ..default()
+                    },
+                    TextColor(icon_color),
+                ));
+            } else if has_leading {
+                parent.spawn((
+                    ChipLeadingIcon,
+                    Text::new(leading_icon.as_deref().unwrap_or("★")),
+                    TextFont {
+                        font_size: CHIP_ICON_SIZE,
+                        ..default()
+                    },
+                    TextColor(icon_color),
+                ));
+            }
+
+            // Label
+            parent.spawn((
+                ChipLabel,
+                Text::new(&label),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(label_color),
+            ));
+
+            // Delete button
+            if deletable {
+                parent
+                    .spawn((
+                        ChipDeleteButton,
+                        Button,
+                        Node {
+                            width: Val::Px(CHIP_ICON_SIZE),
+                            height: Val::Px(CHIP_ICON_SIZE),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                    ))
+                    .with_children(|btn| {
+                        btn.spawn((
+                            ChipDeleteIcon,
+                            Text::new("✕"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(icon_color),
+                        ));
+                    });
+            }
+        });
     }
-    
+
     fn spawn_assist_chip(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
         self.spawn_chip_with(theme, ChipBuilder::assist(label));
     }
-    
+
     fn spawn_filter_chip(
         &mut self,
         theme: &MaterialTheme,
@@ -667,7 +679,7 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_chip_with(theme, ChipBuilder::filter(label).selected(selected));
     }
-    
+
     fn spawn_input_chip(
         &mut self,
         theme: &MaterialTheme,
@@ -680,7 +692,7 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
         }
         self.spawn_chip_with(theme, builder);
     }
-    
+
     fn spawn_suggestion_chip(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
         self.spawn_chip_with(theme, ChipBuilder::suggestion(label));
     }
@@ -692,10 +704,7 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
 
 /// System to handle chip interactions
 fn chip_interaction_system(
-    mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialChip),
-        Changed<Interaction>,
-    >,
+    mut interaction_query: Query<(Entity, &Interaction, &mut MaterialChip), Changed<Interaction>>,
     delete_buttons: Query<(&Interaction, &ChildOf), (Changed<Interaction>, With<ChipDeleteButton>)>,
     mut click_events: MessageWriter<ChipClickEvent>,
     mut delete_events: MessageWriter<ChipDeleteEvent>,
@@ -778,7 +787,9 @@ fn chip_content_style_system(
     let Some(theme) = theme else { return };
 
     for (chip_entity, chip) in chips.iter() {
-        let Ok(children) = children_q.get(chip_entity) else { continue };
+        let Ok(children) = children_q.get(chip_entity) else {
+            continue;
+        };
 
         let label_color = chip.label_color(&theme);
         let icon_color = chip.icon_color(&theme);
@@ -804,9 +815,7 @@ fn chip_content_style_system(
 }
 
 /// System to update chip shadows using native BoxShadow
-fn chip_shadow_system(
-    mut chips: Query<(&MaterialChip, &mut BoxShadow), Changed<MaterialChip>>,
-) {
+fn chip_shadow_system(mut chips: Query<(&MaterialChip, &mut BoxShadow), Changed<MaterialChip>>) {
     for (chip, mut shadow) in chips.iter_mut() {
         *shadow = chip.elevation.to_box_shadow();
     }
@@ -815,7 +824,12 @@ fn chip_shadow_system(
 /// Refresh chip visuals when the theme changes.
 fn chip_theme_refresh_system(
     theme: Option<Res<MaterialTheme>>,
-    mut chips: Query<(Entity, &MaterialChip, &mut BackgroundColor, &mut BorderColor)>,
+    mut chips: Query<(
+        Entity,
+        &MaterialChip,
+        &mut BackgroundColor,
+        &mut BorderColor,
+    )>,
     children_q: Query<&Children>,
     mut colors: ParamSet<(
         Query<&mut TextColor, With<ChipLabel>>,
@@ -832,7 +846,9 @@ fn chip_theme_refresh_system(
         *bg_color = BackgroundColor(chip.background_color(&theme));
         *border_color = BorderColor::all(chip.outline_color(&theme));
 
-        let Ok(children) = children_q.get(chip_entity) else { continue };
+        let Ok(children) = children_q.get(chip_entity) else {
+            continue;
+        };
         let label_color = chip.label_color(&theme);
         let icon_color = chip.icon_color(&theme);
 

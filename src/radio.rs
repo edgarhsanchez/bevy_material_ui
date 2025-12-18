@@ -14,12 +14,7 @@
 
 use bevy::prelude::*;
 
-use crate::{
-    motion::StateLayer,
-    ripple::RippleHost,
-    theme::MaterialTheme,
-    tokens::CornerRadius,
-};
+use crate::{motion::StateLayer, ripple::RippleHost, theme::MaterialTheme, tokens::CornerRadius};
 
 /// Marker component for the radio outer circle
 #[derive(Component)]
@@ -38,16 +33,15 @@ pub struct RadioPlugin;
 
 impl Plugin for RadioPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<RadioChangeEvent>()
-            .add_systems(
-                Update,
-                (
-                    radio_interaction_system,
-                    radio_group_system,
-                    radio_style_system,
-                    radio_theme_refresh_system,
-                ),
-            );
+        app.add_message::<RadioChangeEvent>().add_systems(
+            Update,
+            (
+                radio_interaction_system,
+                radio_group_system,
+                radio_style_system,
+                radio_theme_refresh_system,
+            ),
+        );
     }
 }
 
@@ -184,7 +178,7 @@ fn radio_interaction_system(
             Interaction::Pressed => {
                 radio.pressed = true;
                 radio.hovered = false;
-                
+
                 // Only fire event if not already selected
                 if !radio.selected {
                     radio.selected = true;
@@ -241,7 +235,11 @@ fn radio_style_system(
 
     for (radio, radio_children) in radios.iter() {
         let outer_color = radio.outer_color(&theme);
-        let inner_color = if radio.selected { radio.inner_color(&theme) } else { Color::NONE };
+        let inner_color = if radio.selected {
+            radio.inner_color(&theme)
+        } else {
+            Color::NONE
+        };
 
         // Navigate: Radio -> Touch target children -> StateLayer -> RadioOuter -> RadioInner
         for touch_target in radio_children.iter() {
@@ -249,9 +247,10 @@ fn radio_style_system(
             if let Ok(state_layer_children) = state_layer_query.get(touch_target) {
                 for state_layer_child in state_layer_children.iter() {
                     // Update RadioOuter
-                    if let Ok((mut border, outer_children)) = outer_query.get_mut(state_layer_child) {
+                    if let Ok((mut border, outer_children)) = outer_query.get_mut(state_layer_child)
+                    {
                         *border = BorderColor::all(outer_color);
-                        
+
                         // Update RadioInner
                         for inner_entity in outer_children.iter() {
                             if let Ok(mut bg) = inner_query.get_mut(inner_entity) {
@@ -261,15 +260,17 @@ fn radio_style_system(
                     }
                 }
             }
-            
+
             // Also check children of touch target for state layer
             if let Ok(touch_children) = children_query.get(touch_target) {
                 for touch_child in touch_children.iter() {
                     if let Ok(state_layer_children) = state_layer_query.get(touch_child) {
                         for state_layer_child in state_layer_children.iter() {
-                            if let Ok((mut border, outer_children)) = outer_query.get_mut(state_layer_child) {
+                            if let Ok((mut border, outer_children)) =
+                                outer_query.get_mut(state_layer_child)
+                            {
                                 *border = BorderColor::all(outer_color);
-                                
+
                                 for inner_entity in outer_children.iter() {
                                     if let Ok(mut bg) = inner_query.get_mut(inner_entity) {
                                         bg.0 = inner_color;
@@ -278,11 +279,11 @@ fn radio_style_system(
                             }
                         }
                     }
-                    
+
                     // Direct RadioOuter under touch target
                     if let Ok((mut border, outer_children)) = outer_query.get_mut(touch_child) {
                         *border = BorderColor::all(outer_color);
-                        
+
                         for inner_entity in outer_children.iter() {
                             if let Ok(mut bg) = inner_query.get_mut(inner_entity) {
                                 bg.0 = inner_color;
@@ -320,7 +321,8 @@ fn radio_theme_refresh_system(
         for touch_target in radio_children.iter() {
             if let Ok(state_layer_children) = state_layer_query.get(touch_target) {
                 for state_layer_child in state_layer_children.iter() {
-                    if let Ok((mut border, outer_children)) = outer_query.get_mut(state_layer_child) {
+                    if let Ok((mut border, outer_children)) = outer_query.get_mut(state_layer_child)
+                    {
                         *border = BorderColor::all(outer_color);
                         for inner_entity in outer_children.iter() {
                             if let Ok(mut bg) = inner_query.get_mut(inner_entity) {
@@ -335,7 +337,9 @@ fn radio_theme_refresh_system(
                 for touch_child in touch_children.iter() {
                     if let Ok(state_layer_children) = state_layer_query.get(touch_child) {
                         for state_layer_child in state_layer_children.iter() {
-                            if let Ok((mut border, outer_children)) = outer_query.get_mut(state_layer_child) {
+                            if let Ok((mut border, outer_children)) =
+                                outer_query.get_mut(state_layer_child)
+                            {
                                 *border = BorderColor::all(outer_color);
                                 for inner_entity in outer_children.iter() {
                                     if let Ok(mut bg) = inner_query.get_mut(inner_entity) {
@@ -419,7 +423,7 @@ pub trait SpawnRadio {
         group: impl Into<String>,
         label: &str,
     ) -> Entity;
-    
+
     /// Spawn a radio button using a builder for more control
     fn spawn_radio_with(
         &mut self,
@@ -440,7 +444,7 @@ impl SpawnRadio for Commands<'_, '_> {
         let builder = RadioBuilder::new().selected(selected).group(group);
         self.spawn_radio_with(theme, builder, label)
     }
-    
+
     fn spawn_radio_with(
         &mut self,
         theme: &MaterialTheme,
@@ -451,7 +455,11 @@ impl SpawnRadio for Commands<'_, '_> {
         let label_text = label.to_string();
         let is_selected = builder.radio.selected;
         let border_color = builder.radio.outer_color(theme);
-        let inner_color = if is_selected { theme.primary } else { Color::NONE };
+        let inner_color = if is_selected {
+            theme.primary
+        } else {
+            Color::NONE
+        };
         let state_layer_color = builder.radio.state_layer_color(theme);
 
         self.spawn(Node {
@@ -459,7 +467,8 @@ impl SpawnRadio for Commands<'_, '_> {
             align_items: AlignItems::Center,
             column_gap: Val::Px(12.0),
             ..default()
-        }).with_children(|row| {
+        })
+        .with_children(|row| {
             // Radio touch target
             row.spawn((
                 builder.radio,
@@ -475,59 +484,68 @@ impl SpawnRadio for Commands<'_, '_> {
                 },
                 BackgroundColor(Color::NONE),
                 BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            )).with_children(|touch| {
+            ))
+            .with_children(|touch| {
                 // State layer
-                touch.spawn((
-                    RadioStateLayer,
-                    StateLayer::new(state_layer_color),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: Val::Px(40.0),
-                        height: Val::Px(40.0),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    BackgroundColor(Color::NONE),
-                    BorderRadius::all(Val::Px(20.0)),
-                )).with_children(|state_layer| {
-                    // Outer circle
-                    state_layer.spawn((
-                        RadioOuter,
+                touch
+                    .spawn((
+                        RadioStateLayer,
+                        StateLayer::new(state_layer_color),
                         Node {
-                            width: Val::Px(RADIO_SIZE),
-                            height: Val::Px(RADIO_SIZE),
-                            border: UiRect::all(Val::Px(2.0)),
+                            position_type: PositionType::Absolute,
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderColor::all(border_color),
-                        BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
-                    )).with_children(|outer| {
-                        // Inner dot
-                        outer.spawn((
-                            RadioInner,
-                            Node {
-                                width: Val::Px(RADIO_DOT_SIZE),
-                                height: Val::Px(RADIO_DOT_SIZE),
-                                ..default()
-                            },
-                            BackgroundColor(inner_color),
-                            BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
-                        ));
+                        BorderRadius::all(Val::Px(20.0)),
+                    ))
+                    .with_children(|state_layer| {
+                        // Outer circle
+                        state_layer
+                            .spawn((
+                                RadioOuter,
+                                Node {
+                                    width: Val::Px(RADIO_SIZE),
+                                    height: Val::Px(RADIO_SIZE),
+                                    border: UiRect::all(Val::Px(2.0)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::NONE),
+                                BorderColor::all(border_color),
+                                BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
+                            ))
+                            .with_children(|outer| {
+                                // Inner dot
+                                outer.spawn((
+                                    RadioInner,
+                                    Node {
+                                        width: Val::Px(RADIO_DOT_SIZE),
+                                        height: Val::Px(RADIO_DOT_SIZE),
+                                        ..default()
+                                    },
+                                    BackgroundColor(inner_color),
+                                    BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
+                                ));
+                            });
                     });
-                });
             });
 
             // Label
             row.spawn((
                 Text::new(label_text),
-                TextFont { font_size: 14.0, ..default() },
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
-        }).id()
+        })
+        .id()
     }
 }
 
@@ -541,14 +559,9 @@ pub trait SpawnRadioChild {
         group: impl Into<String>,
         label: &str,
     );
-    
+
     /// Spawn a radio button using a builder for more control
-    fn spawn_radio_with(
-        &mut self,
-        theme: &MaterialTheme,
-        builder: RadioBuilder,
-        label: &str,
-    );
+    fn spawn_radio_with(&mut self, theme: &MaterialTheme, builder: RadioBuilder, label: &str);
 }
 
 impl SpawnRadioChild for ChildSpawnerCommands<'_> {
@@ -562,18 +575,17 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
         let builder = RadioBuilder::new().selected(selected).group(group);
         self.spawn_radio_with(theme, builder, label);
     }
-    
-    fn spawn_radio_with(
-        &mut self,
-        theme: &MaterialTheme,
-        builder: RadioBuilder,
-        label: &str,
-    ) {
+
+    fn spawn_radio_with(&mut self, theme: &MaterialTheme, builder: RadioBuilder, label: &str) {
         let label_color = theme.on_surface;
         let label_text = label.to_string();
         let is_selected = builder.radio.selected;
         let border_color = builder.radio.outer_color(theme);
-        let inner_color = if is_selected { theme.primary } else { Color::NONE };
+        let inner_color = if is_selected {
+            theme.primary
+        } else {
+            Color::NONE
+        };
         let state_layer_color = builder.radio.state_layer_color(theme);
 
         self.spawn(Node {
@@ -581,7 +593,8 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
             align_items: AlignItems::Center,
             column_gap: Val::Px(12.0),
             ..default()
-        }).with_children(|row| {
+        })
+        .with_children(|row| {
             // Radio touch target
             row.spawn((
                 builder.radio,
@@ -597,56 +610,64 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
                 },
                 BackgroundColor(Color::NONE),
                 BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            )).with_children(|touch| {
+            ))
+            .with_children(|touch| {
                 // State layer
-                touch.spawn((
-                    RadioStateLayer,
-                    StateLayer::new(state_layer_color),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: Val::Px(40.0),
-                        height: Val::Px(40.0),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    BackgroundColor(Color::NONE),
-                    BorderRadius::all(Val::Px(20.0)),
-                )).with_children(|state_layer| {
-                    // Outer circle
-                    state_layer.spawn((
-                        RadioOuter,
+                touch
+                    .spawn((
+                        RadioStateLayer,
+                        StateLayer::new(state_layer_color),
                         Node {
-                            width: Val::Px(RADIO_SIZE),
-                            height: Val::Px(RADIO_SIZE),
-                            border: UiRect::all(Val::Px(2.0)),
+                            position_type: PositionType::Absolute,
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderColor::all(border_color),
-                        BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
-                    )).with_children(|outer| {
-                        // Inner dot
-                        outer.spawn((
-                            RadioInner,
-                            Node {
-                                width: Val::Px(RADIO_DOT_SIZE),
-                                height: Val::Px(RADIO_DOT_SIZE),
-                                ..default()
-                            },
-                            BackgroundColor(inner_color),
-                            BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
-                        ));
+                        BorderRadius::all(Val::Px(20.0)),
+                    ))
+                    .with_children(|state_layer| {
+                        // Outer circle
+                        state_layer
+                            .spawn((
+                                RadioOuter,
+                                Node {
+                                    width: Val::Px(RADIO_SIZE),
+                                    height: Val::Px(RADIO_SIZE),
+                                    border: UiRect::all(Val::Px(2.0)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::NONE),
+                                BorderColor::all(border_color),
+                                BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
+                            ))
+                            .with_children(|outer| {
+                                // Inner dot
+                                outer.spawn((
+                                    RadioInner,
+                                    Node {
+                                        width: Val::Px(RADIO_DOT_SIZE),
+                                        height: Val::Px(RADIO_DOT_SIZE),
+                                        ..default()
+                                    },
+                                    BackgroundColor(inner_color),
+                                    BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
+                                ));
+                            });
                     });
-                });
             });
 
             // Label
             row.spawn((
                 Text::new(label_text),
-                TextFont { font_size: 14.0, ..default() },
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
         });

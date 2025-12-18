@@ -15,10 +15,10 @@ pub fn spawn_cards_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Cards",
-                "Containers for related content and actions"
+                "Containers for related content and actions",
             );
 
             section
@@ -35,8 +35,10 @@ pub fn spawn_cards_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                     spawn_card(row, theme, "Outlined", CardType::Outlined);
                 });
 
-            spawn_code_block(section, theme,
-r#"// Create an elevated card
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Create an elevated card
 let card = MaterialCard::new()
     .variant(CardVariant::Elevated);
 
@@ -44,14 +46,24 @@ let card = MaterialCard::new()
 let card = MaterialCard::filled();
 
 // Outlined card  
-let card = MaterialCard::outlined();"#);
+let card = MaterialCard::outlined();"#,
+            );
         });
 }
 
 #[derive(Clone, Copy)]
-enum CardType { Elevated, Filled, Outlined }
+enum CardType {
+    Elevated,
+    Filled,
+    Outlined,
+}
 
-fn spawn_card(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, title: &str, card_type: CardType) {
+fn spawn_card(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    title: &str,
+    card_type: CardType,
+) {
     let builder = match card_type {
         CardType::Elevated => CardBuilder::new().elevated(),
         CardType::Filled => CardBuilder::new().filled(),
@@ -63,15 +75,21 @@ fn spawn_card(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, title: &
     parent
         .spawn((Interaction::None, builder.build(theme)))
         .with_children(|card| {
-        card.spawn((
-            Text::new(title),
-            TextFont { font_size: 16.0, ..default() },
-            TextColor(theme.on_surface),
-        ));
-        card.spawn((
-            Text::new("Card content goes here with supporting text."),
-            TextFont { font_size: 12.0, ..default() },
-            TextColor(theme.on_surface_variant),
-        ));
-    });
+            card.spawn((
+                Text::new(title),
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(theme.on_surface),
+            ));
+            card.spawn((
+                Text::new("Card content goes here with supporting text."),
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
+                TextColor(theme.on_surface_variant),
+            ));
+        });
 }

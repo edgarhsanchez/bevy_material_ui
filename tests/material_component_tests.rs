@@ -11,19 +11,19 @@
 //! - Builder patterns
 //! - Default values
 
-use bevy_material_ui::button::{MaterialButton, ButtonVariant, IconGravity};
-use bevy_material_ui::checkbox::{MaterialCheckbox, CheckboxState};
-use bevy_material_ui::switch::MaterialSwitch;
+use bevy_material_ui::badge::{BadgeSize, MaterialBadge};
+use bevy_material_ui::button::{ButtonVariant, IconGravity, MaterialButton};
+use bevy_material_ui::checkbox::{CheckboxState, MaterialCheckbox};
+use bevy_material_ui::chip::{ChipElevation, ChipVariant, MaterialChip};
+use bevy_material_ui::dialog::{DialogType, MaterialDialog};
+use bevy_material_ui::fab::{FabColor, FabSize, MaterialFab};
+use bevy_material_ui::progress::{MaterialCircularProgress, MaterialLinearProgress, ProgressMode};
 use bevy_material_ui::radio::MaterialRadio;
 use bevy_material_ui::slider::{MaterialSlider, SliderVariant, TickVisibility};
-use bevy_material_ui::chip::{MaterialChip, ChipVariant, ChipElevation};
-use bevy_material_ui::text_field::{MaterialTextField, TextFieldVariant, EndIconMode, InputType};
-use bevy_material_ui::fab::{MaterialFab, FabSize, FabColor};
-use bevy_material_ui::badge::{MaterialBadge, BadgeSize};
-use bevy_material_ui::tooltip::{TooltipTrigger, TooltipVariant, TooltipPosition};
 use bevy_material_ui::snackbar::{ShowSnackbar, SnackbarPosition};
-use bevy_material_ui::dialog::{MaterialDialog, DialogType};
-use bevy_material_ui::progress::{MaterialLinearProgress, MaterialCircularProgress, ProgressMode};
+use bevy_material_ui::switch::MaterialSwitch;
+use bevy_material_ui::text_field::{EndIconMode, InputType, MaterialTextField, TextFieldVariant};
+use bevy_material_ui::tooltip::{TooltipPosition, TooltipTrigger, TooltipVariant};
 
 // ============================================================================
 // Button Tests (modeled after MaterialButtonTest.java)
@@ -40,8 +40,7 @@ mod button_tests {
 
     #[test]
     fn test_set_variant() {
-        let button = MaterialButton::new("Test")
-            .with_variant(ButtonVariant::Outlined);
+        let button = MaterialButton::new("Test").with_variant(ButtonVariant::Outlined);
         assert_eq!(button.variant, ButtonVariant::Outlined);
     }
 
@@ -54,7 +53,7 @@ mod button_tests {
             ButtonVariant::Outlined,
             ButtonVariant::Text,
         ];
-        
+
         for variant in variants {
             let button = MaterialButton::new("Test").with_variant(variant);
             assert_eq!(button.variant, variant);
@@ -77,7 +76,7 @@ mod button_tests {
             IconGravity::Top,
             IconGravity::TextTop,
         ];
-        
+
         for gravity in positions {
             let button = MaterialButton::new("Test")
                 .with_icon("add")
@@ -88,16 +87,15 @@ mod button_tests {
 
     #[test]
     fn test_checkable_button() {
-        let mut button = MaterialButton::new("Toggle")
-            .checkable(true);
-        
+        let mut button = MaterialButton::new("Toggle").checkable(true);
+
         assert!(button.checkable);
         assert!(!button.checked);
-        
+
         // Toggle on
         button.checked = true;
         assert!(button.checked);
-        
+
         // Toggle off
         button.checked = false;
         assert!(!button.checked);
@@ -105,32 +103,28 @@ mod button_tests {
 
     #[test]
     fn test_disabled_button() {
-        let button = MaterialButton::new("Disabled")
-            .disabled(true);
+        let button = MaterialButton::new("Disabled").disabled(true);
         assert!(button.disabled);
     }
 
     #[test]
     fn test_icon_setting() {
-        let button = MaterialButton::new("Add")
-            .with_icon("add");
+        let button = MaterialButton::new("Add").with_icon("add");
         assert_eq!(button.icon, Some("add".to_string()));
     }
 
     #[test]
     fn test_icon_updated_when_changed() {
-        let mut button = MaterialButton::new("Test")
-            .with_icon("add");
+        let mut button = MaterialButton::new("Test").with_icon("add");
         assert_eq!(button.icon, Some("add".to_string()));
-        
+
         button.icon = Some("remove".to_string());
         assert_eq!(button.icon, Some("remove".to_string()));
     }
 
     #[test]
     fn test_corner_radius_customization() {
-        let button = MaterialButton::new("Rounded")
-            .corner_radius(16.0);
+        let button = MaterialButton::new("Rounded").corner_radius(16.0);
         assert_eq!(button.corner_radius, Some(16.0));
     }
 
@@ -162,17 +156,16 @@ mod checkbox_tests {
     fn test_set_checked_state_checked_succeeds() {
         let mut checkbox = MaterialCheckbox::new();
         checkbox.state = CheckboxState::Checked;
-        
+
         assert!(checkbox.state.is_checked());
         assert_eq!(checkbox.state, CheckboxState::Checked);
     }
 
     #[test]
     fn test_set_checked_state_unchecked_succeeds() {
-        let mut checkbox = MaterialCheckbox::new()
-            .with_state(CheckboxState::Checked);
+        let mut checkbox = MaterialCheckbox::new().with_state(CheckboxState::Checked);
         assert!(checkbox.state.is_checked());
-        
+
         checkbox.state = CheckboxState::Unchecked;
         assert!(!checkbox.state.is_checked());
         assert_eq!(checkbox.state, CheckboxState::Unchecked);
@@ -180,9 +173,8 @@ mod checkbox_tests {
 
     #[test]
     fn test_set_checked_state_indeterminate_succeeds() {
-        let checkbox = MaterialCheckbox::new()
-            .with_state(CheckboxState::Indeterminate);
-        
+        let checkbox = MaterialCheckbox::new().with_state(CheckboxState::Indeterminate);
+
         assert!(!checkbox.state.is_checked());
         assert!(checkbox.state.is_indeterminate());
         assert_eq!(checkbox.state, CheckboxState::Indeterminate);
@@ -190,53 +182,47 @@ mod checkbox_tests {
 
     #[test]
     fn test_checked_to_indeterminate_succeeds() {
-        let mut checkbox = MaterialCheckbox::new()
-            .with_state(CheckboxState::Checked);
-        
+        let mut checkbox = MaterialCheckbox::new().with_state(CheckboxState::Checked);
+
         checkbox.state = CheckboxState::Indeterminate;
-        
+
         assert!(!checkbox.state.is_checked());
         assert!(checkbox.state.is_indeterminate());
     }
 
     #[test]
     fn test_indeterminate_toggle_becomes_checked() {
-        let checkbox = MaterialCheckbox::new()
-            .with_state(CheckboxState::Indeterminate);
-        
+        let checkbox = MaterialCheckbox::new().with_state(CheckboxState::Indeterminate);
+
         let toggled = checkbox.state.toggle();
         assert_eq!(toggled, CheckboxState::Checked);
     }
 
     #[test]
     fn test_unchecked_toggle_becomes_checked() {
-        let checkbox = MaterialCheckbox::new()
-            .with_state(CheckboxState::Unchecked);
-        
+        let checkbox = MaterialCheckbox::new().with_state(CheckboxState::Unchecked);
+
         let toggled = checkbox.state.toggle();
         assert_eq!(toggled, CheckboxState::Checked);
     }
 
     #[test]
     fn test_checked_toggle_becomes_unchecked() {
-        let checkbox = MaterialCheckbox::new()
-            .with_state(CheckboxState::Checked);
-        
+        let checkbox = MaterialCheckbox::new().with_state(CheckboxState::Checked);
+
         let toggled = checkbox.state.toggle();
         assert_eq!(toggled, CheckboxState::Unchecked);
     }
 
     #[test]
     fn test_error_state() {
-        let checkbox = MaterialCheckbox::new()
-            .error(true);
+        let checkbox = MaterialCheckbox::new().error(true);
         assert!(checkbox.error);
     }
 
     #[test]
     fn test_disabled_state() {
-        let checkbox = MaterialCheckbox::new()
-            .disabled(true);
+        let checkbox = MaterialCheckbox::new().disabled(true);
         assert!(checkbox.disabled);
     }
 
@@ -346,7 +332,7 @@ mod slider_tests {
     fn test_value_clamped_to_range() {
         let slider = MaterialSlider::new(0.0, 100.0).with_value(150.0);
         assert_eq!(slider.value, 100.0); // Clamped to max
-        
+
         let slider2 = MaterialSlider::new(0.0, 100.0).with_value(-50.0);
         assert_eq!(slider2.value, 0.0); // Clamped to min
     }
@@ -379,8 +365,7 @@ mod slider_tests {
 
     #[test]
     fn test_tick_visibility() {
-        let slider = MaterialSlider::new(0.0, 100.0)
-            .tick_visibility(TickVisibility::Always);
+        let slider = MaterialSlider::new(0.0, 100.0).tick_visibility(TickVisibility::Always);
         assert_eq!(slider.tick_visibility, TickVisibility::Always);
     }
 
@@ -430,7 +415,7 @@ mod chip_tests {
             ChipVariant::Input,
             ChipVariant::Suggestion,
         ];
-        
+
         for variant in variants {
             let chip = MaterialChip::new("Test").with_variant(variant);
             assert_eq!(chip.variant, variant);
@@ -484,7 +469,7 @@ mod chip_tests {
     fn test_elevation() {
         let flat = MaterialChip::new("Flat");
         let elevated = MaterialChip::new("Elevated").elevated();
-        
+
         assert_eq!(flat.elevation, ChipElevation::Flat);
         assert_eq!(elevated.elevation, ChipElevation::Elevated);
     }
@@ -530,7 +515,10 @@ mod text_field_tests {
     #[test]
     fn test_helper_text() {
         let field = MaterialTextField::new().supporting_text("This is helper text");
-        assert_eq!(field.supporting_text, Some("This is helper text".to_string()));
+        assert_eq!(
+            field.supporting_text,
+            Some("This is helper text".to_string())
+        );
     }
 
     #[test]
@@ -572,7 +560,7 @@ mod text_field_tests {
             EndIconMode::DropdownMenu,
             EndIconMode::Custom,
         ];
-        
+
         for mode in modes {
             let field = MaterialTextField::new().end_icon_mode(mode);
             assert_eq!(field.end_icon_mode, mode);
@@ -590,7 +578,7 @@ mod text_field_tests {
             InputType::Url,
             InputType::Multiline,
         ];
-        
+
         for input_type in types {
             let field = MaterialTextField::new().input_type(input_type);
             assert_eq!(field.input_type, input_type);
@@ -602,7 +590,7 @@ mod text_field_tests {
         let mut field = MaterialTextField::new()
             .input_type(InputType::Password)
             .end_icon_mode(EndIconMode::PasswordToggle);
-        
+
         assert!(!field.password_visible);
         field.password_visible = true;
         assert!(field.password_visible);
@@ -616,8 +604,7 @@ mod text_field_tests {
 
     #[test]
     fn test_stroke_width() {
-        let field = MaterialTextField::new()
-            .box_stroke_width(2.0);
+        let field = MaterialTextField::new().box_stroke_width(2.0);
         assert_eq!(field.box_stroke_width, 2.0);
     }
 }
@@ -657,7 +644,7 @@ mod fab_tests {
             FabColor::Secondary,
             FabColor::Tertiary,
         ];
-        
+
         for color in colors {
             let fab = MaterialFab::new("add").with_color(color);
             assert_eq!(fab.color, color);
@@ -729,7 +716,7 @@ mod badge_tests {
     fn test_visibility() {
         let visible = MaterialBadge::dot().visible(true);
         let hidden = MaterialBadge::dot().visible(false);
-        
+
         assert!(visible.visible);
         assert!(!hidden.visible);
     }
@@ -738,7 +725,7 @@ mod badge_tests {
     fn test_set_count() {
         let mut badge = MaterialBadge::dot();
         badge.set_count(10);
-        
+
         assert_eq!(badge.size, BadgeSize::Large);
         assert_eq!(badge.content, Some("10".to_string()));
     }
@@ -747,7 +734,7 @@ mod badge_tests {
     fn test_set_dot() {
         let mut badge = MaterialBadge::count(5);
         badge.set_dot();
-        
+
         assert_eq!(badge.size, BadgeSize::Small);
         assert!(badge.content.is_none());
     }
@@ -774,7 +761,7 @@ mod tooltip_tests {
             TooltipPosition::Left,
             TooltipPosition::Right,
         ];
-        
+
         for pos in positions {
             let trigger = TooltipTrigger::new("Help").with_position(pos);
             assert_eq!(trigger.position, pos);
@@ -783,10 +770,22 @@ mod tooltip_tests {
 
     #[test]
     fn test_position_shortcuts() {
-        assert_eq!(TooltipTrigger::new("T").top().position, TooltipPosition::Top);
-        assert_eq!(TooltipTrigger::new("T").bottom().position, TooltipPosition::Bottom);
-        assert_eq!(TooltipTrigger::new("T").left().position, TooltipPosition::Left);
-        assert_eq!(TooltipTrigger::new("T").right().position, TooltipPosition::Right);
+        assert_eq!(
+            TooltipTrigger::new("T").top().position,
+            TooltipPosition::Top
+        );
+        assert_eq!(
+            TooltipTrigger::new("T").bottom().position,
+            TooltipPosition::Bottom
+        );
+        assert_eq!(
+            TooltipTrigger::new("T").left().position,
+            TooltipPosition::Left
+        );
+        assert_eq!(
+            TooltipTrigger::new("T").right().position,
+            TooltipPosition::Right
+        );
     }
 
     #[test]
@@ -839,7 +838,7 @@ mod snackbar_tests {
     fn test_dismissible() {
         let dismissible = ShowSnackbar::message("Test").dismissible(true);
         let not_dismissible = ShowSnackbar::message("Test").dismissible(false);
-        
+
         assert!(dismissible.dismissible);
         assert!(!not_dismissible.dismissible);
     }
@@ -860,7 +859,7 @@ mod snackbar_tests {
             SnackbarPosition::TopLeft,
             SnackbarPosition::TopRight,
         ];
-        
+
         for pos in positions {
             let snackbar = ShowSnackbar::message("Test").position(pos);
             assert_eq!(snackbar.position, pos);
@@ -984,7 +983,7 @@ mod progress_tests {
     fn test_linear_progress_clamped() {
         let over = MaterialLinearProgress::new().with_progress(1.5);
         let under = MaterialLinearProgress::new().with_progress(-0.5);
-        
+
         assert_eq!(over.progress, 1.0);
         assert_eq!(under.progress, 0.0);
     }
@@ -1116,10 +1115,10 @@ mod slider_behavior_tests {
         // With 6 values: 0, 20, 40, 60, 80, 100
         // Step should be 20
         assert_eq!(slider.step, Some(20.0));
-        
+
         // Simulate value calculation
         let step = slider.step.unwrap_or(1.0);
-        
+
         // Test snapping various values
         let test_cases = [
             (0.0, 0.0),
@@ -1128,7 +1127,7 @@ mod slider_behavior_tests {
             (50.0, 60.0), // rounds to 60
             (100.0, 100.0),
         ];
-        
+
         for (input, expected) in test_cases {
             let snapped = (input / step).round() * step;
             assert_eq!(
@@ -1138,7 +1137,7 @@ mod slider_behavior_tests {
             );
         }
     }
-    
+
     /// Test slider percentage calculation
     #[test]
     fn test_slider_percentage() {
@@ -1146,7 +1145,7 @@ mod slider_behavior_tests {
         let percentage = (slider.value - slider.min) / (slider.max - slider.min);
         assert!((percentage - 0.25).abs() < 0.001);
     }
-    
+
     /// Test slider with non-zero minimum
     #[test]
     fn test_slider_with_offset_range() {
@@ -1154,12 +1153,12 @@ mod slider_behavior_tests {
         let percentage = (slider.value - slider.min) / (slider.max - slider.min);
         assert!((percentage - 0.5).abs() < 0.001);
     }
-    
+
     /// Test slider value from position (simulates drag calculation)
     #[test]
     fn test_slider_value_from_position() {
         let slider = MaterialSlider::new(0.0, 100.0);
-        
+
         // Simulate dragging at different positions
         // position is 0.0 to 1.0 representing relative x position
         let test_cases = [
@@ -1169,23 +1168,25 @@ mod slider_behavior_tests {
             (0.75, 75.0),
             (1.0, 100.0),
         ];
-        
+
         for (position, expected) in test_cases {
             let value = slider.min + (slider.max - slider.min) * position;
             assert!(
                 (value - expected).abs() < 0.001,
                 "Position {} should map to value {}, got {}",
-                position, expected, value
+                position,
+                expected,
+                value
             );
         }
     }
-    
+
     /// Test that step values work correctly for non-round numbers
     #[test]
     fn test_slider_step_with_decimals() {
         let slider = MaterialSlider::new(0.0, 1.0).with_step(0.1);
         let step = slider.step.unwrap();
-        
+
         // Test snapping
         let input = 0.35;
         let snapped = (input / step).round() * step;
@@ -1194,7 +1195,7 @@ mod slider_behavior_tests {
 }
 
 // ============================================================================
-// Tab Behavioral Tests  
+// Tab Behavioral Tests
 // ============================================================================
 
 mod tab_behavior_tests {
@@ -1207,29 +1208,29 @@ mod tab_behavior_tests {
 
         // Initial selection
         assert_eq!(selected_tab, 0);
-        
+
         // Select tab 1
         selected_tab = 1;
         assert_eq!(selected_tab, 1);
-        
+
         // Select tab 2
         selected_tab = 2;
         assert_eq!(selected_tab, 2);
-        
+
         // Selecting same tab should keep it selected
         selected_tab = 2;
         assert_eq!(selected_tab, 2);
-        
+
         // Out of bounds should be clamped (logic to implement)
         selected_tab = selected_tab.min(tab_count - 1);
         assert!(selected_tab < tab_count);
     }
-    
+
     /// Test tab indicator position calculation
     #[test]
     fn test_tab_indicator_position() {
         let tab_widths = [100.0, 100.0, 100.0]; // 3 tabs, 100px each
-        
+
         // Calculate indicator position for each tab
         for (i, &_width) in tab_widths.iter().enumerate() {
             let indicator_x: f32 = tab_widths[..i].iter().sum();
@@ -1237,13 +1238,13 @@ mod tab_behavior_tests {
             assert!((indicator_x - expected).abs() < 0.001);
         }
     }
-    
+
     /// Test tab content visibility logic
     #[test]
     fn test_tab_content_visibility() {
         let selected_tab = 1;
         let content_count = 3;
-        
+
         for i in 0..content_count {
             let should_show = i == selected_tab;
             if i == 1 {
@@ -1268,15 +1269,15 @@ mod nav_behavior_tests {
 
         // Initial selection
         assert_eq!(selected_index, None);
-        
+
         // Select first item
         selected_index = Some(0);
         assert_eq!(selected_index, Some(0));
-        
+
         // Select third item (should deselect first)
         selected_index = Some(2);
         assert_eq!(selected_index, Some(2));
-        
+
         // Verify only one can be selected
         for i in 0..nav_item_count {
             let is_selected = selected_index == Some(i);
@@ -1287,7 +1288,7 @@ mod nav_behavior_tests {
             }
         }
     }
-    
+
     /// Test that selecting an item updates background color logic
     #[test]
     fn test_nav_background_color_logic() {
@@ -1296,29 +1297,37 @@ mod nav_behavior_tests {
             selected: bool,
             bg_color: (u8, u8, u8, u8), // RGBA
         }
-        
+
         let transparent = (0, 0, 0, 0);
         let secondary_container = (232, 222, 248, 255); // Example MD3 color
-        
+
         let mut items = [
-            NavItemVisual { selected: false, bg_color: transparent },
-            NavItemVisual { selected: true, bg_color: secondary_container },
-            NavItemVisual { selected: false, bg_color: transparent },
+            NavItemVisual {
+                selected: false,
+                bg_color: transparent,
+            },
+            NavItemVisual {
+                selected: true,
+                bg_color: secondary_container,
+            },
+            NavItemVisual {
+                selected: false,
+                bg_color: transparent,
+            },
         ];
-        
+
         // Verify colors
         assert_eq!(items[0].bg_color, transparent);
         assert_eq!(items[1].bg_color, secondary_container);
         assert_eq!(items[2].bg_color, transparent);
-        
+
         // Change selection
         items[1].selected = false;
         items[1].bg_color = transparent;
         items[2].selected = true;
         items[2].bg_color = secondary_container;
-        
+
         assert_eq!(items[1].bg_color, transparent);
         assert_eq!(items[2].bg_color, secondary_container);
     }
 }
-

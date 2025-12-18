@@ -109,9 +109,9 @@ fn spawn_ripple_system(
         if let Ok((host, computed_node, _transform)) = hosts.get(event.host) {
             let size = computed_node.size();
             let max_radius = (size.x.powi(2) + size.y.powi(2)).sqrt();
-            
+
             let color = host.color.unwrap_or(Color::srgba(1.0, 1.0, 1.0, 0.12));
-            
+
             commands.entity(event.host).with_children(|parent| {
                 parent.spawn((
                     Ripple::new(event.position, max_radius, color),
@@ -139,9 +139,9 @@ fn animate_ripple_system(
 ) {
     for (entity, mut ripple, mut node, mut bg_color) in ripples.iter_mut() {
         ripple.timer.tick(time.delta());
-        
+
         let progress = ripple.timer.fraction();
-        
+
         if ripple.fading_out {
             // Fade out phase - reduce opacity
             ripple.opacity = 0.12 * (1.0 - ease_out(progress));
@@ -149,23 +149,23 @@ fn animate_ripple_system(
             // Expand phase - grow the ripple
             ripple.scale = ease_out(progress);
         }
-        
+
         // Update visual properties
         let current_radius = ripple.max_radius * ripple.scale;
         let diameter = current_radius * 2.0;
-        
+
         node.width = Val::Px(diameter);
         node.height = Val::Px(diameter);
         node.left = Val::Px(ripple.center.x - current_radius);
         node.top = Val::Px(ripple.center.y - current_radius);
-        
+
         *bg_color = BackgroundColor(ripple.color.with_alpha(ripple.opacity));
-        
+
         // Check if expansion is complete, start fade out
         if !ripple.fading_out && ripple.timer.is_finished() {
             ripple.start_fade_out();
         }
-        
+
         // Remove completed ripples
         if ripple.is_complete() {
             commands.entity(entity).despawn();

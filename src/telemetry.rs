@@ -48,7 +48,7 @@ impl Plugin for TelemetryPlugin {
         // Initialize telemetry config from environment
         let enabled = std::env::var("BEVY_TELEMETRY").is_ok();
         app.insert_resource(TelemetryConfig { enabled });
-        
+
         if enabled {
             info!("📊 Telemetry enabled");
         }
@@ -67,7 +67,7 @@ impl TelemetryConfig {
     pub fn enabled() -> Self {
         Self { enabled: true }
     }
-    
+
     /// Create a config with telemetry disabled
     pub fn disabled() -> Self {
         Self { enabled: false }
@@ -75,7 +75,7 @@ impl TelemetryConfig {
 }
 
 /// Test ID component for automated testing
-/// 
+///
 /// This component allows test automation tools to find UI elements by a stable identifier.
 /// When telemetry is disabled, this component can still be added but won't be written
 /// to the telemetry output.
@@ -87,7 +87,7 @@ impl TestId {
     pub fn new(id: impl Into<String>) -> Self {
         Self(id.into())
     }
-    
+
     /// Get the ID string
     pub fn id(&self) -> &str {
         &self.0
@@ -148,7 +148,7 @@ impl ElementBounds {
             parent: None,
         }
     }
-    
+
     /// Set the parent test ID
     pub fn with_parent(mut self, parent: impl Into<String>) -> Self {
         self.parent = Some(parent.into());
@@ -212,8 +212,7 @@ mod tests {
 
     #[test]
     fn test_element_bounds_with_parent() {
-        let bounds = ElementBounds::new("child", 0.0, 0.0, 50.0, 50.0)
-            .with_parent("parent");
+        let bounds = ElementBounds::new("child", 0.0, 0.0, 50.0, 50.0).with_parent("parent");
         assert_eq!(bounds.parent, Some("parent".to_string()));
     }
 }

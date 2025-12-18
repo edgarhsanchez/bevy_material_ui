@@ -2,11 +2,11 @@
 //!
 //! Provides the main icon component and bundle for rendering Material Symbols.
 
-use bevy::prelude::*;
 use super::codepoints::*;
 use super::style::IconStyle;
 use super::MaterialIconFont;
 use super::EMBEDDED_MATERIAL_SYMBOLS_FONT;
+use bevy::prelude::*;
 
 /// A Material Design icon component
 ///
@@ -58,279 +58,533 @@ impl MaterialIcon {
 
     // Navigation icons
     /// Home icon
-    pub fn home() -> Self { Self::new(ICON_HOME) }
+    pub fn home() -> Self {
+        Self::new(ICON_HOME)
+    }
     /// Menu icon (hamburger)
-    pub fn menu() -> Self { Self::new(ICON_MENU) }
+    pub fn menu() -> Self {
+        Self::new(ICON_MENU)
+    }
     /// More vertical icon (three dots)
-    pub fn more_vert() -> Self { Self::new(ICON_MORE_VERT) }
+    pub fn more_vert() -> Self {
+        Self::new(ICON_MORE_VERT)
+    }
     /// More horizontal icon
-    pub fn more_horiz() -> Self { Self::new(ICON_MORE_HORIZ) }
+    pub fn more_horiz() -> Self {
+        Self::new(ICON_MORE_HORIZ)
+    }
     /// Arrow back icon
-    pub fn arrow_back() -> Self { Self::new(ICON_ARROW_BACK) }
+    pub fn arrow_back() -> Self {
+        Self::new(ICON_ARROW_BACK)
+    }
     /// Arrow forward icon
-    pub fn arrow_forward() -> Self { Self::new(ICON_ARROW_FORWARD) }
+    pub fn arrow_forward() -> Self {
+        Self::new(ICON_ARROW_FORWARD)
+    }
     /// Arrow upward icon
-    pub fn arrow_upward() -> Self { Self::new(ICON_ARROW_UPWARD) }
+    pub fn arrow_upward() -> Self {
+        Self::new(ICON_ARROW_UPWARD)
+    }
     /// Arrow downward icon
-    pub fn arrow_downward() -> Self { Self::new(ICON_ARROW_DOWNWARD) }
+    pub fn arrow_downward() -> Self {
+        Self::new(ICON_ARROW_DOWNWARD)
+    }
     /// Close icon
-    pub fn close() -> Self { Self::new(ICON_CLOSE) }
+    pub fn close() -> Self {
+        Self::new(ICON_CLOSE)
+    }
     /// Check icon
-    pub fn check() -> Self { Self::new(ICON_CHECK) }
+    pub fn check() -> Self {
+        Self::new(ICON_CHECK)
+    }
     /// Expand more icon (chevron down)
-    pub fn expand_more() -> Self { Self::new(ICON_EXPAND_MORE) }
+    pub fn expand_more() -> Self {
+        Self::new(ICON_EXPAND_MORE)
+    }
     /// Expand less icon (chevron up)
-    pub fn expand_less() -> Self { Self::new(ICON_EXPAND_LESS) }
+    pub fn expand_less() -> Self {
+        Self::new(ICON_EXPAND_LESS)
+    }
     /// Chevron left icon
-    pub fn chevron_left() -> Self { Self::new(ICON_CHEVRON_LEFT) }
+    pub fn chevron_left() -> Self {
+        Self::new(ICON_CHEVRON_LEFT)
+    }
     /// Chevron right icon
-    pub fn chevron_right() -> Self { Self::new(ICON_CHEVRON_RIGHT) }
+    pub fn chevron_right() -> Self {
+        Self::new(ICON_CHEVRON_RIGHT)
+    }
 
     // Action icons
     /// Add icon (plus)
-    pub fn add() -> Self { Self::new(ICON_ADD) }
+    pub fn add() -> Self {
+        Self::new(ICON_ADD)
+    }
     /// Remove icon (minus)
-    pub fn remove() -> Self { Self::new(ICON_REMOVE) }
+    pub fn remove() -> Self {
+        Self::new(ICON_REMOVE)
+    }
     /// Delete icon (trash)
-    pub fn delete() -> Self { Self::new(ICON_DELETE) }
+    pub fn delete() -> Self {
+        Self::new(ICON_DELETE)
+    }
     /// Edit icon (pencil)
-    pub fn edit() -> Self { Self::new(ICON_EDIT) }
+    pub fn edit() -> Self {
+        Self::new(ICON_EDIT)
+    }
     /// Save icon
-    pub fn save() -> Self { Self::new(ICON_SAVE) }
+    pub fn save() -> Self {
+        Self::new(ICON_SAVE)
+    }
     /// Search icon
-    pub fn search() -> Self { Self::new(ICON_SEARCH) }
+    pub fn search() -> Self {
+        Self::new(ICON_SEARCH)
+    }
     /// Refresh icon
-    pub fn refresh() -> Self { Self::new(ICON_REFRESH) }
+    pub fn refresh() -> Self {
+        Self::new(ICON_REFRESH)
+    }
     /// Settings icon (gear)
-    pub fn settings() -> Self { Self::new(ICON_SETTINGS) }
+    pub fn settings() -> Self {
+        Self::new(ICON_SETTINGS)
+    }
     /// Help icon (question mark)
-    pub fn help() -> Self { Self::new(ICON_HELP) }
+    pub fn help() -> Self {
+        Self::new(ICON_HELP)
+    }
     /// Info icon
-    pub fn info() -> Self { Self::new(ICON_INFO) }
+    pub fn info() -> Self {
+        Self::new(ICON_INFO)
+    }
     /// Share icon
-    pub fn share() -> Self { Self::new(ICON_SHARE) }
+    pub fn share() -> Self {
+        Self::new(ICON_SHARE)
+    }
     /// Download icon
-    pub fn download() -> Self { Self::new(ICON_DOWNLOAD) }
+    pub fn download() -> Self {
+        Self::new(ICON_DOWNLOAD)
+    }
     /// Upload icon
-    pub fn upload() -> Self { Self::new(ICON_UPLOAD) }
+    pub fn upload() -> Self {
+        Self::new(ICON_UPLOAD)
+    }
     /// Print icon
-    pub fn print() -> Self { Self::new(ICON_PRINT) }
+    pub fn print() -> Self {
+        Self::new(ICON_PRINT)
+    }
     /// Copy icon
-    pub fn copy() -> Self { Self::new(ICON_CONTENT_COPY) }
+    pub fn copy() -> Self {
+        Self::new(ICON_CONTENT_COPY)
+    }
     /// Paste icon
-    pub fn paste() -> Self { Self::new(ICON_CONTENT_PASTE) }
+    pub fn paste() -> Self {
+        Self::new(ICON_CONTENT_PASTE)
+    }
     /// Cut icon
-    pub fn cut() -> Self { Self::new(ICON_CONTENT_CUT) }
+    pub fn cut() -> Self {
+        Self::new(ICON_CONTENT_CUT)
+    }
     /// Undo icon
-    pub fn undo() -> Self { Self::new(ICON_UNDO) }
+    pub fn undo() -> Self {
+        Self::new(ICON_UNDO)
+    }
     /// Redo icon
-    pub fn redo() -> Self { Self::new(ICON_REDO) }
+    pub fn redo() -> Self {
+        Self::new(ICON_REDO)
+    }
 
     // Toggle icons
     /// Checkbox checked icon
-    pub fn checkbox_checked() -> Self { Self::new(ICON_CHECK_BOX) }
+    pub fn checkbox_checked() -> Self {
+        Self::new(ICON_CHECK_BOX)
+    }
     /// Checkbox unchecked icon
-    pub fn checkbox_unchecked() -> Self { Self::new(ICON_CHECK_BOX_OUTLINE_BLANK) }
+    pub fn checkbox_unchecked() -> Self {
+        Self::new(ICON_CHECK_BOX_OUTLINE_BLANK)
+    }
     /// Radio button checked icon
-    pub fn radio_checked() -> Self { Self::new(ICON_RADIO_BUTTON_CHECKED) }
+    pub fn radio_checked() -> Self {
+        Self::new(ICON_RADIO_BUTTON_CHECKED)
+    }
     /// Radio button unchecked icon
-    pub fn radio_unchecked() -> Self { Self::new(ICON_RADIO_BUTTON_UNCHECKED) }
+    pub fn radio_unchecked() -> Self {
+        Self::new(ICON_RADIO_BUTTON_UNCHECKED)
+    }
     /// Toggle on icon
-    pub fn toggle_on() -> Self { Self::new(ICON_TOGGLE_ON) }
+    pub fn toggle_on() -> Self {
+        Self::new(ICON_TOGGLE_ON)
+    }
     /// Toggle off icon
-    pub fn toggle_off() -> Self { Self::new(ICON_TOGGLE_OFF) }
+    pub fn toggle_off() -> Self {
+        Self::new(ICON_TOGGLE_OFF)
+    }
     /// Star filled icon
-    pub fn star() -> Self { Self::new(ICON_STAR) }
+    pub fn star() -> Self {
+        Self::new(ICON_STAR)
+    }
     /// Star outline icon
-    pub fn star_outline() -> Self { Self::new(ICON_STAR_BORDER) }
+    pub fn star_outline() -> Self {
+        Self::new(ICON_STAR_BORDER)
+    }
     /// Favorite (heart) filled icon
-    pub fn favorite() -> Self { Self::new(ICON_FAVORITE) }
+    pub fn favorite() -> Self {
+        Self::new(ICON_FAVORITE)
+    }
     /// Favorite outline icon
-    pub fn favorite_outline() -> Self { Self::new(ICON_FAVORITE_BORDER) }
+    pub fn favorite_outline() -> Self {
+        Self::new(ICON_FAVORITE_BORDER)
+    }
     /// Visibility (eye) icon
-    pub fn visibility() -> Self { Self::new(ICON_VISIBILITY) }
+    pub fn visibility() -> Self {
+        Self::new(ICON_VISIBILITY)
+    }
     /// Visibility off icon
-    pub fn visibility_off() -> Self { Self::new(ICON_VISIBILITY_OFF) }
+    pub fn visibility_off() -> Self {
+        Self::new(ICON_VISIBILITY_OFF)
+    }
 
     // Alert/Status icons
     /// Error icon
-    pub fn error() -> Self { Self::new(ICON_ERROR) }
+    pub fn error() -> Self {
+        Self::new(ICON_ERROR)
+    }
     /// Warning icon
-    pub fn warning() -> Self { Self::new(ICON_WARNING) }
+    pub fn warning() -> Self {
+        Self::new(ICON_WARNING)
+    }
     /// Check circle (success) icon
-    pub fn check_circle() -> Self { Self::new(ICON_CHECK_CIRCLE) }
+    pub fn check_circle() -> Self {
+        Self::new(ICON_CHECK_CIRCLE)
+    }
     /// Cancel icon
-    pub fn cancel() -> Self { Self::new(ICON_CANCEL) }
+    pub fn cancel() -> Self {
+        Self::new(ICON_CANCEL)
+    }
     /// Block icon
-    pub fn block() -> Self { Self::new(ICON_BLOCK) }
+    pub fn block() -> Self {
+        Self::new(ICON_BLOCK)
+    }
     /// Notifications (bell) icon
-    pub fn notifications() -> Self { Self::new(ICON_NOTIFICATIONS) }
+    pub fn notifications() -> Self {
+        Self::new(ICON_NOTIFICATIONS)
+    }
     /// Notifications off icon
-    pub fn notifications_off() -> Self { Self::new(ICON_NOTIFICATIONS_OFF) }
+    pub fn notifications_off() -> Self {
+        Self::new(ICON_NOTIFICATIONS_OFF)
+    }
 
     // Content icons
     /// Folder icon
-    pub fn folder() -> Self { Self::new(ICON_FOLDER) }
+    pub fn folder() -> Self {
+        Self::new(ICON_FOLDER)
+    }
     /// Folder open icon
-    pub fn folder_open() -> Self { Self::new(ICON_FOLDER_OPEN) }
+    pub fn folder_open() -> Self {
+        Self::new(ICON_FOLDER_OPEN)
+    }
     /// Document icon
-    pub fn document() -> Self { Self::new(ICON_DESCRIPTION) }
+    pub fn document() -> Self {
+        Self::new(ICON_DESCRIPTION)
+    }
     /// Image icon
-    pub fn image() -> Self { Self::new(ICON_IMAGE) }
+    pub fn image() -> Self {
+        Self::new(ICON_IMAGE)
+    }
     /// Video icon
-    pub fn video() -> Self { Self::new(ICON_VIDEOCAM) }
+    pub fn video() -> Self {
+        Self::new(ICON_VIDEOCAM)
+    }
     /// Music note icon
-    pub fn music() -> Self { Self::new(ICON_MUSIC_NOTE) }
+    pub fn music() -> Self {
+        Self::new(ICON_MUSIC_NOTE)
+    }
     /// Link icon
-    pub fn link() -> Self { Self::new(ICON_LINK) }
+    pub fn link() -> Self {
+        Self::new(ICON_LINK)
+    }
     /// Attachment icon
-    pub fn attachment() -> Self { Self::new(ICON_ATTACH_FILE) }
+    pub fn attachment() -> Self {
+        Self::new(ICON_ATTACH_FILE)
+    }
 
     // Person/Account icons
     /// Person icon
-    pub fn person() -> Self { Self::new(ICON_PERSON) }
+    pub fn person() -> Self {
+        Self::new(ICON_PERSON)
+    }
     /// Group (people) icon
-    pub fn group() -> Self { Self::new(ICON_GROUP) }
+    pub fn group() -> Self {
+        Self::new(ICON_GROUP)
+    }
     /// Account circle icon
-    pub fn account_circle() -> Self { Self::new(ICON_ACCOUNT_CIRCLE) }
+    pub fn account_circle() -> Self {
+        Self::new(ICON_ACCOUNT_CIRCLE)
+    }
     /// Person add icon
-    pub fn person_add() -> Self { Self::new(ICON_PERSON_ADD) }
+    pub fn person_add() -> Self {
+        Self::new(ICON_PERSON_ADD)
+    }
     /// Login icon
-    pub fn login() -> Self { Self::new(ICON_LOGIN) }
+    pub fn login() -> Self {
+        Self::new(ICON_LOGIN)
+    }
     /// Logout icon
-    pub fn logout() -> Self { Self::new(ICON_LOGOUT) }
+    pub fn logout() -> Self {
+        Self::new(ICON_LOGOUT)
+    }
 
     // Communication icons
     /// Email icon
-    pub fn email() -> Self { Self::new(ICON_EMAIL) }
+    pub fn email() -> Self {
+        Self::new(ICON_EMAIL)
+    }
     /// Chat icon
-    pub fn chat() -> Self { Self::new(ICON_CHAT) }
+    pub fn chat() -> Self {
+        Self::new(ICON_CHAT)
+    }
     /// Message icon
-    pub fn message() -> Self { Self::new(ICON_MESSAGE) }
+    pub fn message() -> Self {
+        Self::new(ICON_MESSAGE)
+    }
     /// Phone icon
-    pub fn phone() -> Self { Self::new(ICON_PHONE) }
+    pub fn phone() -> Self {
+        Self::new(ICON_PHONE)
+    }
     /// Send icon
-    pub fn send() -> Self { Self::new(ICON_SEND) }
+    pub fn send() -> Self {
+        Self::new(ICON_SEND)
+    }
 
     // Media control icons
     /// Play icon
-    pub fn play() -> Self { Self::new(ICON_PLAY_ARROW) }
+    pub fn play() -> Self {
+        Self::new(ICON_PLAY_ARROW)
+    }
     /// Pause icon
-    pub fn pause() -> Self { Self::new(ICON_PAUSE) }
+    pub fn pause() -> Self {
+        Self::new(ICON_PAUSE)
+    }
     /// Stop icon
-    pub fn stop() -> Self { Self::new(ICON_STOP) }
+    pub fn stop() -> Self {
+        Self::new(ICON_STOP)
+    }
     /// Skip next icon
-    pub fn skip_next() -> Self { Self::new(ICON_SKIP_NEXT) }
+    pub fn skip_next() -> Self {
+        Self::new(ICON_SKIP_NEXT)
+    }
     /// Skip previous icon
-    pub fn skip_previous() -> Self { Self::new(ICON_SKIP_PREVIOUS) }
+    pub fn skip_previous() -> Self {
+        Self::new(ICON_SKIP_PREVIOUS)
+    }
     /// Fast forward icon
-    pub fn fast_forward() -> Self { Self::new(ICON_FAST_FORWARD) }
+    pub fn fast_forward() -> Self {
+        Self::new(ICON_FAST_FORWARD)
+    }
     /// Fast rewind icon
-    pub fn fast_rewind() -> Self { Self::new(ICON_FAST_REWIND) }
+    pub fn fast_rewind() -> Self {
+        Self::new(ICON_FAST_REWIND)
+    }
     /// Replay icon
-    pub fn replay() -> Self { Self::new(ICON_REPLAY) }
+    pub fn replay() -> Self {
+        Self::new(ICON_REPLAY)
+    }
     /// Shuffle icon
-    pub fn shuffle() -> Self { Self::new(ICON_SHUFFLE) }
+    pub fn shuffle() -> Self {
+        Self::new(ICON_SHUFFLE)
+    }
     /// Repeat icon
-    pub fn repeat_icon() -> Self { Self::new(ICON_REPEAT) }
+    pub fn repeat_icon() -> Self {
+        Self::new(ICON_REPEAT)
+    }
     /// Volume up icon
-    pub fn volume_up() -> Self { Self::new(ICON_VOLUME_UP) }
+    pub fn volume_up() -> Self {
+        Self::new(ICON_VOLUME_UP)
+    }
     /// Volume down icon
-    pub fn volume_down() -> Self { Self::new(ICON_VOLUME_DOWN) }
+    pub fn volume_down() -> Self {
+        Self::new(ICON_VOLUME_DOWN)
+    }
     /// Volume mute icon
-    pub fn volume_mute() -> Self { Self::new(ICON_VOLUME_MUTE) }
+    pub fn volume_mute() -> Self {
+        Self::new(ICON_VOLUME_MUTE)
+    }
     /// Volume off icon
-    pub fn volume_off() -> Self { Self::new(ICON_VOLUME_OFF) }
+    pub fn volume_off() -> Self {
+        Self::new(ICON_VOLUME_OFF)
+    }
 
     // Device icons
     /// Smartphone icon
-    pub fn smartphone() -> Self { Self::new(ICON_SMARTPHONE) }
+    pub fn smartphone() -> Self {
+        Self::new(ICON_SMARTPHONE)
+    }
     /// Tablet icon
-    pub fn tablet() -> Self { Self::new(ICON_TABLET) }
+    pub fn tablet() -> Self {
+        Self::new(ICON_TABLET)
+    }
     /// Laptop icon
-    pub fn laptop() -> Self { Self::new(ICON_LAPTOP) }
+    pub fn laptop() -> Self {
+        Self::new(ICON_LAPTOP)
+    }
     /// Desktop icon
-    pub fn desktop() -> Self { Self::new(ICON_DESKTOP_WINDOWS) }
+    pub fn desktop() -> Self {
+        Self::new(ICON_DESKTOP_WINDOWS)
+    }
     /// Keyboard icon
-    pub fn keyboard() -> Self { Self::new(ICON_KEYBOARD) }
+    pub fn keyboard() -> Self {
+        Self::new(ICON_KEYBOARD)
+    }
     /// Mouse icon
-    pub fn mouse() -> Self { Self::new(ICON_MOUSE) }
+    pub fn mouse() -> Self {
+        Self::new(ICON_MOUSE)
+    }
     /// Gamepad icon
-    pub fn gamepad() -> Self { Self::new(ICON_GAMEPAD) }
+    pub fn gamepad() -> Self {
+        Self::new(ICON_GAMEPAD)
+    }
     /// Wifi icon
-    pub fn wifi() -> Self { Self::new(ICON_WIFI) }
+    pub fn wifi() -> Self {
+        Self::new(ICON_WIFI)
+    }
     /// Bluetooth icon
-    pub fn bluetooth() -> Self { Self::new(ICON_BLUETOOTH) }
+    pub fn bluetooth() -> Self {
+        Self::new(ICON_BLUETOOTH)
+    }
     /// Battery full icon
-    pub fn battery_full() -> Self { Self::new(ICON_BATTERY_FULL) }
+    pub fn battery_full() -> Self {
+        Self::new(ICON_BATTERY_FULL)
+    }
     /// Battery alert icon
-    pub fn battery_alert() -> Self { Self::new(ICON_BATTERY_ALERT) }
+    pub fn battery_alert() -> Self {
+        Self::new(ICON_BATTERY_ALERT)
+    }
 
     // Game/D&D icons
     /// Dice icon
-    pub fn dice() -> Self { Self::new(ICON_CASINO) }
+    pub fn dice() -> Self {
+        Self::new(ICON_CASINO)
+    }
     /// Puzzle/module icon
-    pub fn puzzle() -> Self { Self::new(ICON_EXTENSION) }
+    pub fn puzzle() -> Self {
+        Self::new(ICON_EXTENSION)
+    }
     /// Shield icon
-    pub fn shield() -> Self { Self::new(ICON_SHIELD) }
+    pub fn shield() -> Self {
+        Self::new(ICON_SHIELD)
+    }
     /// Combat/martial arts icon
-    pub fn combat() -> Self { Self::new(ICON_SPORTS_MARTIAL_ARTS) }
+    pub fn combat() -> Self {
+        Self::new(ICON_SPORTS_MARTIAL_ARTS)
+    }
     /// Magic/spell icon
-    pub fn magic() -> Self { Self::new(ICON_AUTO_FIX_HIGH) }
+    pub fn magic() -> Self {
+        Self::new(ICON_AUTO_FIX_HIGH)
+    }
     /// Lightbulb/inspiration icon
-    pub fn lightbulb() -> Self { Self::new(ICON_LIGHTBULB) }
+    pub fn lightbulb() -> Self {
+        Self::new(ICON_LIGHTBULB)
+    }
     /// Inventory/backpack icon
-    pub fn inventory() -> Self { Self::new(ICON_INVENTORY_2) }
+    pub fn inventory() -> Self {
+        Self::new(ICON_INVENTORY_2)
+    }
     /// Book/spellbook icon
-    pub fn book() -> Self { Self::new(ICON_BOOK) }
+    pub fn book() -> Self {
+        Self::new(ICON_BOOK)
+    }
     /// Mind/wisdom icon
-    pub fn mind() -> Self { Self::new(ICON_PSYCHOLOGY) }
+    pub fn mind() -> Self {
+        Self::new(ICON_PSYCHOLOGY)
+    }
     /// Strength icon
-    pub fn strength() -> Self { Self::new(ICON_FITNESS_CENTER) }
+    pub fn strength() -> Self {
+        Self::new(ICON_FITNESS_CENTER)
+    }
     /// Speed/dexterity icon
-    pub fn speed() -> Self { Self::new(ICON_SPEED) }
+    pub fn speed() -> Self {
+        Self::new(ICON_SPEED)
+    }
     /// Health/healing icon
-    pub fn health() -> Self { Self::new(ICON_HEALING) }
+    pub fn health() -> Self {
+        Self::new(ICON_HEALING)
+    }
 
     // Misc icons
     /// Language/globe icon
-    pub fn language() -> Self { Self::new(ICON_LANGUAGE) }
+    pub fn language() -> Self {
+        Self::new(ICON_LANGUAGE)
+    }
     /// Dark mode icon
-    pub fn dark_mode() -> Self { Self::new(ICON_DARK_MODE) }
+    pub fn dark_mode() -> Self {
+        Self::new(ICON_DARK_MODE)
+    }
     /// Light mode icon
-    pub fn light_mode() -> Self { Self::new(ICON_LIGHT_MODE) }
+    pub fn light_mode() -> Self {
+        Self::new(ICON_LIGHT_MODE)
+    }
     /// Fullscreen icon
-    pub fn fullscreen() -> Self { Self::new(ICON_FULLSCREEN) }
+    pub fn fullscreen() -> Self {
+        Self::new(ICON_FULLSCREEN)
+    }
     /// Fullscreen exit icon
-    pub fn fullscreen_exit() -> Self { Self::new(ICON_FULLSCREEN_EXIT) }
+    pub fn fullscreen_exit() -> Self {
+        Self::new(ICON_FULLSCREEN_EXIT)
+    }
     /// Zoom in icon
-    pub fn zoom_in() -> Self { Self::new(ICON_ZOOM_IN) }
+    pub fn zoom_in() -> Self {
+        Self::new(ICON_ZOOM_IN)
+    }
     /// Zoom out icon
-    pub fn zoom_out() -> Self { Self::new(ICON_ZOOM_OUT) }
+    pub fn zoom_out() -> Self {
+        Self::new(ICON_ZOOM_OUT)
+    }
     /// Lock icon
-    pub fn lock() -> Self { Self::new(ICON_LOCK) }
+    pub fn lock() -> Self {
+        Self::new(ICON_LOCK)
+    }
     /// Lock open icon
-    pub fn lock_open() -> Self { Self::new(ICON_LOCK_OPEN) }
+    pub fn lock_open() -> Self {
+        Self::new(ICON_LOCK_OPEN)
+    }
     /// Tune/adjust icon
-    pub fn tune() -> Self { Self::new(ICON_TUNE) }
+    pub fn tune() -> Self {
+        Self::new(ICON_TUNE)
+    }
     /// Filter icon
-    pub fn filter() -> Self { Self::new(ICON_FILTER_LIST) }
+    pub fn filter() -> Self {
+        Self::new(ICON_FILTER_LIST)
+    }
     /// Sort icon
-    pub fn sort() -> Self { Self::new(ICON_SORT) }
+    pub fn sort() -> Self {
+        Self::new(ICON_SORT)
+    }
     /// Drag handle icon
-    pub fn drag_handle() -> Self { Self::new(ICON_DRAG_HANDLE) }
+    pub fn drag_handle() -> Self {
+        Self::new(ICON_DRAG_HANDLE)
+    }
     /// Apps/grid icon
-    pub fn apps() -> Self { Self::new(ICON_APPS) }
+    pub fn apps() -> Self {
+        Self::new(ICON_APPS)
+    }
     /// List view icon
-    pub fn list_view() -> Self { Self::new(ICON_VIEW_LIST) }
+    pub fn list_view() -> Self {
+        Self::new(ICON_VIEW_LIST)
+    }
     /// Grid view icon
-    pub fn grid_view() -> Self { Self::new(ICON_VIEW_MODULE) }
+    pub fn grid_view() -> Self {
+        Self::new(ICON_VIEW_MODULE)
+    }
     /// Clock/schedule icon
-    pub fn clock() -> Self { Self::new(ICON_SCHEDULE) }
+    pub fn clock() -> Self {
+        Self::new(ICON_SCHEDULE)
+    }
     /// Calendar/event icon
-    pub fn calendar() -> Self { Self::new(ICON_EVENT) }
+    pub fn calendar() -> Self {
+        Self::new(ICON_EVENT)
+    }
     /// Today icon
-    pub fn today() -> Self { Self::new(ICON_TODAY) }
+    pub fn today() -> Self {
+        Self::new(ICON_TODAY)
+    }
 }
 
 /// Bundle for spawning a Material Icon as a UI element
@@ -399,17 +653,15 @@ fn sync_icon_render_components(
     icon_font: Option<Res<MaterialIconFont>>,
     mut fonts: ResMut<Assets<Font>>,
     mut commands: Commands,
-    mut query: Query<
-        (
-            Entity,
-            &MaterialIcon,
-            &IconStyle,
-            Option<&Node>,
-            Option<&mut Text>,
-            Option<&mut TextFont>,
-            Option<&mut TextColor>,
-        ),
-    >,
+    mut query: Query<(
+        Entity,
+        &MaterialIcon,
+        &IconStyle,
+        Option<&Node>,
+        Option<&mut Text>,
+        Option<&mut TextFont>,
+        Option<&mut TextColor>,
+    )>,
 ) {
     // Ensure the icon font resource exists even if the user forgets to add
     // `MaterialIconsPlugin` (or if startup order changes).
@@ -426,10 +678,8 @@ fn sync_icon_render_components(
         }
     };
 
-    let icon_font_changed = created_icon_font_this_frame
-        || icon_font
-            .as_ref()
-            .is_some_and(|font| font.is_changed());
+    let icon_font_changed =
+        created_icon_font_this_frame || icon_font.as_ref().is_some_and(|font| font.is_changed());
 
     for (entity, icon, style, node, text, text_font, text_color) in query.iter_mut() {
         let desired_text = Text::new(icon.as_str());
@@ -517,7 +767,7 @@ mod tests {
     fn test_icon_from_name() {
         let icon = MaterialIcon::from_name("settings").unwrap();
         assert_eq!(icon.codepoint, ICON_SETTINGS);
-        
+
         let none = MaterialIcon::from_name("nonexistent");
         assert!(none.is_none());
     }
@@ -527,7 +777,7 @@ mod tests {
         let bundle = IconBundle::new(MaterialIcon::search())
             .with_size(24.0)
             .with_color(Color::WHITE);
-        
+
         assert_eq!(bundle.icon.codepoint, ICON_SEARCH);
         assert_eq!(bundle.style.effective_size(), 24.0);
         assert_eq!(bundle.style.color, Some(Color::WHITE));
@@ -552,7 +802,7 @@ mod tests {
             MaterialIcon::dice(),
             MaterialIcon::shield(),
         ];
-        
+
         for icon in icons {
             assert!(icon.codepoint as u32 > 0);
             assert!(!icon.as_str().is_empty());

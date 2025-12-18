@@ -3,7 +3,7 @@
 //! Measures the performance of HCT color space conversions,
 //! palette generation, and color scheme creation.
 
-use bevy_material_ui::color::{Hct, TonalPalette, MaterialColorScheme};
+use bevy_material_ui::color::{Hct, MaterialColorScheme, TonalPalette};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 /// Benchmark HCT to sRGB conversion
@@ -21,16 +21,20 @@ fn bench_hct_to_srgb(c: &mut Criterion) {
     // Batch conversions (simulating palette generation)
     for size in [10, 50, 100, 256].iter() {
         group.throughput(Throughput::Elements(*size as u64));
-        group.bench_with_input(BenchmarkId::new("hct_to_argb_batch", size), size, |b, &size| {
-            let hcts: Vec<_> = (0..size)
-                .map(|i| Hct::new((i as f64 * 3.6) % 360.0, 50.0, 50.0))
-                .collect();
-            b.iter(|| {
-                for hct in &hcts {
-                    black_box(hct.to_argb());
-                }
-            })
-        });
+        group.bench_with_input(
+            BenchmarkId::new("hct_to_argb_batch", size),
+            size,
+            |b, &size| {
+                let hcts: Vec<_> = (0..size)
+                    .map(|i| Hct::new((i as f64 * 3.6) % 360.0, 50.0, 50.0))
+                    .collect();
+                b.iter(|| {
+                    for hct in &hcts {
+                        black_box(hct.to_argb());
+                    }
+                })
+            },
+        );
     }
 
     group.finish();

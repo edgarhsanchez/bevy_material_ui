@@ -14,11 +14,7 @@
 
 use bevy::prelude::*;
 
-use crate::{
-    ripple::RippleHost,
-    theme::MaterialTheme,
-    tokens::CornerRadius,
-};
+use crate::{ripple::RippleHost, theme::MaterialTheme, tokens::CornerRadius};
 
 /// Marker component for switch state layer
 #[derive(Component)]
@@ -29,15 +25,14 @@ pub struct SwitchPlugin;
 
 impl Plugin for SwitchPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<SwitchChangeEvent>()
-            .add_systems(
-                Update,
-                (
-                    switch_interaction_system,
-                    switch_style_system,
-                    switch_theme_refresh_system,
-                ),
-            );
+        app.add_message::<SwitchChangeEvent>().add_systems(
+            Update,
+            (
+                switch_interaction_system,
+                switch_style_system,
+                switch_theme_refresh_system,
+            ),
+        );
     }
 }
 
@@ -230,8 +225,20 @@ fn switch_interaction_system(
 /// System to update switch visual styles when state changes
 fn switch_style_system(
     theme: Option<Res<MaterialTheme>>,
-    mut switches: Query<(&MaterialSwitch, &mut BackgroundColor, &mut BorderColor, &mut Node, &Children), Changed<MaterialSwitch>>,
-    mut handles: Query<(&mut BackgroundColor, &mut Node, &mut BorderRadius), (With<SwitchHandle>, Without<MaterialSwitch>)>,
+    mut switches: Query<
+        (
+            &MaterialSwitch,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &mut Node,
+            &Children,
+        ),
+        Changed<MaterialSwitch>,
+    >,
+    mut handles: Query<
+        (&mut BackgroundColor, &mut Node, &mut BorderRadius),
+        (With<SwitchHandle>, Without<MaterialSwitch>),
+    >,
 ) {
     let Some(theme) = theme else { return };
 
@@ -239,17 +246,22 @@ fn switch_style_system(
         // Update track
         *bg_color = BackgroundColor(switch.track_color(&theme));
         *border_color = BorderColor::all(switch.track_outline_color(&theme));
-        
+
         // Update track layout for handle position
-        node.justify_content = if switch.selected { JustifyContent::FlexEnd } else { JustifyContent::FlexStart };
+        node.justify_content = if switch.selected {
+            JustifyContent::FlexEnd
+        } else {
+            JustifyContent::FlexStart
+        };
         node.border = UiRect::all(Val::Px(if switch.selected { 0.0 } else { 2.0 }));
-        
+
         // Update handle
         let handle_color = switch.handle_color(&theme);
         let handle_size = switch.handle_size();
-        
+
         for child in children.iter() {
-            if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child) {
+            if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child)
+            {
                 *handle_bg = BackgroundColor(handle_color);
                 handle_node.width = Val::Px(handle_size);
                 handle_node.height = Val::Px(handle_size);
@@ -262,8 +274,17 @@ fn switch_style_system(
 /// Refresh switch visuals when the theme changes.
 fn switch_theme_refresh_system(
     theme: Option<Res<MaterialTheme>>,
-    mut switches: Query<(&MaterialSwitch, &mut BackgroundColor, &mut BorderColor, &mut Node, &Children)>,
-    mut handles: Query<(&mut BackgroundColor, &mut Node, &mut BorderRadius), (With<SwitchHandle>, Without<MaterialSwitch>)>,
+    mut switches: Query<(
+        &MaterialSwitch,
+        &mut BackgroundColor,
+        &mut BorderColor,
+        &mut Node,
+        &Children,
+    )>,
+    mut handles: Query<
+        (&mut BackgroundColor, &mut Node, &mut BorderRadius),
+        (With<SwitchHandle>, Without<MaterialSwitch>),
+    >,
 ) {
     let Some(theme) = theme else { return };
     if !theme.is_changed() {
@@ -285,7 +306,8 @@ fn switch_theme_refresh_system(
         let handle_size = switch.handle_size();
 
         for child in children.iter() {
-            if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child) {
+            if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child)
+            {
                 *handle_bg = BackgroundColor(handle_color);
                 handle_node.width = Val::Px(handle_size);
                 handle_node.height = Val::Px(handle_size);
@@ -366,13 +388,8 @@ pub struct SwitchHandle;
 /// Extension trait to spawn switches with full visual hierarchy
 pub trait SpawnSwitch {
     /// Spawn a switch with a label
-    fn spawn_switch(
-        &mut self,
-        theme: &MaterialTheme,
-        selected: bool,
-        label: &str,
-    ) -> Entity;
-    
+    fn spawn_switch(&mut self, theme: &MaterialTheme, selected: bool, label: &str) -> Entity;
+
     /// Spawn a switch using a builder for more control
     fn spawn_switch_with(
         &mut self,
@@ -383,16 +400,11 @@ pub trait SpawnSwitch {
 }
 
 impl SpawnSwitch for Commands<'_, '_> {
-    fn spawn_switch(
-        &mut self,
-        theme: &MaterialTheme,
-        selected: bool,
-        label: &str,
-    ) -> Entity {
+    fn spawn_switch(&mut self, theme: &MaterialTheme, selected: bool, label: &str) -> Entity {
         let builder = SwitchBuilder::new().selected(selected);
         self.spawn_switch_with(theme, builder, label)
     }
-    
+
     fn spawn_switch_with(
         &mut self,
         theme: &MaterialTheme,
@@ -407,14 +419,19 @@ impl SpawnSwitch for Commands<'_, '_> {
         let handle_color = switch.handle_color(theme);
         let handle_size = switch.handle_size();
         let has_border = !switch.selected;
-        let justify = if switch.selected { JustifyContent::FlexEnd } else { JustifyContent::FlexStart };
+        let justify = if switch.selected {
+            JustifyContent::FlexEnd
+        } else {
+            JustifyContent::FlexStart
+        };
 
         self.spawn(Node {
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Center,
             column_gap: Val::Px(12.0),
             ..default()
-        }).with_children(|row| {
+        })
+        .with_children(|row| {
             // Switch track (the main touch target)
             row.spawn((
                 switch,
@@ -433,7 +450,8 @@ impl SpawnSwitch for Commands<'_, '_> {
                 BackgroundColor(bg_color),
                 BorderColor::all(border_color),
                 BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            )).with_children(|track| {
+            ))
+            .with_children(|track| {
                 // Handle (thumb)
                 track.spawn((
                     SwitchHandle,
@@ -450,49 +468,33 @@ impl SpawnSwitch for Commands<'_, '_> {
             // Label
             row.spawn((
                 Text::new(label_text),
-                TextFont { font_size: 14.0, ..default() },
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
-        }).id()
+        })
+        .id()
     }
 }
 
 /// Extension trait to spawn switches within a ChildSpawnerCommands context
 pub trait SpawnSwitchChild {
     /// Spawn a switch with a label
-    fn spawn_switch(
-        &mut self,
-        theme: &MaterialTheme,
-        selected: bool,
-        label: &str,
-    );
-    
+    fn spawn_switch(&mut self, theme: &MaterialTheme, selected: bool, label: &str);
+
     /// Spawn a switch using a builder for more control
-    fn spawn_switch_with(
-        &mut self,
-        theme: &MaterialTheme,
-        builder: SwitchBuilder,
-        label: &str,
-    );
+    fn spawn_switch_with(&mut self, theme: &MaterialTheme, builder: SwitchBuilder, label: &str);
 }
 
 impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
-    fn spawn_switch(
-        &mut self,
-        theme: &MaterialTheme,
-        selected: bool,
-        label: &str,
-    ) {
+    fn spawn_switch(&mut self, theme: &MaterialTheme, selected: bool, label: &str) {
         let builder = SwitchBuilder::new().selected(selected);
         self.spawn_switch_with(theme, builder, label);
     }
-    
-    fn spawn_switch_with(
-        &mut self,
-        theme: &MaterialTheme,
-        builder: SwitchBuilder,
-        label: &str,
-    ) {
+
+    fn spawn_switch_with(&mut self, theme: &MaterialTheme, builder: SwitchBuilder, label: &str) {
         let label_color = theme.on_surface;
         let label_text = label.to_string();
         let switch = builder.switch;
@@ -501,14 +503,19 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
         let handle_color = switch.handle_color(theme);
         let handle_size = switch.handle_size();
         let has_border = !switch.selected;
-        let justify = if switch.selected { JustifyContent::FlexEnd } else { JustifyContent::FlexStart };
+        let justify = if switch.selected {
+            JustifyContent::FlexEnd
+        } else {
+            JustifyContent::FlexStart
+        };
 
         self.spawn(Node {
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Center,
             column_gap: Val::Px(12.0),
             ..default()
-        }).with_children(|row| {
+        })
+        .with_children(|row| {
             // Switch track
             row.spawn((
                 switch,
@@ -527,7 +534,8 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
                 BackgroundColor(bg_color),
                 BorderColor::all(border_color),
                 BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            )).with_children(|track| {
+            ))
+            .with_children(|track| {
                 // Handle (thumb)
                 track.spawn((
                     SwitchHandle,
@@ -544,7 +552,10 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
             // Label
             row.spawn((
                 Text::new(label_text),
-                TextFont { font_size: 14.0, ..default() },
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
                 TextColor(label_color),
             ));
         });
@@ -595,7 +606,7 @@ mod tests {
     fn test_switch_disabled() {
         let switch = MaterialSwitch::new().disabled(true);
         assert!(switch.disabled);
-        
+
         let switch = MaterialSwitch::new().disabled(false);
         assert!(!switch.disabled);
     }
@@ -649,7 +660,7 @@ mod tests {
             .selected(true)
             .disabled(false)
             .with_icon();
-        
+
         assert!(switch.selected);
         assert!(!switch.disabled);
         assert!(switch.with_icon);
@@ -697,7 +708,7 @@ mod tests {
             .selected(true)
             .disabled(false)
             .with_icon();
-        
+
         assert!(builder.switch.selected);
         assert!(!builder.switch.disabled);
         assert!(builder.switch.with_icon);

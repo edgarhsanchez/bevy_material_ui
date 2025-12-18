@@ -21,10 +21,10 @@ impl Plugin for AppBarPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<AppBarNavigationEvent>()
             .add_message::<AppBarActionEvent>()
-            .add_systems(Update, (
-                top_app_bar_scroll_system,
-                app_bar_interaction_system,
-            ));
+            .add_systems(
+                Update,
+                (top_app_bar_scroll_system, app_bar_interaction_system),
+            );
     }
 }
 
@@ -198,16 +198,16 @@ impl TopAppBar {
     /// Get the height based on variant and scroll state
     pub fn height(&self) -> f32 {
         match self.variant {
-            TopAppBarVariant::Small | TopAppBarVariant::CenterAligned => {
-                TOP_APP_BAR_HEIGHT_SMALL
-            }
+            TopAppBarVariant::Small | TopAppBarVariant::CenterAligned => TOP_APP_BAR_HEIGHT_SMALL,
             TopAppBarVariant::Medium => {
                 let collapsed = (self.scroll_offset / 100.0).clamp(0.0, 1.0);
-                TOP_APP_BAR_HEIGHT_MEDIUM - collapsed * (TOP_APP_BAR_HEIGHT_MEDIUM - TOP_APP_BAR_HEIGHT_SMALL)
+                TOP_APP_BAR_HEIGHT_MEDIUM
+                    - collapsed * (TOP_APP_BAR_HEIGHT_MEDIUM - TOP_APP_BAR_HEIGHT_SMALL)
             }
             TopAppBarVariant::Large => {
                 let collapsed = (self.scroll_offset / 100.0).clamp(0.0, 1.0);
-                TOP_APP_BAR_HEIGHT_LARGE - collapsed * (TOP_APP_BAR_HEIGHT_LARGE - TOP_APP_BAR_HEIGHT_SMALL)
+                TOP_APP_BAR_HEIGHT_LARGE
+                    - collapsed * (TOP_APP_BAR_HEIGHT_LARGE - TOP_APP_BAR_HEIGHT_SMALL)
             }
         }
     }
@@ -490,7 +490,7 @@ pub trait SpawnAppBarChild {
         title: impl Into<String>,
         with_content: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a top app bar with full builder control
     fn spawn_top_app_bar_with(
         &mut self,
@@ -498,14 +498,14 @@ pub trait SpawnAppBarChild {
         builder: TopAppBarBuilder,
         with_content: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a bottom app bar
     fn spawn_bottom_app_bar(
         &mut self,
         theme: &MaterialTheme,
         with_content: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a bottom app bar with full builder control
     fn spawn_bottom_app_bar_with(
         &mut self,
@@ -524,7 +524,7 @@ impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_top_app_bar_with(theme, TopAppBarBuilder::new(title), with_content);
     }
-    
+
     fn spawn_top_app_bar_with(
         &mut self,
         theme: &MaterialTheme,
@@ -533,22 +533,27 @@ impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
     ) {
         let title_text = builder.app_bar.title.clone();
         let title_color = builder.app_bar.title_color(theme);
-        
-        self.spawn(builder.build(theme))
-            .with_children(|bar| {
-                // Title
-                bar.spawn((
-                    Text::new(&title_text),
-                    TextFont { font_size: 22.0, ..default() },
-                    TextColor(title_color),
-                    Node { flex_grow: 1.0, ..default() },
-                ));
-                
-                // Additional content
-                with_content(bar);
-            });
+
+        self.spawn(builder.build(theme)).with_children(|bar| {
+            // Title
+            bar.spawn((
+                Text::new(&title_text),
+                TextFont {
+                    font_size: 22.0,
+                    ..default()
+                },
+                TextColor(title_color),
+                Node {
+                    flex_grow: 1.0,
+                    ..default()
+                },
+            ));
+
+            // Additional content
+            with_content(bar);
+        });
     }
-    
+
     fn spawn_bottom_app_bar(
         &mut self,
         theme: &MaterialTheme,
@@ -556,7 +561,7 @@ impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_bottom_app_bar_with(theme, BottomAppBarBuilder::new(), with_content);
     }
-    
+
     fn spawn_bottom_app_bar_with(
         &mut self,
         theme: &MaterialTheme,
@@ -665,30 +670,33 @@ pub fn spawn_top_app_bar(
                 })
                 .with_children(|right| {
                     for action in &actions {
-                        right.spawn((
-                            AppBarActionButton { id: action.id.clone() },
-                            Button,
-                            RippleHost::new(),
-                            Node {
-                                width: Val::Px(48.0),
-                                height: Val::Px(48.0),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
-                            BackgroundColor(Color::NONE),
-                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                        ))
-                        .with_children(|btn| {
-                            if let Some(icon) = MaterialIcon::from_name(&action.icon) {
-                                btn.spawn((
-                                    icon,
-                                    IconStyle::outlined()
-                                        .with_color(theme.on_surface_variant)
-                                        .with_size(24.0),
-                                ));
-                            }
-                        });
+                        right
+                            .spawn((
+                                AppBarActionButton {
+                                    id: action.id.clone(),
+                                },
+                                Button,
+                                RippleHost::new(),
+                                Node {
+                                    width: Val::Px(48.0),
+                                    height: Val::Px(48.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::NONE),
+                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            ))
+                            .with_children(|btn| {
+                                if let Some(icon) = MaterialIcon::from_name(&action.icon) {
+                                    btn.spawn((
+                                        icon,
+                                        IconStyle::outlined()
+                                            .with_color(theme.on_surface_variant)
+                                            .with_size(24.0),
+                                    ));
+                                }
+                            });
                     }
                 });
         })

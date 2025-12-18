@@ -15,10 +15,10 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
         })
         .with_children(|section| {
             spawn_section_header(
-                section, 
-                theme, 
+                section,
+                theme,
                 "Dividers",
-                "Visual separators between content sections"
+                "Visual separators between content sections",
             );
 
             section
@@ -33,31 +33,42 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                 .with_children(|col| {
                     col.spawn((
                         Text::new("Content above divider"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface),
                     ));
-                    
+
                     // Full-width divider (real MaterialDivider)
                     col.spawn_horizontal_divider(theme);
-                    
+
                     col.spawn((
                         Text::new("Content below divider"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface),
                     ));
-                    
+
                     // Inset divider (real MaterialDivider)
                     col.spawn_inset_divider(theme);
-                    
+
                     col.spawn((
                         Text::new("After inset divider"),
-                        TextFont { font_size: 14.0, ..default() },
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
                         TextColor(theme.on_surface),
                     ));
                 });
 
-            spawn_code_block(section, theme,
-r#"// Full-width divider
+            spawn_code_block(
+                section,
+                theme,
+                r#"// Full-width divider
 commands.spawn((
     Node { width: Val::Percent(100.0), height: Val::Px(1.0), ..default() },
     BackgroundColor(theme.outline_variant),
@@ -72,6 +83,7 @@ commands.spawn((
         ..default() 
     },
     BackgroundColor(theme.outline_variant),
-));"#);
+));"#,
+            );
         });
 }

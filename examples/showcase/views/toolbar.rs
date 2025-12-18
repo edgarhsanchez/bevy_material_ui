@@ -1,13 +1,17 @@
 //! Toolbar view for the showcase application.
 
 use bevy::prelude::*;
-use bevy_material_ui::prelude::*;
 use bevy_material_ui::icons::{ICON_MENU, ICON_MORE_VERT, ICON_SEARCH};
+use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
 
 /// Spawn the toolbar section content
-pub fn spawn_toolbar_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, icon_font: Handle<Font>) {
+pub fn spawn_toolbar_section(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    icon_font: Handle<Font>,
+) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -93,7 +97,12 @@ pub fn spawn_toolbar_section(parent: &mut ChildSpawnerCommands, theme: &Material
                     ));
 
                     spawn_standard_icon_button_codepoint(toolbar, theme, &icon_font, ICON_SEARCH);
-                    spawn_standard_icon_button_codepoint(toolbar, theme, &icon_font, ICON_MORE_VERT);
+                    spawn_standard_icon_button_codepoint(
+                        toolbar,
+                        theme,
+                        &icon_font,
+                        ICON_MORE_VERT,
+                    );
                 });
 
             spawn_code_block(

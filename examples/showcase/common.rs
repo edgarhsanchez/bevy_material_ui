@@ -36,24 +36,28 @@ impl ComponentTelemetry {
             self.events.remove(0);
         }
     }
-    
+
     pub fn write_to_file(&self) {
         if !self.enabled {
             return;
         }
-        
+
         // Convert elements to serializable format
-        let elements_json: Vec<_> = self.elements.values().map(|e| {
-            serde_json::json!({
-                "test_id": e.test_id,
-                "x": e.x,
-                "y": e.y,
-                "width": e.width,
-                "height": e.height,
-                "parent": e.parent,
+        let elements_json: Vec<_> = self
+            .elements
+            .values()
+            .map(|e| {
+                serde_json::json!({
+                    "test_id": e.test_id,
+                    "x": e.x,
+                    "y": e.y,
+                    "width": e.width,
+                    "height": e.height,
+                    "parent": e.parent,
+                })
             })
-        }).collect();
-        
+            .collect();
+
         let json = serde_json::json!({
             "states": self.states,
             "events": self.events,
@@ -176,7 +180,7 @@ impl ComponentSection {
             Self::ThemeColors => "ThemeColors",
         }
     }
-    
+
     /// Get all component sections in order
     pub fn all() -> &'static [ComponentSection] {
         &[
@@ -275,7 +279,6 @@ impl Default for SnackbarDemoOptions {
         }
     }
 }
-
 
 // ============================================================================
 // Interactive Marker Components
@@ -411,7 +414,7 @@ pub struct ListSelectionModeOption(pub bevy_material_ui::list::ListSelectionMode
 // NOTE: RadioOuter, RadioInner, and SwitchHandle are exported by the library
 // Use bevy_material_ui::prelude::{RadioOuter, RadioInner, SwitchHandle}
 
-// NOTE: Select components (SelectContainer, SelectTrigger, SelectDropdown, 
+// NOTE: Select components (SelectContainer, SelectTrigger, SelectDropdown,
 // SelectOptionItem, SelectDisplayText) are now imported from bevy_material_ui::prelude
 
 // ============================================================================
@@ -433,9 +436,9 @@ pub fn spawn_code_block(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme
         .with_children(|block| {
             block.spawn((
                 Text::new(code),
-                TextFont { 
-                    font_size: 12.0, 
-                    ..default() 
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
                 },
                 TextColor(theme.on_surface.with_alpha(0.87)),
             ));
@@ -443,17 +446,28 @@ pub fn spawn_code_block(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme
 }
 
 /// Spawn a section header with title and description
-pub fn spawn_section_header(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, title: &str, description: &str) {
+pub fn spawn_section_header(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    title: &str,
+    description: &str,
+) {
     parent.spawn((
         Text::new(title),
-        TextFont { font_size: 22.0, ..default() },
+        TextFont {
+            font_size: 22.0,
+            ..default()
+        },
         TextColor(theme.primary),
     ));
-    
+
     if !description.is_empty() {
         parent.spawn((
             Text::new(description),
-            TextFont { font_size: 14.0, ..default() },
+            TextFont {
+                font_size: 14.0,
+                ..default()
+            },
             TextColor(theme.on_surface_variant),
             Node {
                 margin: UiRect::bottom(Val::Px(8.0)),

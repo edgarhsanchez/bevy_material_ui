@@ -4,7 +4,7 @@
 //! Reference: <https://m3.material.io/components/cards/overview>
 //!
 //! ## Bevy 0.17 Improvements
-//! 
+//!
 //! This module now leverages:
 //! - Native `BoxShadow` for elevation shadows
 //! - Modern bundle patterns
@@ -23,13 +23,15 @@ pub struct CardPlugin;
 
 impl Plugin for CardPlugin {
     fn build(&self, app: &mut App) {
-        app.add_message::<CardClickEvent>()
-            .add_systems(Update, (
+        app.add_message::<CardClickEvent>().add_systems(
+            Update,
+            (
                 card_interaction_system,
                 card_style_system,
                 card_theme_refresh_system,
                 card_shadow_system,
-            ));
+            ),
+        );
     }
 }
 
@@ -96,7 +98,7 @@ impl MaterialCard {
             CardVariant::Filled => theme.surface_container_highest,
             CardVariant::Outlined => theme.surface,
         };
-        
+
         // Apply state layer for clickable cards
         let state_opacity = self.state_layer_opacity();
         if state_opacity > 0.0 {
@@ -139,7 +141,7 @@ impl MaterialCard {
         if !self.clickable {
             return 0.0;
         }
-        
+
         if self.pressed {
             0.12
         } else if self.hovered {
@@ -226,12 +228,7 @@ fn card_theme_refresh_system(
 }
 
 /// System to update card shadows using Bevy's native BoxShadow
-fn card_shadow_system(
-    mut cards: Query<
-        (&MaterialCard, &mut BoxShadow),
-        Changed<MaterialCard>,
-    >,
-) {
+fn card_shadow_system(mut cards: Query<(&MaterialCard, &mut BoxShadow), Changed<MaterialCard>>) {
     for (card, mut box_shadow) in cards.iter_mut() {
         let elevation = card.elevation();
         *box_shadow = elevation.to_box_shadow();
@@ -239,9 +236,9 @@ fn card_shadow_system(
 }
 
 /// Builder for cards
-/// 
+///
 /// ## Example with Bevy 0.17's native shadows:
-/// 
+///
 /// ```ignore
 /// commands.spawn((
 ///     CardBuilder::new().elevated().build(&theme),
@@ -400,9 +397,9 @@ impl Default for CardBuilder {
 // ============================================================================
 
 /// Extension trait to spawn Material cards as children
-/// 
+///
 /// This trait provides a clean API for spawning cards within UI hierarchies.
-/// 
+///
 /// ## Example:
 /// ```ignore
 /// parent.spawn(Node::default()).with_children(|children| {
@@ -418,21 +415,21 @@ pub trait SpawnCardChild {
         theme: &MaterialTheme,
         with_children: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a filled card
     fn spawn_filled_card(
         &mut self,
         theme: &MaterialTheme,
         with_children: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn an outlined card
     fn spawn_outlined_card(
         &mut self,
         theme: &MaterialTheme,
         with_children: impl FnOnce(&mut ChildSpawnerCommands),
     );
-    
+
     /// Spawn a card with full builder control
     fn spawn_card_with(
         &mut self,
@@ -450,7 +447,7 @@ impl SpawnCardChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_card_with(theme, CardBuilder::new().elevated(), with_children);
     }
-    
+
     fn spawn_filled_card(
         &mut self,
         theme: &MaterialTheme,
@@ -458,7 +455,7 @@ impl SpawnCardChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_card_with(theme, CardBuilder::new().filled(), with_children);
     }
-    
+
     fn spawn_outlined_card(
         &mut self,
         theme: &MaterialTheme,
@@ -466,13 +463,14 @@ impl SpawnCardChild for ChildSpawnerCommands<'_> {
     ) {
         self.spawn_card_with(theme, CardBuilder::new().outlined(), with_children);
     }
-    
+
     fn spawn_card_with(
         &mut self,
         theme: &MaterialTheme,
         builder: CardBuilder,
         with_children: impl FnOnce(&mut ChildSpawnerCommands),
     ) {
-        self.spawn(builder.build(theme)).with_children(with_children);
+        self.spawn(builder.build(theme))
+            .with_children(with_children);
     }
 }
