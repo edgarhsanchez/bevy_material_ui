@@ -58,6 +58,7 @@ impl Plugin for ScrollPlugin {
             (
                 ensure_scroll_content_wrapper_system,
                 ensure_scrollbars_system,
+                scrollbar_theme_refresh_system,
                 assign_scrollbar_test_ids_system,
                 sync_scroll_state_system,
                 mouse_wheel_scroll_system,
@@ -67,6 +68,34 @@ impl Plugin for ScrollPlugin {
             )
                 .chain(),
         );
+    }
+}
+
+fn scrollbar_theme_refresh_system(
+    theme: Res<MaterialTheme>,
+    mut tracks_v: Query<&mut BackgroundColor, With<ScrollbarTrackVertical>>,
+    mut thumbs_v: Query<&mut BackgroundColor, With<ScrollbarThumbVertical>>,
+    mut tracks_h: Query<&mut BackgroundColor, With<ScrollbarTrackHorizontal>>,
+    mut thumbs_h: Query<&mut BackgroundColor, With<ScrollbarThumbHorizontal>>,
+) {
+    if !theme.is_changed() {
+        return;
+    }
+
+    let track_color = theme.surface_container_highest.with_alpha(0.5);
+    let thumb_color = theme.primary.with_alpha(0.7);
+
+    for mut bg in tracks_v.iter_mut() {
+        *bg = BackgroundColor(track_color);
+    }
+    for mut bg in thumbs_v.iter_mut() {
+        *bg = BackgroundColor(thumb_color);
+    }
+    for mut bg in tracks_h.iter_mut() {
+        *bg = BackgroundColor(track_color);
+    }
+    for mut bg in thumbs_h.iter_mut() {
+        *bg = BackgroundColor(thumb_color);
     }
 }
 
