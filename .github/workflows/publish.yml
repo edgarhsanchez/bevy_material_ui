@@ -18,6 +18,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libwayland-dev libxkbcommon-dev
+
+      - name: Verify crates.io token is available
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "${CARGO_REGISTRY_TOKEN}" ]; then
+            echo "Missing secret: CARGO_REGISTRY_TOKEN"
+            echo "Set it in: GitHub repo Settings -> Secrets and variables -> Actions -> New repository secret"
+            exit 1
+          fi
+          echo "OK: CARGO_REGISTRY_TOKEN is set (length: ${#CARGO_REGISTRY_TOKEN})"
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -50,10 +67,49 @@ jobs:
           print(f"OK: tag {tag} matches Cargo.toml version {cargo_version}")
           PY
 
+      - name: Check if version is already published
+        id: crates_io
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          import urllib.error
+          import urllib.request
+
+          with open('Cargo.toml', 'rb') as f:
+              cargo = tomllib.load(f)
+
+          name = cargo['package']['name']
+          version = cargo['package']['version']
+
+          url = f"https://crates.io/api/v1/crates/{name}/{version}"
+          already = False
+          try:
+              with urllib.request.urlopen(url) as r:
+                  already = (getattr(r, 'status', 200) == 200)
+          except urllib.error.HTTPError as e:
+              # 404 means the version doesn't exist yet.
+              already = False
+              if e.code != 404:
+                  raise
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write(f"already_published={'true' if already else 'false'}\n")
+
+          print(f"crates.io: {name} {version} already_published={already}")
+          PY
+
       - name: Dry-run publish
         run: cargo publish --dry-run --locked
 
       - name: Publish
+        if: steps.crates_io.outputs.already_published != 'true'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: cargo publish --locked
+
+      - name: Publish skipped
+        if: steps.crates_io.outputs.already_published == 'true'
+        run: |
+          echo "Skipping publish: version already exists on crates.io"
