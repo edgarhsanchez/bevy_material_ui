@@ -7,7 +7,7 @@
 //! The standard tones used in MD3 are:
 //! 0, 4, 6, 10, 12, 17, 20, 22, 24, 30, 40, 50, 60, 70, 80, 87, 90, 92, 94, 95, 96, 98, 99, 100
 
-use super::hct::Hct;
+use super::Hct;
 use bevy::prelude::Color;
 use std::collections::HashMap;
 

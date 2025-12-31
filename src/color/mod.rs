@@ -29,14 +29,13 @@
 //! let tone_40 = palette.tone(40);
 //!
 //! // Generate a complete color scheme
-//! let scheme = MaterialColorScheme::from_seed(0xFF6750A4);
+//! let scheme = MaterialColorScheme::dark_from_argb(0xFF6750A4);
 //! ```
 
-mod hct;
-mod math;
 mod palette;
 mod scheme;
+mod hct_bevy;
 
-pub use hct::Hct;
+pub use hct_bevy::Hct;
 pub use palette::TonalPalette;
 pub use scheme::MaterialColorScheme;
