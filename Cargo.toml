@@ -37,29 +37,24 @@ serde_json = "1.0"
 # Pure Rust CAM16 + HCT solver
 hct-cam16 = "0.1.0"
 
-# Optional: use a pre-packed embedded icon blob (instead of building from a local checkout).
-google-material-design-icons-bin = { version = "0.1.2", optional = true }
+# Packed embedded icon blob (required).
+google-material-design-icons-bin = "0.1.2"
 
 # Optional clipboard support for text fields (copy/paste)
 arboard = { version = "3.4", optional = true }
 
 [features]
-# Default to the published packed icon crate (no local icon repo required).
-default = ["external_icons"]
+# Keep default features empty so downstream crates can opt in.
+default = []
 
 # Enables copy/paste support in `MaterialTextField` via the `arboard` crate.
 clipboard = ["dep:arboard"]
-
-# Uses the external packed icon crate instead of build-time embedding from a local repo.
-external_icons = ["dep:google-material-design-icons-bin"]
 
 [dev-dependencies]
 # No dynamic_linking to avoid Windows linker limit issues
 criterion = { version = "0.5", features = ["html_reports"] }
 
-[build-dependencies]
-png = "0.17"
-walkdir = "2.5"
+
 
 [[bench]]
 name = "color_benchmarks"

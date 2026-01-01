@@ -30,17 +30,7 @@ fn test_icon_pixel_blob_has_expected_size() {
     let (name, id) = material_icons::ALL[0];
     let _ = name;
 
-    #[cfg(feature = "external_icons")]
-    {
-        let alpha = id.alpha();
-        let expected_len = (id.width as usize) * (id.height as usize);
-        assert_eq!(alpha.len(), expected_len);
-    }
-
-    #[cfg(not(feature = "external_icons"))]
-    {
-        let rgba = id.rgba();
-        let expected_len = (id.width as usize) * (id.height as usize) * 4;
-        assert_eq!(rgba.len(), expected_len);
-    }
+    let alpha = id.alpha();
+    let expected_len = (id.width as usize) * (id.height as usize);
+    assert_eq!(alpha.len(), expected_len);
 }

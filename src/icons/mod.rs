@@ -11,33 +11,18 @@ use bevy::ui::widget::ImageNode;
 use std::collections::HashMap;
 
 fn icon_pixels_rgba8(id: material_icons::IconId) -> Vec<u8> {
-    #[cfg(feature = "external_icons")]
-    {
-        let alpha = id.alpha();
-        let mut rgba = Vec::with_capacity(alpha.len() * 4);
-        for a in alpha.iter().copied() {
-            rgba.extend_from_slice(&[255, 255, 255, a]);
-        }
-        rgba
+    let alpha = id.alpha();
+    let mut rgba = Vec::with_capacity(alpha.len() * 4);
+    for a in alpha.iter().copied() {
+        rgba.extend_from_slice(&[255, 255, 255, a]);
     }
-
-    #[cfg(not(feature = "external_icons"))]
-    {
-        id.rgba().to_vec()
-    }
+    rgba
 }
 
-/// Generated icon table + embedded RGBA bytes.
+/// Generated icon table + embedded alpha-only bytes.
 ///
-/// This mirrors the source folder layout as Rust modules (category/icon).
-#[cfg(feature = "external_icons")]
+/// This mirrors the source folder layout as Rust modules (platform/category/icon).
 pub use google_material_design_icons_bin::material_icons;
-
-#[cfg(not(feature = "external_icons"))]
-#[allow(non_upper_case_globals)]
-pub mod material_icons {
-    include!(concat!(env!("OUT_DIR"), "/material_design_icons.rs"));
-}
 
 /// Lookup an embedded icon by its folder name (case-insensitive).
 ///

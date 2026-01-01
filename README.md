@@ -38,15 +38,6 @@ bevy_material_ui = "0.1"
 By default, this crate uses the published [`google-material-design-icons-bin`](https://crates.io/crates/google-material-design-icons-bin) crate as its icon source.
 Icons are embedded as **ALPHA8** and expanded to RGBA8 (white + alpha) at runtime so Bevy UI tinting via `ImageNode.color` continues to work.
 
-If you prefer the old behavior (build-time embedding from a local `material-design-icons` checkout), disable default features:
-
-```toml
-[dependencies]
-bevy_material_ui = { version = "0.1", default-features = false }
-```
-
-In that mode, you must have a `material-design-icons` checkout available (or set `MATERIAL_DESIGN_ICONS_DIR`).
-
 ### Using Icons
 
 ```rust
