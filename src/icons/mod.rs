@@ -1,7 +1,8 @@
 //! Embedded icon system.
 //!
-//! Icons are sourced at build time from a local `material-design-icons` checkout
-//! and embedded as RGBA8 (white + alpha). UI tinting is applied via `ImageNode.color`.
+//! By default, icons come from the `google-material-design-icons-bin` crate as ALPHA8.
+//! For compatibility, icons are expanded to RGBA8 (white + alpha) when building UI images.
+//! UI tinting is applied via `ImageNode.color`.
 
 use bevy::asset::RenderAssetUsages;
 use bevy::prelude::*;
@@ -9,9 +10,30 @@ use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use bevy::ui::widget::ImageNode;
 use std::collections::HashMap;
 
+fn icon_pixels_rgba8(id: material_icons::IconId) -> Vec<u8> {
+    #[cfg(feature = "external_icons")]
+    {
+        let alpha = id.alpha();
+        let mut rgba = Vec::with_capacity(alpha.len() * 4);
+        for a in alpha.iter().copied() {
+            rgba.extend_from_slice(&[255, 255, 255, a]);
+        }
+        rgba
+    }
+
+    #[cfg(not(feature = "external_icons"))]
+    {
+        id.rgba().to_vec()
+    }
+}
+
 /// Generated icon table + embedded RGBA bytes.
 ///
 /// This mirrors the source folder layout as Rust modules (category/icon).
+#[cfg(feature = "external_icons")]
+pub use google_material_design_icons_bin::material_icons;
+
+#[cfg(not(feature = "external_icons"))]
 #[allow(non_upper_case_globals)]
 pub mod material_icons {
     include!(concat!(env!("OUT_DIR"), "/material_design_icons.rs"));
@@ -259,7 +281,7 @@ fn material_icon_system(
             let image = Image::new(
                 extent,
                 TextureDimension::D2,
-                icon.id.rgba().to_vec(),
+                icon_pixels_rgba8(icon.id),
                 TextureFormat::Rgba8UnormSrgb,
                 RenderAssetUsages::default(),
             );
@@ -311,7 +333,7 @@ fn material_icon_repair_system(
             let image = Image::new(
                 extent,
                 TextureDimension::D2,
-                icon.id.rgba().to_vec(),
+                icon_pixels_rgba8(icon.id),
                 TextureFormat::Rgba8UnormSrgb,
                 RenderAssetUsages::default(),
             );

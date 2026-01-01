@@ -14,6 +14,12 @@ fn main() {
     println!("cargo:rerun-if-env-changed=MATERIAL_DESIGN_ICONS_DIR");
     println!("cargo:rerun-if-changed=build.rs");
 
+    // When the external packed icon crate is enabled, skip build-time embedding.
+    // This avoids requiring a local `material-design-icons` checkout for builds.
+    if std::env::var_os("CARGO_FEATURE_EXTERNAL_ICONS").is_some() {
+        return;
+    }
+
     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let blob_path = out_dir.join("material_design_icons_rgba.bin");
     let rs_path = out_dir.join("material_design_icons.rs");
