@@ -1710,7 +1710,7 @@ fn debug_lists_visibility_system(
 
     let list_child_count = list_children.map(|c| c.len()).unwrap_or(0);
     let list_size = list_computed.map(|c| c.size());
-    let list_scroll = scroll_positions.get(list_entity).ok().map(|p| (**p));
+    let list_scroll = scroll_positions.get(list_entity).ok().map(|p| **p);
     bevy::log::info!(
         "[lists debug] ListDemoRoot={:?} children={} size={:?} scroll={:?}",
         list_entity,
@@ -1740,7 +1740,7 @@ fn debug_lists_visibility_system(
             scroll_contents.get(content).ok().unwrap();
         let content_child_count = content_children.map(|c| c.len()).unwrap_or(0);
         let content_size = content_computed.map(|c| c.size());
-        let content_scroll = scroll_positions.get(content_e).ok().map(|p| (**p));
+        let content_scroll = scroll_positions.get(content_e).ok().map(|p| **p);
         bevy::log::info!(
             "[lists debug] ScrollContent={:?} children={} size={:?} scroll={:?}",
             content_e,
@@ -1777,7 +1777,7 @@ fn debug_lists_visibility_system(
         .find(|(_e, id, _c, _comp)| id.id() == "list_item_0")
     {
         let item_size = item_comp.map(|c| c.size());
-        let item_scroll = scroll_positions.get(item_e).ok().map(|p| (**p));
+        let item_scroll = scroll_positions.get(item_e).ok().map(|p| **p);
 
         // Count descendants for quick sanity.
         let mut text_count = 0usize;
