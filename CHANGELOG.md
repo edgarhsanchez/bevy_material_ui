@@ -2,6 +2,22 @@
 
 ## 0.2.4 (2026-01-02)
 
+### Breaking Changes
+- **Text Field API**: The trait method `spawn_text_field_with` has been removed. Use the standalone function `spawn_text_field_control_with` instead.
+  - **Migration**: See [docs/MIGRATION_v0.2.4.md](docs/MIGRATION_v0.2.4.md) for detailed migration steps
+
+### Code Quality & Cleanup
+- **Removed Legacy Code**: Deleted unused internal HCT implementation files (hct.rs, math.rs) totaling ~1,051 lines - now exclusively using external `hct-cam16` crate
+- **Centralized Date Validation**: Removed redundant `DateInputPattern::is_valid_complete_basic()` method - all date validation now uses `Date::is_valid()` with proper leap year and days-in-month checks
+- **Removed Dead Code**: Cleaned up unused `CalendarPresenter` placeholder struct and `DatePickerDialog.picker` field
+- **MAX_ANCESTOR_DEPTH Constant**: Replaced magic number 32 with named constant across scroll.rs, list.rs, and app_bar.rs for better code discoverability
+
+### Production Readiness
+- **CurrentDate Resource**: Added `CurrentDate` resource pattern for production date handling in date picker
+  - Date picker systems now check for `CurrentDate` resource before falling back to placeholder
+  - Comprehensive documentation with integration examples for `chrono` and `time` crates
+- **Enhanced Documentation**: Added clear warnings about `Date::today()` placeholder implementation
+
 ### Internationalization (i18n)
 - **Comprehensive i18n Implementation**: Full internationalization support across all showcase views with 95+ translation keys
 - **Multi-Language Support**: 7 languages fully supported (en-US, es-ES, fr-FR, de-DE, ja-JP, zh-CN, he-IL)

@@ -718,7 +718,13 @@ fn normalize_date_by_pattern(input: &str, pattern: DateInputPattern) -> String {
 fn is_valid_complete_date_by_pattern(input: &str, pattern: DateInputPattern) -> bool {
     // Keep this intentionally "basic" (format-level validation).
     // Higher-level widgets (like date pickers) can do constraint validation.
-    pattern.is_valid_complete_basic(input)
+    use crate::date_picker::Date;
+    
+    let Some((year, month, day)) = pattern.try_parse_complete(input) else {
+        return false;
+    };
+    
+    Date::new(year, month, day).is_valid()
 }
 
 /// Apply formatter normalization/format validation for fields that opt-in.

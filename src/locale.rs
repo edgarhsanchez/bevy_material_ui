@@ -158,14 +158,6 @@ impl DateInputPattern {
 
         Some((year, month, day))
     }
-
-    pub fn is_valid_complete_basic(self, input: &str) -> bool {
-        let Some((_year, month, day)) = self.try_parse_complete(input) else {
-            return false;
-        };
-
-        (1..=12).contains(&month) && (1..=31).contains(&day)
-    }
 }
 
 /// Resolve a reasonable date input pattern for a locale tag.

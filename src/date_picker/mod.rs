@@ -418,9 +418,7 @@ struct DatePickerScrim {
 }
 
 #[derive(Component)]
-struct DatePickerDialog {
-    picker: Entity,
-}
+struct DatePickerDialog;
 
 #[derive(Component)]
 struct DatePickerModeToggle {
@@ -1769,9 +1767,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
             
             // Dialog container with calendar
             root.spawn((
-                DatePickerDialog {
-                    picker: entity,
-                },
+                DatePickerDialog,
                 // Ensure clicks on the dialog surface don't count as scrim clicks.
                 Interaction::None,
                 FocusPolicy::Block,
