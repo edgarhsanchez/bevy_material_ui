@@ -131,7 +131,11 @@ impl CheckboxState {
         matches!(self, CheckboxState::Indeterminate)
     }
 
-    /// Get the icon name for this state.
+    /// Get the Material icon name for this state.
+    ///
+    /// The returned string is a Material icon identifier (as used by [`icon_by_name`])
+    /// that can be resolved to a [`MaterialIcon`]. Returns `None` for the unchecked
+    /// state, which has no icon.
     pub fn icon(&self) -> Option<&'static str> {
         match self {
             CheckboxState::Unchecked => None,
