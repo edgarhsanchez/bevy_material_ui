@@ -154,7 +154,7 @@ The following demos properly demonstrate Material Symbols icons:
 - `icon_button_demo` - All icon button variants with Material Symbols
 - `fab_demo` - FABs with icon integration
 - `app_bar_demo` - App bars with navigation/action icons
-- `all_icon_buttons` - Complete icon font showcase (all glyphs)
+- `all_icon_buttons` - Complete icon showcase (all embedded bitmaps)
 
 ## Scroll Container Usage
 

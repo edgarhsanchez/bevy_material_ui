@@ -1,6 +1,6 @@
 //! Material Icon Component
 //!
-//! Provides the main icon component and bundle for rendering Material Symbols.
+//! Provides the main icon component and bundle for rendering Material Design icons as embedded bitmaps.
 
 use super::codepoints::*;
 use super::style::IconStyle;
@@ -10,8 +10,8 @@ use bevy::prelude::*;
 
 /// A Material Design icon component
 ///
-/// This component represents a Material Symbols icon by its Unicode codepoint.
-/// The icon is rendered using the Material Symbols font.
+/// This component represents a Material Design icon by its identifier.
+/// Icons are rendered as embedded bitmap images from the `google-material-design-icons-bin` crate.
 ///
 /// # Example
 ///
@@ -589,7 +589,7 @@ impl MaterialIcon {
 
 /// Bundle for spawning a Material Icon as a UI element
 ///
-/// This creates a text element that renders the icon using the icon font.
+/// This creates an image element that renders the icon using embedded bitmap data.
 #[derive(Bundle, Default)]
 pub struct IconBundle {
     /// The icon to display
@@ -665,12 +665,13 @@ fn sync_icon_render_components(
 ) {
     // Ensure the icon font resource exists even if the user forgets to add
     // `MaterialIconsPlugin` (or if startup order changes).
+    // Note: Despite the name, this handles the legacy font-based icon system.
     let mut created_icon_font_this_frame = false;
     let ensured_font_handle: Option<Handle<Font>> = match icon_font.as_ref() {
         Some(font) => Some(font.0.clone()),
         None => {
             let font = Font::try_from_bytes(EMBEDDED_MATERIAL_SYMBOLS_FONT.to_vec())
-                .expect("Failed to load embedded Material Symbols font");
+                .expect("Failed to load embedded icon font (legacy compatibility)");
             let font_handle = fonts.add(font);
             commands.insert_resource(MaterialIconFont(font_handle.clone()));
             created_icon_font_this_frame = true;
@@ -687,6 +688,7 @@ fn sync_icon_render_components(
 
         // Fast path: skip entities that are already fully configured.
         // We still re-run when the icon font resource changes (e.g. becomes available).
+        // Note: New code should use embedded bitmaps from MaterialIcon component.
         if !icon_font_changed && node.is_some() && text.is_some() {
             let has_text_font = text_font.is_some();
             let font_matches = match (&ensured_font_handle, &text_font) {

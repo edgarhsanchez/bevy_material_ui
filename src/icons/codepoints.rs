@@ -1,10 +1,11 @@
-//! Material Symbols Icon Codepoints
+//! Material Design Icon Identifiers
 //!
-//! This file contains Unicode codepoints for Material Symbols icons.
-//! The codepoints are from the Material Symbols Outlined font.
+//! This file contains identifiers for Material Design icons.
+//! Icons are embedded as bitmaps from the `google-material-design-icons-bin` crate.
 //!
-//! These codepoints can be used with the Material Symbols font to render icons.
-//! Font download: <https://fonts.google.com/icons?icon.set=Material+Symbols>
+//! Note: These constants may reference legacy codepoint values but icons are now
+//! rendered as embedded bitmaps, not font glyphs.
+//! Icon reference: <https://fonts.google.com/icons>
 
 // Navigation Icons
 /// Home icon codepoint

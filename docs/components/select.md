@@ -77,8 +77,8 @@ commands.spawn(Node::default()).with_children(|ui| {
 
 Notes:
 
-- The select dropdown arrow is rendered using the Material Symbols icon font.
-- Option icons are rendered via Material Symbols when you provide a recognized icon name.
+- The select dropdown arrow is rendered using embedded icon bitmaps.
+- Option icons are rendered as embedded bitmaps when you provide a recognized icon name.
 
 ## Disabled State
 

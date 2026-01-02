@@ -890,7 +890,7 @@ impl SelectBuilder {
 #[derive(Component)]
 pub struct SelectDropdown;
 
-/// Internal marker for option icons so we can apply the Material Symbols font.
+/// Internal marker for option icons rendered as embedded bitmaps.
 #[derive(Component)]
 struct SelectOptionIcon;
 
