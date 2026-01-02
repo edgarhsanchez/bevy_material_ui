@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::chip::{ChipBuilder, ChipLabel};
+use bevy_material_ui::dialog::create_dialog_scrim_for;
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
@@ -18,7 +19,9 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.dialogs.title",
                 "Dialogs",
+                "showcase.section.dialogs.description",
                 "Modal windows with positioning options",
             );
 

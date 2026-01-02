@@ -42,5 +42,5 @@ fn handle_toolbar(
 
 ## Notes
 
-- Icons are rendered using the Material Symbols font included by `MaterialUiPlugin`.
+- Icons are rendered as embedded bitmaps from the `google-material-design-icons-bin` crate included by `MaterialUiPlugin`.
 - If you need scroll/collapse behavior, use the app bar components (`TopAppBar`/`BottomAppBar`) instead.

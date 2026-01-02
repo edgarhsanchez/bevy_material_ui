@@ -23,8 +23,10 @@ pub fn spawn_icons_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.icons.title",
                 "Material Icons",
-                "Google Material Symbols with variable font support",
+                "showcase.section.icons.description",
+                "Embedded Material icons",
             );
 
             section
@@ -36,20 +38,8 @@ pub fn spawn_icons_section(
                     ..default()
                 })
                 .with_children(|row| {
-                    let icons = [
-                        MaterialIcon::check(),
-                        MaterialIcon::home(),
-                        MaterialIcon::settings(),
-                        MaterialIcon::favorite(),
-                        MaterialIcon::search(),
-                    ];
-
-                    for icon in icons {
+                    for icon_name in ["check", "home", "settings", "favorite", "search"] {
                         row.spawn((
-                            icon,
-                            IconStyle::default()
-                                .with_size(24.0)
-                                .with_color(theme.on_surface),
                             Node {
                                 width: Val::Px(48.0),
                                 height: Val::Px(48.0),
@@ -59,25 +49,23 @@ pub fn spawn_icons_section(
                             },
                             BackgroundColor(theme.surface_container),
                             BorderRadius::all(Val::Px(8.0)),
-                        ));
+                        ))
+                        .with_children(|cell| {
+                            if let Some(icon) = MaterialIcon::from_name(icon_name) {
+                                cell.spawn(icon.with_size(24.0).with_color(theme.on_surface));
+                            }
+                        });
                     }
                 });
 
             spawn_code_block(
                 section,
                 theme,
-                r#"// Using Material Symbols icons
-use bevy_material_ui::icons::{ICON_CHECK, icon_by_name};
+                r#"// Using embedded icons
+use bevy_material_ui::icons::MaterialIcon;
 
-// By constant
-commands.spawn((
-    Text::new(ICON_CHECK),
-    TextFont { font: icon_font.0.clone(), font_size: 24.0, ..default() },
-));
-
-// By name lookup
-if let Some(codepoint) = icon_by_name("home") {
-    // Use codepoint...
+if let Some(icon) = MaterialIcon::from_name("home") {
+    commands.spawn(icon);
 }"#,
             );
         });

@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
+use bevy_material_ui::text_field::spawn_text_field_control_with;
 use bevy_material_ui::theme::ThemeMode;
 
 use crate::showcase::common::*;
@@ -22,7 +23,9 @@ pub fn spawn_theme_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.theme_colors.title",
                 "Theme Colors",
+                "showcase.section.theme_colors.description",
                 "Material Design 3 color scheme with dynamic color support",
             );
 
@@ -160,7 +163,8 @@ pub fn spawn_theme_section(
                         },
                     ))
                     .with_children(|slot| {
-                        slot.spawn_text_field_with(
+                        spawn_text_field_control_with(
+                            slot,
                             theme,
                             TextFieldBuilder::new()
                                 .label("Theme seed")
@@ -169,6 +173,7 @@ pub fn spawn_theme_section(
                                 .supporting_text("Paste/type a hex seed")
                                 .outlined()
                                 .width(Val::Percent(100.0)),
+                            ThemeSeedTextField,
                         );
                     });
                 });

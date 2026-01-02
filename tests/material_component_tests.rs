@@ -1,7 +1,6 @@
 //! Comprehensive Material Component Tests
 //!
-//! Tests modeled after Android Material Components test patterns from:
-//! https://github.com/material-components/material-components-android/tree/1.13.0/lib/javatests/com/google/android/material
+//! Tests modeled after reference Material Components test patterns.
 //!
 //! These tests verify:
 //! - Component state management
@@ -13,6 +12,9 @@
 
 use bevy_material_ui::badge::{BadgeSize, MaterialBadge};
 use bevy_material_ui::button::{ButtonVariant, IconGravity, MaterialButton};
+use bevy_material_ui::button_group::{
+    ButtonGroupBuilder, ButtonGroupOrientation, MaterialButtonGroup,
+};
 use bevy_material_ui::checkbox::{CheckboxState, MaterialCheckbox};
 use bevy_material_ui::chip::{ChipElevation, ChipVariant, MaterialChip};
 use bevy_material_ui::dialog::{DialogType, MaterialDialog};
@@ -142,6 +144,35 @@ mod button_tests {
         assert!(!button.pressed);
         assert!(!button.hovered);
         assert!(!button.focused);
+    }
+}
+
+// ============================================================================
+// Button Group Tests (modeled after MaterialButtonToggleGroup behaviors)
+// ============================================================================
+
+mod button_group_tests {
+    use super::*;
+
+    #[test]
+    fn test_default_orientation_is_horizontal() {
+        let group = MaterialButtonGroup::new();
+        assert_eq!(group.orientation, ButtonGroupOrientation::Horizontal);
+    }
+
+    #[test]
+    fn test_builder_vertical() {
+        let group = ButtonGroupBuilder::new().vertical().build();
+        assert_eq!(group.orientation, ButtonGroupOrientation::Vertical);
+    }
+
+    #[test]
+    fn test_single_selection_and_required_flags() {
+        let group = MaterialButtonGroup::new()
+            .single_selection(true)
+            .selection_required(true);
+        assert!(group.single_selection);
+        assert!(group.selection_required);
     }
 }
 

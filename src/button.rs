@@ -25,6 +25,9 @@ pub struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<ButtonClickEvent>().add_systems(
             Update,
             (
@@ -55,7 +58,7 @@ pub enum ButtonVariant {
 }
 
 /// Icon gravity - determines where the icon is positioned relative to the label
-/// Matches Android MaterialButton.IconGravity
+/// Matches the reference `MaterialButton.IconGravity`
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum IconGravity {
     /// Icon at the start of the button
@@ -75,7 +78,7 @@ pub enum IconGravity {
 
 /// Material button component
 ///
-/// Matches properties from Material Android MaterialButton:
+/// Matches properties from the reference `MaterialButton`:
 /// - Multiple variants (filled, outlined, text, elevated, tonal)
 /// - State-based styling (normal, pressed, hovered, focused, disabled)
 /// - Corner radius customization
@@ -561,6 +564,18 @@ impl MaterialButtonBuilder {
     /// Set the button as disabled
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.button.disabled = disabled;
+        self
+    }
+
+    /// Set whether the button is checkable (toggle button)
+    pub fn checkable(mut self, checkable: bool) -> Self {
+        self.button.checkable = checkable;
+        self
+    }
+
+    /// Set whether the button is checked (for toggle buttons)
+    pub fn checked(mut self, checked: bool) -> Self {
+        self.button.checked = checked;
         self
     }
 

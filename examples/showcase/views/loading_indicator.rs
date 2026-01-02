@@ -24,7 +24,9 @@ pub fn spawn_loading_indicator_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.loading_indicator.title",
                 "Loading Indicator",
+                "showcase.section.loading_indicator.description",
                 "Material Design 3 loading indicators with morphing shapes",
             );
 
@@ -40,23 +42,29 @@ pub fn spawn_loading_indicator_section(
                 .with_children(|col| {
                     // Default
                     col.spawn((
-                        Text::new("Loading indicator"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.loading.default")
+                            .with_default("Loading indicator"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
+                        NeedsInternationalFont,
                     ));
                     col.spawn_loading_indicator(theme, materials);
 
                     // Contained (with container background)
                     col.spawn((
-                        Text::new("Loading indicator with container"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.loading.with_container")
+                            .with_default("Loading indicator with container"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
+                        NeedsInternationalFont,
                     ));
                     col.spawn_loading_indicator_with(
                         theme,
@@ -66,12 +74,15 @@ pub fn spawn_loading_indicator_section(
 
                     // Multiple colors
                     col.spawn((
-                        Text::new("Loading indicator with multiple colors"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.loading.multi_color")
+                            .with_default("Loading indicator with multiple colors"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
+                        NeedsInternationalFont,
                     ));
                     col.spawn_loading_indicator_with(
                         theme,
@@ -81,12 +92,15 @@ pub fn spawn_loading_indicator_section(
 
                     // Small size
                     col.spawn((
-                        Text::new("Small loading indicator"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.loading.small")
+                            .with_default("Small loading indicator"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
+                        NeedsInternationalFont,
                     ));
                     col.spawn_loading_indicator_with(
                         theme,
@@ -96,12 +110,15 @@ pub fn spawn_loading_indicator_section(
 
                     // Large and fast
                     col.spawn((
-                        Text::new("Large loading indicator (fast)"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.loading.large_fast")
+                            .with_default("Large loading indicator (fast)"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
+                        NeedsInternationalFont,
                     ));
                     col.spawn_loading_indicator_with(
                         theme,

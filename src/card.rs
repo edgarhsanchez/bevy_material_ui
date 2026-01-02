@@ -23,6 +23,9 @@ pub struct CardPlugin;
 
 impl Plugin for CardPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<CardClickEvent>().add_systems(
             Update,
             (

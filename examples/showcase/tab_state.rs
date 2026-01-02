@@ -3,7 +3,7 @@
 use bevy::prelude::Resource;
 use std::collections::HashMap;
 
-use super::showcase::ComponentSection;
+use crate::showcase::common::ComponentSection;
 
 /// Stores tab selections across UI rebuilds
 #[derive(Resource, Default)]

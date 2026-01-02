@@ -6,6 +6,8 @@
 use bevy::prelude::*;
 use bevy::ui::UiGlobalTransform;
 
+use std::collections::HashMap;
+
 use crate::theme::MaterialTheme;
 
 /// Slider orientation
@@ -36,14 +38,73 @@ pub struct SliderPlugin;
 
 impl Plugin for SliderPlugin {
     fn build(&self, app: &mut App) {
+        app.init_resource::<SliderTraceSettings>()
+            .init_resource::<SliderTraceState>();
         app.add_message::<SliderChangeEvent>().add_systems(
             Update,
             (
                 slider_interaction_system,
                 slider_visual_update_system.after(slider_interaction_system),
                 slider_theme_refresh_system.after(slider_visual_update_system),
+                // Position handle/active track using actual track geometry so callers don't
+                // need to perfectly superimpose the slider root and its rail/track.
+                slider_geometry_update_system.after(slider_theme_refresh_system),
             ),
         );
+    }
+}
+
+/// Enables throttled runtime logging for slider interaction + geometry.
+///
+/// This is meant for diagnosing coordinate-space issues (logical vs physical pixels, UiScale,
+/// DPI scaling) and layout timing problems (zero-size nodes before layout settles).
+#[derive(Resource, Debug, Clone)]
+pub struct SliderTraceSettings {
+    /// Turn tracing on/off.
+    pub enabled: bool,
+    /// Emit logs at most once per slider per this interval.
+    pub log_every_secs: f32,
+    /// If true, also logs geometry updates even when not dragging.
+    pub log_geometry_always: bool,
+}
+
+impl Default for SliderTraceSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            log_every_secs: 0.25,
+            log_geometry_always: false,
+        }
+    }
+}
+
+#[derive(Resource, Default)]
+struct SliderTraceState {
+    last_log_at: HashMap<Entity, f32>,
+}
+
+fn slider_trace_should_log(
+    entity: Entity,
+    now: f32,
+    settings: &SliderTraceSettings,
+    state: &mut SliderTraceState,
+) -> bool {
+    if !settings.enabled {
+        return false;
+    }
+
+    let every = settings.log_every_secs.max(0.0);
+    if every == 0.0 {
+        state.last_log_at.insert(entity, now);
+        return true;
+    }
+
+    match state.last_log_at.get(&entity).copied() {
+        Some(last) if now - last < every => false,
+        _ => {
+            state.last_log_at.insert(entity, now);
+            true
+        }
     }
 }
 
@@ -394,26 +455,31 @@ fn slider_interaction_system(
             Entity,
             &Interaction,
             &mut MaterialSlider,
+            &SliderParts,
             &ComputedNode,
             &UiGlobalTransform,
         ),
         With<MaterialSlider>,
     >,
     mut change_events: MessageWriter<SliderChangeEvent>,
+    computed: Query<(&ComputedNode, &UiGlobalTransform)>,
     windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
     mouse_button: Res<ButtonInput<MouseButton>>,
+    time: Res<Time>,
+    trace: Res<SliderTraceSettings>,
+    mut trace_state: ResMut<SliderTraceState>,
 ) {
     let Ok(window) = windows.single() else { return };
     let Some(cursor_position) = window.cursor_position() else {
         return;
     };
 
-    // Bevy UI layout uses physical pixels for `UiGlobalTransform` and `ComputedNode`.
-    // Convert the window cursor position (logical coords) into physical pixels.
-    let scale_factor = window.scale_factor();
-    let cursor_physical = cursor_position * scale_factor;
+    // `Window::cursor_position()` is in logical pixels; `UiGlobalTransform` / `ComputedNode` are
+    // in physical pixels. Convert cursor to physical pixels.
+    let cursor_physical = cursor_position * window.scale_factor();
 
-    for (entity, interaction, mut slider, computed_node, transform) in interaction_query.iter_mut()
+    for (entity, interaction, mut slider, parts, computed_node, transform) in
+        interaction_query.iter_mut()
     {
         if slider.disabled {
             continue;
@@ -440,33 +506,81 @@ fn slider_interaction_system(
 
         // Handle dragging
         if slider.dragging {
+            // Prefer mapping cursor position to the actual track geometry rather than the slider
+            // root node. This makes the slider behave correctly even when the rail isn't
+            // perfectly superimposed within the parent layout.
+            let Ok((track_node, track_transform)) = computed.get(parts.track) else {
+                continue;
+            };
+
             let slider_center = transform.translation;
             let slider_size = computed_node.size();
+            let track_center = track_transform.translation;
+            let track_size = track_node.size();
+
+            // Convert logical style values (thumb radius) to physical pixels for geometry math.
+            // `inverse_scale_factor` is effectively (logical_px / physical_px) for this node.
+            let logical_per_physical = computed_node.inverse_scale_factor;
+            if !logical_per_physical.is_finite() || logical_per_physical <= 0.0 {
+                continue;
+            }
+            let physical_per_logical = 1.0 / logical_per_physical;
+
+            // Layout may not be computed yet (or may be zero during first-frame interactions).
+            if slider_size.x <= 0.0
+                || slider_size.y <= 0.0
+                || track_size.x <= 0.0
+                || track_size.y <= 0.0
+            {
+                continue;
+            }
+
+            // Keep the cursor->value mapping consistent with the thumb not being allowed to
+            // overlap past the ends of the slider.
+            let handle_radius_physical = slider.thumb_radius.max(0.0) * physical_per_logical;
+
+            let slider_left = slider_center.x - slider_size.x / 2.0;
+            let slider_top = slider_center.y - slider_size.y / 2.0;
+            let slider_right = slider_left + slider_size.x;
+            let slider_bottom = slider_top + slider_size.y;
+
+            let track_left = track_center.x - track_size.x / 2.0;
+            let track_top = track_center.y - track_size.y / 2.0;
+            let track_right = track_left + track_size.x;
+            let track_bottom = track_top + track_size.y;
+
+            // Constrain the usable drag range to both:
+            // - the track extents, inset by the thumb radius
+            // - the slider root extents, inset by the thumb radius (keeps thumb clickable)
+            let usable_left =
+                (track_left + handle_radius_physical).max(slider_left + handle_radius_physical);
+            let usable_right =
+                (track_right - handle_radius_physical).min(slider_right - handle_radius_physical);
+            let usable_top =
+                (track_top + handle_radius_physical).max(slider_top + handle_radius_physical);
+            let usable_bottom =
+                (track_bottom - handle_radius_physical).min(slider_bottom - handle_radius_physical);
 
             let position_percent = match slider.orientation {
                 SliderOrientation::Horizontal => {
-                    // Layout may not be computed yet (or may be zero during first-frame interactions).
-                    // Avoid NaNs that would poison the slider value and visuals.
-                    if slider_size.x <= 0.0 {
+                    let span = usable_right - usable_left;
+                    if span <= 0.0 {
                         continue;
                     }
-
-                    let slider_left = slider_center.x - slider_size.x / 2.0;
-                    let relative_x = cursor_physical.x - slider_left;
-                    let p = (relative_x / slider_size.x).clamp(0.0, 1.0);
+                    let x = cursor_physical.x.clamp(usable_left, usable_right);
+                    let p = ((x - usable_left) / span).clamp(0.0, 1.0);
                     if !p.is_finite() {
                         continue;
                     }
                     p
                 }
                 SliderOrientation::Vertical => {
-                    if slider_size.y <= 0.0 {
+                    let span = usable_bottom - usable_top;
+                    if span <= 0.0 {
                         continue;
                     }
-
-                    let slider_top = slider_center.y - slider_size.y / 2.0;
-                    let relative_y = cursor_physical.y - slider_top;
-                    let p = (relative_y / slider_size.y).clamp(0.0, 1.0);
+                    let y = cursor_physical.y.clamp(usable_top, usable_bottom);
+                    let p = ((y - usable_top) / span).clamp(0.0, 1.0);
                     if !p.is_finite() {
                         continue;
                     }
@@ -485,6 +599,22 @@ fn slider_interaction_system(
 
             let old_value = slider.value;
             slider.set_from_normalized(normalized);
+
+            if slider_trace_should_log(entity, time.elapsed_secs(), &trace, &mut trace_state) {
+                info!(
+                    target: "bevy_material_ui::slider",
+                    "drag entity={:?} cursor_phys={:?} slider_size_phys={:?} track_size_phys={:?} handle_r_phys={:.2} pos={:.3} norm={:.3} value={:.3}->{:.3}",
+                    entity,
+                    cursor_physical,
+                    slider_size,
+                    track_size,
+                    handle_radius_physical,
+                    position_percent,
+                    normalized,
+                    old_value,
+                    slider.value
+                );
+            }
 
             if (slider.value - old_value).abs() > f32::EPSILON {
                 change_events.write(SliderChangeEvent {
@@ -560,7 +690,6 @@ fn update_slider_visuals(
     visibilities: &mut Query<&mut Visibility>,
     ticks: &Query<&SliderTick>,
 ) {
-    let _value_percent = slider.normalized_value().clamp(0.0, 1.0);
     let position_percent = slider.position_percent().clamp(0.0, 1.0);
 
     let track_height = if slider.dragging {
@@ -598,33 +727,15 @@ fn update_slider_visuals(
         *bg = BackgroundColor(active_color);
     }
     if let Ok(mut node) = nodes.get_mut(parts.active_track) {
+        node.position_type = PositionType::Absolute;
+        // Geometry (left/top/width/height along the main axis) is computed in
+        // `slider_geometry_update_system` so it follows the actual track placement.
         match slider.orientation {
             SliderOrientation::Horizontal => {
-                match slider.direction {
-                    SliderDirection::StartToEnd => {
-                        node.left = Val::Px(0.0);
-                        node.width = Val::Percent(position_percent * 100.0);
-                    }
-                    SliderDirection::EndToStart => {
-                        node.left = Val::Percent(position_percent * 100.0);
-                        node.width = Val::Percent((1.0 - position_percent) * 100.0);
-                    }
-                }
                 node.height = Val::Px(track_height);
-                node.top = Val::Px((SLIDER_HANDLE_SIZE + 8.0 - track_height) / 2.0);
             }
             SliderOrientation::Vertical => {
                 node.width = Val::Px(track_height);
-                match slider.direction {
-                    SliderDirection::StartToEnd => {
-                        node.top = Val::Px(0.0);
-                        node.height = Val::Percent(position_percent * 100.0);
-                    }
-                    SliderDirection::EndToStart => {
-                        node.top = Val::Percent(position_percent * 100.0);
-                        node.height = Val::Percent((1.0 - position_percent) * 100.0);
-                    }
-                }
             }
         }
     }
@@ -641,14 +752,16 @@ fn update_slider_visuals(
         *bg = BackgroundColor(handle_color);
     }
     if let Ok(mut node) = nodes.get_mut(parts.handle) {
+        node.position_type = PositionType::Absolute;
         match slider.orientation {
             SliderOrientation::Horizontal => {
-                node.left = Val::Percent(position_percent * 100.0);
-                node.margin.left = Val::Px(-handle_radius);
+                // left/top is set in `slider_geometry_update_system`
+                node.margin.left = Val::Px(0.0);
+                node.margin.top = Val::Px(0.0);
             }
             SliderOrientation::Vertical => {
-                node.top = Val::Percent(position_percent * 100.0);
-                node.margin.top = Val::Px(-handle_radius);
+                node.margin.left = Val::Px(0.0);
+                node.margin.top = Val::Px(0.0);
             }
         }
         node.width = Val::Px(handle_radius * 2.0);
@@ -684,6 +797,276 @@ fn update_slider_visuals(
         if let Ok(mut bg) = bg_colors.get_mut(tick_entity) {
             *bg = BackgroundColor(tick_color);
         }
+    }
+}
+
+fn slider_geometry_update_system(
+    sliders: Query<
+        (
+            Entity,
+            &MaterialSlider,
+            &SliderParts,
+            &ComputedNode,
+            &UiGlobalTransform,
+        ),
+        With<MaterialSlider>,
+    >,
+    computed: Query<(&ComputedNode, &UiGlobalTransform)>,
+    ticks: Query<&SliderTick>,
+    mut nodes: Query<&mut Node>,
+    time: Res<Time>,
+    trace: Res<SliderTraceSettings>,
+    mut trace_state: ResMut<SliderTraceState>,
+) {
+    for (slider_entity, slider, parts, slider_node, slider_transform) in sliders.iter() {
+        let Ok((track_node, track_transform)) = computed.get(parts.track) else {
+            continue;
+        };
+
+        let slider_size = slider_node.size();
+        let track_size = track_node.size();
+        if slider_size.x <= 0.0
+            || slider_size.y <= 0.0
+            || track_size.x <= 0.0
+            || track_size.y <= 0.0
+        {
+            if slider_trace_should_log(slider_entity, time.elapsed_secs(), &trace, &mut trace_state)
+            {
+                info!(
+                    target: "bevy_material_ui::slider",
+                    "layout-not-ready entity={:?} slider_size_phys={:?} track_size_phys={:?}",
+                    slider_entity,
+                    slider_size,
+                    track_size
+                );
+            }
+            continue;
+        }
+
+        let slider_center = slider_transform.translation;
+        let track_center = track_transform.translation;
+
+        // `UiGlobalTransform` + `ComputedNode` sizes are in physical pixels.
+        // `Node` style values (left/top/width/height in `Val::Px`) are in logical pixels.
+        // Convert between the two using the computed node scale.
+        let logical_per_physical = slider_node.inverse_scale_factor;
+        if !logical_per_physical.is_finite() || logical_per_physical <= 0.0 {
+            continue;
+        }
+        let physical_per_logical = 1.0 / logical_per_physical;
+
+        let slider_left = slider_center.x - slider_size.x / 2.0;
+        let slider_top = slider_center.y - slider_size.y / 2.0;
+        let slider_right = slider_left + slider_size.x;
+        let slider_bottom = slider_top + slider_size.y;
+
+        let track_left = track_center.x - track_size.x / 2.0;
+        let track_top = track_center.y - track_size.y / 2.0;
+        let track_right = track_left + track_size.x;
+        let track_bottom = track_top + track_size.y;
+
+        // Use the same pressed-size logic as the visual update so the thumb never grows
+        // beyond bounds while dragging.
+        let mut handle_radius_logical = slider.thumb_radius.max(0.0);
+        if slider.dragging {
+            handle_radius_logical =
+                (handle_radius_logical + 2.0).min(SLIDER_HANDLE_SIZE_PRESSED / 2.0);
+        }
+        let handle_radius_physical = handle_radius_logical * physical_per_logical;
+
+        let track_height = if slider.dragging {
+            SLIDER_TRACK_HEIGHT_ACTIVE
+        } else {
+            slider.track_height
+        };
+        let track_height_physical = track_height * physical_per_logical;
+
+        let position_percent = slider.position_percent().clamp(0.0, 1.0);
+
+        match slider.orientation {
+            SliderOrientation::Horizontal => {
+                // Usable range is track, inset by thumb radius, and clamped to slider bounds.
+                let usable_left =
+                    (track_left + handle_radius_physical).max(slider_left + handle_radius_physical);
+                let usable_right = (track_right - handle_radius_physical)
+                    .min(slider_right - handle_radius_physical);
+                if usable_right <= usable_left {
+                    continue;
+                }
+
+                let thumb_center_x =
+                    (usable_left + (usable_right - usable_left) * position_percent).clamp(
+                        slider_left + handle_radius_physical,
+                        slider_right - handle_radius_physical,
+                    );
+                let thumb_center_y = track_center.y.clamp(
+                    slider_top + handle_radius_physical,
+                    slider_bottom - handle_radius_physical,
+                );
+
+                // Handle
+                if let Ok(mut handle_node) = nodes.get_mut(parts.handle) {
+                    handle_node.position_type = PositionType::Absolute;
+                    handle_node.left = Val::Px(
+                        (thumb_center_x - slider_left - handle_radius_physical)
+                            * logical_per_physical,
+                    );
+                    handle_node.top = Val::Px(
+                        (thumb_center_y - slider_top - handle_radius_physical)
+                            * logical_per_physical,
+                    );
+                    handle_node.margin = UiRect::all(Val::Px(0.0));
+                    handle_node.width = Val::Px(handle_radius_logical * 2.0);
+                    handle_node.height = Val::Px(handle_radius_logical * 2.0);
+                }
+
+                // Active track: from track start to thumb (or thumb to end for reversed direction)
+                let active_top_physical = track_center.y - slider_top - track_height_physical / 2.0;
+                let (active_left_physical, active_width_physical) = match slider.direction {
+                    SliderDirection::StartToEnd => {
+                        let start = track_left;
+                        let end = thumb_center_x;
+                        (start - slider_left, (end - start).max(0.0))
+                    }
+                    SliderDirection::EndToStart => {
+                        let start = thumb_center_x;
+                        let end = track_right;
+                        (start - slider_left, (end - start).max(0.0))
+                    }
+                };
+                if let Ok(mut active_node) = nodes.get_mut(parts.active_track) {
+                    active_node.position_type = PositionType::Absolute;
+                    active_node.left = Val::Px(active_left_physical * logical_per_physical);
+                    active_node.top = Val::Px(active_top_physical * logical_per_physical);
+                    active_node.width = Val::Px(active_width_physical * logical_per_physical);
+                    active_node.height = Val::Px(track_height);
+                    active_node.margin = UiRect::all(Val::Px(0.0));
+                }
+
+                // Tick marks (if present): position along track regardless of direction
+                let tick_width_logical = 2.0;
+                let tick_width_physical = tick_width_logical * physical_per_logical;
+                let tick_top_physical = track_center.y - slider_top + track_height_physical / 2.0;
+                for &tick_entity in &parts.ticks {
+                    let Ok(tick) = ticks.get(tick_entity) else {
+                        continue;
+                    };
+                    let x = track_left + track_size.x * tick.position.clamp(0.0, 1.0);
+                    if let Ok(mut tick_node) = nodes.get_mut(tick_entity) {
+                        tick_node.position_type = PositionType::Absolute;
+                        tick_node.left = Val::Px(
+                            (x - slider_left - tick_width_physical / 2.0) * logical_per_physical,
+                        );
+                        tick_node.top = Val::Px(tick_top_physical * logical_per_physical);
+                        tick_node.margin = UiRect::all(Val::Px(0.0));
+                    }
+                }
+            }
+            SliderOrientation::Vertical => {
+                let usable_top =
+                    (track_top + handle_radius_physical).max(slider_top + handle_radius_physical);
+                let usable_bottom = (track_bottom - handle_radius_physical)
+                    .min(slider_bottom - handle_radius_physical);
+                if usable_bottom <= usable_top {
+                    continue;
+                }
+
+                let thumb_center_y = (usable_top + (usable_bottom - usable_top) * position_percent)
+                    .clamp(
+                        slider_top + handle_radius_physical,
+                        slider_bottom - handle_radius_physical,
+                    );
+                let thumb_center_x = track_center.x.clamp(
+                    slider_left + handle_radius_physical,
+                    slider_right - handle_radius_physical,
+                );
+
+                // Handle
+                if let Ok(mut handle_node) = nodes.get_mut(parts.handle) {
+                    handle_node.position_type = PositionType::Absolute;
+                    handle_node.left = Val::Px(
+                        (thumb_center_x - slider_left - handle_radius_physical)
+                            * logical_per_physical,
+                    );
+                    handle_node.top = Val::Px(
+                        (thumb_center_y - slider_top - handle_radius_physical)
+                            * logical_per_physical,
+                    );
+                    handle_node.margin = UiRect::all(Val::Px(0.0));
+                    handle_node.width = Val::Px(handle_radius_logical * 2.0);
+                    handle_node.height = Val::Px(handle_radius_logical * 2.0);
+                }
+
+                // Active track
+                let active_left_physical =
+                    track_center.x - slider_left - track_height_physical / 2.0;
+                let (active_top_physical, active_height_physical) = match slider.direction {
+                    SliderDirection::StartToEnd => {
+                        let start = track_top;
+                        let end = thumb_center_y;
+                        (start - slider_top, (end - start).max(0.0))
+                    }
+                    SliderDirection::EndToStart => {
+                        let start = thumb_center_y;
+                        let end = track_bottom;
+                        (start - slider_top, (end - start).max(0.0))
+                    }
+                };
+                if let Ok(mut active_node) = nodes.get_mut(parts.active_track) {
+                    active_node.position_type = PositionType::Absolute;
+                    active_node.left = Val::Px(active_left_physical * logical_per_physical);
+                    active_node.top = Val::Px(active_top_physical * logical_per_physical);
+                    active_node.width = Val::Px(track_height);
+                    active_node.height = Val::Px(active_height_physical * logical_per_physical);
+                    active_node.margin = UiRect::all(Val::Px(0.0));
+                }
+
+                // Tick marks
+                let tick_width_logical = 4.0;
+                let tick_height_logical = 2.0;
+                let tick_width_physical = tick_width_logical * physical_per_logical;
+                let tick_height_physical = tick_height_logical * physical_per_logical;
+                for &tick_entity in &parts.ticks {
+                    let Ok(tick) = ticks.get(tick_entity) else {
+                        continue;
+                    };
+                    let y = track_top + track_size.y * tick.position.clamp(0.0, 1.0);
+                    if let Ok(mut tick_node) = nodes.get_mut(tick_entity) {
+                        tick_node.position_type = PositionType::Absolute;
+                        tick_node.left = Val::Px(
+                            (track_center.x - slider_left - tick_width_physical / 2.0)
+                                * logical_per_physical,
+                        );
+                        tick_node.top = Val::Px(
+                            (y - slider_top - tick_height_physical / 2.0) * logical_per_physical,
+                        );
+                        tick_node.margin = UiRect::all(Val::Px(0.0));
+                    }
+                }
+            }
+        }
+
+        if trace.enabled
+            && (trace.log_geometry_always || slider.dragging)
+            && slider_trace_should_log(slider_entity, time.elapsed_secs(), &trace, &mut trace_state)
+        {
+            info!(
+                target: "bevy_material_ui::slider",
+                "geom entity={:?} inv_scale={:.4} slider_center_phys={:?} track_center_phys={:?} slider_size_phys={:?} track_size_phys={:?} pos={:.3} dir={:?} orient={:?}",
+                slider_entity,
+                slider_node.inverse_scale_factor,
+                slider_transform.translation,
+                track_transform.translation,
+                slider_size,
+                track_size,
+                position_percent,
+                slider.direction,
+                slider.orientation
+            );
+        }
+
+        // Avoid unused variable warning if we later remove slider_entity usage.
+        let _ = slider_entity;
     }
 }
 

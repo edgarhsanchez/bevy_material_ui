@@ -33,7 +33,9 @@ pub fn spawn_tabs_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.tabs.title",
                 "Tabs",
+                "showcase.section.tabs.description",
                 "Primary tabs with content panels driven by TabContent",
             );
 

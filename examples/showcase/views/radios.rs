@@ -6,9 +6,9 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::radio::SpawnRadioChild;
 
 use crate::showcase::common::*;
+use crate::showcase::i18n_helpers::spawn_radio_i18n;
 
 /// Spawn the radio buttons section content
 pub fn spawn_radios_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
@@ -22,7 +22,9 @@ pub fn spawn_radios_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.radio_buttons.title",
                 "Radio Buttons",
+                "showcase.section.radio_buttons.description",
                 "Single selection within a group - only one can be selected",
             );
 
@@ -37,10 +39,30 @@ pub fn spawn_radios_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     },
                 ))
                 .with_children(|col| {
-                    // Simple, clean API - just pass theme, selected state, group name, and label
-                    col.spawn_radio(theme, true, "example_group", "Choice A");
-                    col.spawn_radio(theme, false, "example_group", "Choice B");
-                    col.spawn_radio(theme, false, "example_group", "Choice C");
+                    spawn_radio_i18n(
+                        col,
+                        theme,
+                        true,
+                        "example_group",
+                        "showcase.radios.choice_a",
+                        "Choice A",
+                    );
+                    spawn_radio_i18n(
+                        col,
+                        theme,
+                        false,
+                        "example_group",
+                        "showcase.radios.choice_b",
+                        "Choice B",
+                    );
+                    spawn_radio_i18n(
+                        col,
+                        theme,
+                        false,
+                        "example_group",
+                        "showcase.radios.choice_c",
+                        "Choice C",
+                    );
                 });
 
             spawn_code_block(

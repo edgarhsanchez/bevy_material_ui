@@ -6,24 +6,41 @@
 use bevy::prelude::*;
 
 use crate::{
+    i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
     icons::{icon_by_name, IconStyle, MaterialIcon, ICON_CLOSE},
+    locale::{DateFieldOrder, DateInputPattern},
     ripple::RippleHost,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
 };
 
-fn resolve_icon_codepoint(icon: &str) -> Option<char> {
+#[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
+pub struct TextFieldLocalization {
+    pub label_key: Option<String>,
+    pub placeholder_key: Option<String>,
+    pub supporting_text_key: Option<String>,
+    pub error_text_key: Option<String>,
+}
+
+impl TextFieldLocalization {
+    fn is_empty(&self) -> bool {
+        self.label_key.is_none()
+            && self.placeholder_key.is_none()
+            && self.supporting_text_key.is_none()
+            && self.error_text_key.is_none()
+    }
+
+    fn needs_supporting_entity(&self) -> bool {
+        self.supporting_text_key.is_some() || self.error_text_key.is_some()
+    }
+}
+
+fn resolve_icon_id(icon: &str) -> Option<crate::icons::material_icons::IconId> {
     let icon = icon.trim();
     if icon.is_empty() {
         return None;
     }
 
-    // If the caller passed an actual icon glyph (e.g. ICON_EMAIL.to_string()), keep it.
-    if icon.chars().count() == 1 {
-        return icon.chars().next();
-    }
-
-    // Otherwise treat it as an icon name.
     icon_by_name(icon)
 }
 
@@ -32,6 +49,9 @@ pub struct TextFieldPlugin;
 
 impl Plugin for TextFieldPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<TextFieldChangeEvent>()
             .add_message::<TextFieldSubmitEvent>()
             .init_resource::<ActiveTextField>()
@@ -45,6 +65,8 @@ impl Plugin for TextFieldPlugin {
                     text_field_focus_system,
                     text_field_end_icon_click_system,
                     text_field_input_system,
+                    text_field_formatter_system,
+                    text_field_localization_system,
                     text_field_caret_blink_system,
                     text_field_label_system,
                     text_field_placeholder_system,
@@ -55,6 +77,92 @@ impl Plugin for TextFieldPlugin {
                 )
                     .chain(),
             );
+    }
+}
+
+fn resolve_language_tag_for_entity(
+    mut entity: Entity,
+    child_of: &Query<&ChildOf>,
+    overrides: &Query<&MaterialLanguageOverride>,
+    global: &MaterialLanguage,
+) -> String {
+    if let Ok(ov) = overrides.get(entity) {
+        return ov.tag.clone();
+    }
+
+    while let Ok(parent) = child_of.get(entity) {
+        entity = parent.parent();
+        if let Ok(ov) = overrides.get(entity) {
+            return ov.tag.clone();
+        }
+    }
+
+    global.tag.clone()
+}
+
+fn text_field_localization_system(
+    i18n: Option<Res<MaterialI18n>>,
+    language: Option<Res<MaterialLanguage>>,
+    child_of: Query<&ChildOf>,
+    overrides: Query<&MaterialLanguageOverride>,
+    mut fields: ParamSet<(
+        Query<(Entity, &mut MaterialTextField, &TextFieldLocalization)>,
+        Query<
+            (Entity, &mut MaterialTextField, &TextFieldLocalization),
+            Or<(Added<TextFieldLocalization>, Changed<TextFieldLocalization>)>,
+        >,
+    )>,
+) {
+    let (Some(i18n), Some(language)) = (i18n, language) else {
+        return;
+    };
+
+    let global_changed = i18n.is_changed() || language.is_changed();
+
+    let apply = |entity: Entity, mut field: Mut<MaterialTextField>, loc: &TextFieldLocalization| {
+        if loc.is_empty() {
+            return;
+        }
+
+        let lang = resolve_language_tag_for_entity(entity, &child_of, &overrides, &language);
+
+        if let Some(key) = &loc.label_key {
+            let resolved = i18n.translate(&lang, key).unwrap_or(key.as_str());
+            if field.label.as_deref() != Some(resolved) {
+                field.label = Some(resolved.to_string());
+            }
+        }
+
+        if let Some(key) = &loc.placeholder_key {
+            let resolved = i18n.translate(&lang, key).unwrap_or(key.as_str());
+            if field.placeholder.as_str() != resolved {
+                field.placeholder = resolved.to_string();
+            }
+        }
+
+        if let Some(key) = &loc.supporting_text_key {
+            let resolved = i18n.translate(&lang, key).unwrap_or(key.as_str());
+            if field.supporting_text.as_deref() != Some(resolved) {
+                field.supporting_text = Some(resolved.to_string());
+            }
+        }
+
+        if let Some(key) = &loc.error_text_key {
+            let resolved = i18n.translate(&lang, key).unwrap_or(key.as_str());
+            if field.error_text.as_deref() != Some(resolved) {
+                field.error_text = Some(resolved.to_string());
+            }
+        }
+    };
+
+    if global_changed {
+        for (entity, field, loc) in fields.p0().iter_mut() {
+            apply(entity, field, loc);
+        }
+    } else {
+        for (entity, field, loc) in fields.p1().iter_mut() {
+            apply(entity, field, loc);
+        }
     }
 }
 
@@ -171,7 +279,7 @@ pub enum InputType {
 
 /// Material text field component
 ///
-/// Matches properties from Material Android TextInputLayout:
+/// Matches properties from the reference `TextInputLayout`:
 /// - Box background mode (filled/outlined)
 /// - Box stroke width and colors
 /// - Box corner radii
@@ -439,21 +547,19 @@ impl MaterialTextField {
     pub fn effective_trailing_icon(&self) -> Option<&str> {
         match self.end_icon_mode {
             EndIconMode::None => self.trailing_icon.as_deref(),
-            EndIconMode::PasswordToggle => {
-                Some(if self.password_visible {
-                    "\u{E8F4}"
-                } else {
-                    "\u{E8F5}"
-                }) // visibility / visibility_off
-            }
+            EndIconMode::PasswordToggle => Some(if self.password_visible {
+                "visibility"
+            } else {
+                "visibility_off"
+            }),
             EndIconMode::ClearText => {
                 if self.has_content {
-                    Some("\u{E5CD}")
+                    Some(ICON_CLOSE)
                 } else {
                     None
-                } // close icon
+                }
             }
-            EndIconMode::DropdownMenu => Some("\u{E5C5}"), // arrow_drop_down
+            EndIconMode::DropdownMenu => Some("arrow_drop_down"),
             EndIconMode::Custom => self.trailing_icon.as_deref(),
         }
     }
@@ -570,6 +676,132 @@ pub struct TextFieldChangeEvent {
 pub struct TextFieldSubmitEvent {
     pub entity: Entity,
     pub value: String,
+}
+
+// ============================================================================
+// Formatters (Android-style "TextWatcher" idea)
+// ============================================================================
+
+/// Optional text formatting + validation behavior attached to a `MaterialTextField`.
+///
+/// This is modeled after Android's `TextWatcher` approach: as the user types,
+/// a formatter can normalize the value (e.g. auto-insert delimiters) and
+/// optionally surface format errors.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum TextFieldFormatter {
+    /// No formatting/validation.
+    #[default]
+    None,
+    /// Date format: `MM/DD/YYYY`.
+    DateMmDdYyyy,
+    /// Date format driven by a `DateInputPattern`.
+    DatePattern(DateInputPattern),
+}
+
+/// Tracks whether the current error state was set by the formatter.
+///
+/// This prevents the formatter system from clearing errors that were set by
+/// higher-level widgets (e.g. date picker out-of-range or invalid-range errors).
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct TextFieldFormatState {
+    pub(crate) format_error: bool,
+}
+
+fn normalize_date_by_pattern(input: &str, pattern: DateInputPattern) -> String {
+    pattern.normalize_digits(input)
+}
+
+fn is_valid_complete_date_by_pattern(input: &str, pattern: DateInputPattern) -> bool {
+    // Keep this intentionally "basic" (format-level validation).
+    // Higher-level widgets (like date pickers) can do constraint validation.
+    use crate::date_picker::Date;
+
+    let Some((year, month, day)) = pattern.try_parse_complete(input) else {
+        return false;
+    };
+
+    Date::new(year, month, day).is_valid()
+}
+
+/// Apply formatter normalization/format validation for fields that opt-in.
+///
+/// Runs immediately after `text_field_input_system` in the same chained stage.
+fn text_field_formatter_system(
+    mut fields: Query<(
+        &TextFieldFormatter,
+        &mut MaterialTextField,
+        &mut TextFieldFormatState,
+    )>,
+    mut change_events: MessageReader<TextFieldChangeEvent>,
+) {
+    for ev in change_events.read() {
+        let Ok((formatter, mut field, mut state)) = fields.get_mut(ev.entity) else {
+            continue;
+        };
+
+        match *formatter {
+            TextFieldFormatter::None => {}
+            TextFieldFormatter::DateMmDdYyyy => {
+                let pattern = DateInputPattern::new(DateFieldOrder::Mdy, '/');
+
+                // Normalize (auto-insert delimiters).
+                let normalized = normalize_date_by_pattern(&field.value, pattern);
+                if field.value != normalized {
+                    field.value = normalized;
+                }
+                field.has_content = !field.value.is_empty();
+
+                // Match Android: don't validate until complete.
+                if field.value.is_empty() || field.value.len() < pattern.formatted_len() {
+                    if state.format_error {
+                        field.error = false;
+                        field.error_text = None;
+                        state.format_error = false;
+                    }
+                    continue;
+                }
+
+                if !is_valid_complete_date_by_pattern(&field.value, pattern) {
+                    field.error = true;
+                    field.error_text = Some(format!("Invalid format. Use {}", pattern.hint()));
+                    state.format_error = true;
+                } else if state.format_error {
+                    // Only clear if we set the error.
+                    field.error = false;
+                    field.error_text = None;
+                    state.format_error = false;
+                }
+            }
+            TextFieldFormatter::DatePattern(pattern) => {
+                // Normalize (auto-insert delimiters).
+                let normalized = normalize_date_by_pattern(&field.value, pattern);
+                if field.value != normalized {
+                    field.value = normalized;
+                }
+                field.has_content = !field.value.is_empty();
+
+                // Match Android: don't validate until complete.
+                if field.value.is_empty() || field.value.len() < pattern.formatted_len() {
+                    if state.format_error {
+                        field.error = false;
+                        field.error_text = None;
+                        state.format_error = false;
+                    }
+                    continue;
+                }
+
+                if !is_valid_complete_date_by_pattern(&field.value, pattern) {
+                    field.error = true;
+                    field.error_text = Some(format!("Invalid format. Use {}", pattern.hint()));
+                    state.format_error = true;
+                } else if state.format_error {
+                    field.error = false;
+                    field.error_text = None;
+                    state.format_error = false;
+                }
+            }
+        }
+    }
 }
 
 /// Text field dimensions
@@ -942,7 +1174,7 @@ fn text_field_placeholder_system(
     let Some(theme) = theme else { return };
 
     for (field_entity, field) in changed_fields.iter() {
-        // Android M3 placeholder behavior:
+        // Reference M3 placeholder behavior:
         // - Placeholder is a separate layer.
         // - Shown only when the label is floating (hint collapsed) and the field is empty.
         // We only enable this when a label exists; otherwise placeholder acts as the expanded hint.
@@ -1051,6 +1283,8 @@ fn text_field_style_system(
 pub struct TextFieldBuilder {
     text_field: MaterialTextField,
     width: Val,
+    formatter: TextFieldFormatter,
+    localization: TextFieldLocalization,
 }
 
 impl TextFieldBuilder {
@@ -1059,7 +1293,28 @@ impl TextFieldBuilder {
         Self {
             text_field: MaterialTextField::new(),
             width: Val::Px(TEXT_FIELD_MIN_WIDTH),
+            formatter: TextFieldFormatter::None,
+            localization: TextFieldLocalization::default(),
         }
+    }
+
+    /// Attach a formatter to this text field.
+    pub fn formatter(mut self, formatter: TextFieldFormatter) -> Self {
+        self.formatter = formatter;
+        self
+    }
+
+    /// Convenience: set up a date field in `MM/DD/YYYY` format.
+    pub fn date_mm_dd_yyyy(self) -> Self {
+        self.date_pattern(DateInputPattern::new(DateFieldOrder::Mdy, '/'))
+    }
+
+    /// Convenience: set up a date field with a specific input pattern.
+    pub fn date_pattern(self, pattern: DateInputPattern) -> Self {
+        self.formatter(TextFieldFormatter::DatePattern(pattern))
+            .placeholder(pattern.hint())
+            .input_type(InputType::Number)
+            .max_length(pattern.formatted_len())
     }
 
     /// Set variant
@@ -1091,15 +1346,35 @@ impl TextFieldBuilder {
         self
     }
 
+    /// Set placeholder from i18n key.
+    pub fn placeholder_key(mut self, key: impl Into<String>) -> Self {
+        self.localization.placeholder_key = Some(key.into());
+        self
+    }
+
     /// Set label
     pub fn label(mut self, label: impl Into<String>) -> Self {
         self.text_field.label = Some(label.into());
         self
     }
 
+    /// Set label from i18n key.
+    pub fn label_key(mut self, key: impl Into<String>) -> Self {
+        self.text_field.label = Some(String::new());
+        self.localization.label_key = Some(key.into());
+        self
+    }
+
     /// Set supporting text
     pub fn supporting_text(mut self, text: impl Into<String>) -> Self {
         self.text_field.supporting_text = Some(text.into());
+        self
+    }
+
+    /// Set supporting text from i18n key.
+    pub fn supporting_text_key(mut self, key: impl Into<String>) -> Self {
+        self.text_field.supporting_text = Some(String::new());
+        self.localization.supporting_text_key = Some(key.into());
         self
     }
 
@@ -1155,6 +1430,14 @@ impl TextFieldBuilder {
         self
     }
 
+    /// Set error text from i18n key.
+    pub fn error_text_key(mut self, key: impl Into<String>) -> Self {
+        self.text_field.error_text = Some(String::new());
+        self.localization.error_text_key = Some(key.into());
+        self.text_field.error = true;
+        self
+    }
+
     /// Set max length
     pub fn max_length(mut self, max: usize) -> Self {
         self.text_field.max_length = Some(max);
@@ -1175,6 +1458,9 @@ impl TextFieldBuilder {
 
         (
             self.text_field,
+            self.formatter,
+            TextFieldFormatState::default(),
+            self.localization,
             Button,
             Interaction::None,
             Node {
@@ -1356,7 +1642,8 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
             )
         };
 
-        let should_spawn_supporting = !supporting_display.is_empty();
+        let should_spawn_supporting =
+            !supporting_display.is_empty() || builder.localization.needs_supporting_entity();
 
         // Wrapper so supporting/error text can appear below the 56px field.
         self.spawn(Node {
@@ -1373,7 +1660,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                 // Leading icon (start icon)
                 let leading_icon_visible = leading_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -1398,14 +1685,15 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = leading_icon_text
+                        let icon_id = leading_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldLeadingIcon,
                             TextFieldLeadingIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -1515,10 +1803,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                     });
 
                 // End icon (trailing icon)
-                let end_icon_visible = end_icon_text
-                    .as_deref()
-                    .and_then(resolve_icon_codepoint)
-                    .is_some();
+                let end_icon_visible = end_icon_text.as_deref().and_then(resolve_icon_id).is_some();
                 container
                     .spawn((
                         TextFieldEndIconButton,
@@ -1542,14 +1827,15 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = end_icon_text
+                        let icon_id = end_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldEndIcon,
                             TextFieldEndIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -1615,7 +1901,8 @@ pub fn spawn_text_field_control(
         )
     };
 
-    let should_spawn_supporting = !supporting_display.is_empty();
+    let should_spawn_supporting =
+        !supporting_display.is_empty() || builder.localization.needs_supporting_entity();
 
     let mut spawned_field: Option<Entity> = None;
     parent
@@ -1634,7 +1921,7 @@ pub fn spawn_text_field_control(
                 // Leading icon (start icon)
                 let leading_icon_visible = leading_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -1659,14 +1946,15 @@ pub fn spawn_text_field_control(
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = leading_icon_text
+                        let icon_id = leading_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldLeadingIcon,
                             TextFieldLeadingIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -1776,10 +2064,7 @@ pub fn spawn_text_field_control(
                     });
 
                 // End icon (trailing icon)
-                let end_icon_visible = end_icon_text
-                    .as_deref()
-                    .and_then(resolve_icon_codepoint)
-                    .is_some();
+                let end_icon_visible = end_icon_text.as_deref().and_then(resolve_icon_id).is_some();
                 container
                     .spawn((
                         TextFieldEndIconButton,
@@ -1803,14 +2088,15 @@ pub fn spawn_text_field_control(
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = end_icon_text
+                        let icon_id = end_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldEndIcon,
                             TextFieldEndIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -1873,7 +2159,8 @@ pub fn spawn_text_field_control_with<M: Component>(
         )
     };
 
-    let should_spawn_supporting = !supporting_display.is_empty();
+    let should_spawn_supporting =
+        !supporting_display.is_empty() || builder.localization.needs_supporting_entity();
 
     let mut spawned_field: Option<Entity> = None;
     parent
@@ -1893,7 +2180,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                 // Leading icon (start icon)
                 let leading_icon_visible = leading_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -1918,14 +2205,15 @@ pub fn spawn_text_field_control_with<M: Component>(
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = leading_icon_text
+                        let icon_id = leading_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldLeadingIcon,
                             TextFieldLeadingIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -2035,10 +2323,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                     });
 
                 // End icon (trailing icon)
-                let end_icon_visible = end_icon_text
-                    .as_deref()
-                    .and_then(resolve_icon_codepoint)
-                    .is_some();
+                let end_icon_visible = end_icon_text.as_deref().and_then(resolve_icon_id).is_some();
                 container
                     .spawn((
                         TextFieldEndIconButton,
@@ -2062,14 +2347,15 @@ pub fn spawn_text_field_control_with<M: Component>(
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = end_icon_text
+                        let icon_id = end_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldEndIcon,
                             TextFieldEndIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -2164,25 +2450,22 @@ fn text_field_icon_system(
         let icon_color = field.icon_color(&theme);
 
         // Leading
-        let leading_codepoint = field
-            .leading_icon
-            .as_deref()
-            .and_then(resolve_icon_codepoint);
+        let leading_icon_id = field.leading_icon.as_deref().and_then(resolve_icon_id);
         for (owner, mut icon, mut style) in leading_icons.iter_mut() {
             if owner.0 != field_entity {
                 continue;
             }
-            if let Some(cp) = leading_codepoint {
-                icon.codepoint = cp;
-                style.color = Some(icon_color);
-                style.size = Some(24.0);
+            if let Some(id) = leading_icon_id {
+                icon.id = id;
+                style.color = icon_color;
+                style.size = 24.0;
             }
         }
         for (owner, mut node) in leading_buttons.iter_mut() {
             if owner.0 != field_entity {
                 continue;
             }
-            node.display = if leading_codepoint.is_some() {
+            node.display = if leading_icon_id.is_some() {
                 Display::Flex
             } else {
                 Display::None
@@ -2190,24 +2473,22 @@ fn text_field_icon_system(
         }
 
         // End icon (trailing)
-        let end_codepoint = field
-            .effective_trailing_icon()
-            .and_then(resolve_icon_codepoint);
+        let end_icon_id = field.effective_trailing_icon().and_then(resolve_icon_id);
         for (owner, mut icon, mut style) in end_icons.iter_mut() {
             if owner.0 != field_entity {
                 continue;
             }
-            if let Some(cp) = end_codepoint {
-                icon.codepoint = cp;
-                style.color = Some(icon_color);
-                style.size = Some(24.0);
+            if let Some(id) = end_icon_id {
+                icon.id = id;
+                style.color = icon_color;
+                style.size = 24.0;
             }
         }
         for (owner, mut node) in end_buttons.iter_mut() {
             if owner.0 != field_entity {
                 continue;
             }
-            node.display = if end_codepoint.is_some() {
+            node.display = if end_icon_id.is_some() {
                 Display::Flex
             } else {
                 Display::None

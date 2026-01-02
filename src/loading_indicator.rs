@@ -48,6 +48,9 @@ pub struct LoadingIndicatorPlugin;
 
 impl Plugin for LoadingIndicatorPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         // Embed the shader so downstream apps don't need to copy it into their `assets/` folder.
         // Path is relative to this source file (bevy_asset::load_internal_asset! uses include_str!).
         bevy::asset::load_internal_asset!(

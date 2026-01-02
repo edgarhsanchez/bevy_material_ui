@@ -6,9 +6,9 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::switch::SpawnSwitchChild;
 
 use crate::showcase::common::*;
+use crate::showcase::i18n_helpers::spawn_switch_i18n;
 
 /// Spawn the switches section content
 pub fn spawn_switches_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
@@ -22,7 +22,9 @@ pub fn spawn_switches_section(parent: &mut ChildSpawnerCommands, theme: &Materia
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.switches.title",
                 "Switches",
+                "showcase.section.switches.description",
                 "Toggle on/off with sliding thumb animation",
             );
 
@@ -34,28 +36,50 @@ pub fn spawn_switches_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     ..default()
                 })
                 .with_children(|col| {
-                    // Simple, clean API - just pass theme, selected state, and label
-                    col.spawn_switch(theme, true, "Wi-Fi");
-                    col.spawn_switch(theme, false, "Bluetooth");
-                    col.spawn_switch(theme, false, "Dark Mode");
+                    spawn_switch_i18n(col, theme, true, "showcase.switches.wifi", "Wi-Fi");
+                    spawn_switch_i18n(
+                        col,
+                        theme,
+                        false,
+                        "showcase.switches.bluetooth",
+                        "Bluetooth",
+                    );
+                    spawn_switch_i18n(
+                        col,
+                        theme,
+                        false,
+                        "showcase.switches.dark_mode",
+                        "Dark Mode",
+                    );
                 });
 
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create switches with the simple spawn API
+                r#"// Without i18n - simple API
 parent.spawn_switch(&theme, false, "Notifications");
-parent.spawn_switch(&theme, true, "Auto-update");
 
-// Or use the builder for more control
-parent.spawn_switch_with(
-    &theme,
-    SwitchBuilder::new()
-        .selected(true)
-        .with_icon()
-        .disabled(false),
-    "Advanced Mode"
-);
+// With i18n - use LocalizedText component
+parent.spawn(Node::default()).with_children(|row| {
+    row.spawn((
+        MaterialSwitch::new().selected(true),
+        Button,
+        // ... other button components
+    )).with_children(|switch| {
+        // Add switch handle
+        // ...
+    });
+    
+    // Add localized label
+    row.spawn((
+        Text::new(""),
+        LocalizedText::new("settings.wifi")
+            .with_default("Wi-Fi"),
+        TextFont { font_size: 14.0, ..default() },
+        TextColor(theme.on_surface),
+        NeedsInternationalFont,
+    ));
+});
 
 // Listen for changes
 fn handle_switch_changes(

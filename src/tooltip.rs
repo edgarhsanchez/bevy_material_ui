@@ -10,6 +10,7 @@ use bevy::prelude::*;
 use bevy::ui::UiGlobalTransform;
 
 use crate::{
+    i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
     motion::{ease_standard_accelerate, ease_standard_decelerate},
     theme::MaterialTheme,
     tokens::{CornerRadius, Duration, Spacing},
@@ -24,14 +25,123 @@ pub struct TooltipPlugin;
 
 impl Plugin for TooltipPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_systems(Startup, setup_tooltip_overlay).add_systems(
             Update,
             (
+                tooltip_localization_system,
                 tooltip_hover_system,
                 tooltip_animation_system,
                 tooltip_position_system,
             ),
         );
+    }
+}
+
+/// Optional localization keys for a tooltip trigger.
+#[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
+pub struct TooltipLocalization {
+    pub text_key: Option<String>,
+}
+
+#[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
+struct TooltipLocalizationState {
+    last_revision: u64,
+    last_language: String,
+}
+
+fn resolve_language_tag_for_entity(
+    mut entity: Entity,
+    child_of: &Query<&ChildOf>,
+    overrides: &Query<&MaterialLanguageOverride>,
+    global: &MaterialLanguage,
+) -> String {
+    if let Ok(ov) = overrides.get(entity) {
+        return ov.tag.clone();
+    }
+
+    while let Ok(parent) = child_of.get(entity) {
+        entity = parent.parent();
+        if let Ok(ov) = overrides.get(entity) {
+            return ov.tag.clone();
+        }
+    }
+
+    global.tag.clone()
+}
+
+fn tooltip_localization_system(
+    i18n: Option<Res<MaterialI18n>>,
+    language: Option<Res<MaterialLanguage>>,
+    child_of: Query<&ChildOf>,
+    overrides: Query<&MaterialLanguageOverride>,
+    children: Query<&Children>,
+    mut triggers: Query<(
+        Entity,
+        &TooltipLocalization,
+        &mut TooltipTrigger,
+        Option<&mut TooltipLocalizationState>,
+    )>,
+    mut tooltips: Query<&mut Tooltip>,
+    mut tooltip_texts: Query<&mut Text, With<TooltipText>>,
+    mut commands: Commands,
+) {
+    let (Some(i18n), Some(language)) = (i18n, language) else {
+        return;
+    };
+
+    let global_revision = i18n.revision();
+
+    for (entity, loc, mut trigger, state) in triggers.iter_mut() {
+        let Some(key) = loc.text_key.as_deref() else {
+            continue;
+        };
+
+        let resolved_language =
+            resolve_language_tag_for_entity(entity, &child_of, &overrides, &language);
+
+        let needs_update = match &state {
+            Some(s) => s.last_revision != global_revision || s.last_language != resolved_language,
+            None => true,
+        };
+
+        if !needs_update {
+            continue;
+        }
+
+        if let Some(v) = i18n.translate(&resolved_language, key) {
+            let next = v.to_string();
+
+            if trigger.text != next {
+                trigger.text = next.clone();
+            }
+
+            if let Some(tooltip_entity) = trigger.tooltip_entity {
+                if let Ok(mut tooltip) = tooltips.get_mut(tooltip_entity) {
+                    tooltip.text = next.clone();
+                }
+
+                if let Ok(kids) = children.get(tooltip_entity) {
+                    for child in kids.iter() {
+                        if let Ok(mut text) = tooltip_texts.get_mut(child) {
+                            *text = Text::new(next.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(mut state) = state {
+            state.last_revision = global_revision;
+            state.last_language = resolved_language;
+        } else {
+            commands.entity(entity).insert(TooltipLocalizationState {
+                last_revision: global_revision,
+                last_language: resolved_language,
+            });
+        }
     }
 }
 

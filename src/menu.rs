@@ -8,9 +8,12 @@
 use bevy::prelude::*;
 use bevy::ui::BoxShadow;
 
+use std::collections::HashMap;
+
 use crate::{
     elevation::Elevation,
     ripple::RippleHost,
+    telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
 };
@@ -20,6 +23,9 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<MenuOpenEvent>()
             .add_message::<MenuCloseEvent>()
             .add_message::<MenuItemSelectEvent>()
@@ -30,8 +36,84 @@ impl Plugin for MenuPlugin {
                     menu_shadow_system,
                     menu_item_interaction_system,
                     menu_item_style_system,
+                    menu_telemetry_system,
                 ),
             );
+    }
+}
+
+fn sanitize_test_id_component(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    for ch in raw.chars() {
+        let c = ch.to_ascii_lowercase();
+        if c.is_ascii_alphanumeric() {
+            out.push(c);
+        } else if (c.is_ascii_whitespace() || c == '-') && !out.ends_with('_') {
+            out.push('_');
+        }
+    }
+
+    while out.ends_with('_') {
+        out.pop();
+    }
+
+    if out.is_empty() {
+        "item".to_string()
+    } else {
+        out
+    }
+}
+
+fn menu_telemetry_system(
+    mut commands: Commands,
+    telemetry: Option<Res<TelemetryConfig>>,
+    menus: Query<(&TestId, &Children), With<MaterialMenu>>,
+    children_query: Query<&Children>,
+    menu_items: Query<&MaterialMenuItem>,
+    menu_dividers: Query<(), With<MenuDivider>>,
+) {
+    let Some(telemetry) = telemetry else {
+        return;
+    };
+    if !telemetry.enabled {
+        return;
+    }
+
+    for (test_id, children) in menus.iter() {
+        let base = test_id.id();
+        let mut item_counts: HashMap<String, u32> = HashMap::new();
+        let mut divider_index: u32 = 0;
+
+        let mut stack: Vec<Entity> = children.iter().collect();
+        while let Some(entity) = stack.pop() {
+            if let Ok(item) = menu_items.get(entity) {
+                let slug = sanitize_test_id_component(item.label.as_str());
+                let count = item_counts.entry(slug.clone()).or_insert(0);
+                *count += 1;
+                let unique = if *count == 1 {
+                    slug
+                } else {
+                    format!("{slug}_{}", *count)
+                };
+
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/item/{unique}"),
+                });
+            }
+
+            if menu_dividers.get(entity).is_ok() {
+                divider_index += 1;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/divider/{divider_index}"),
+                });
+            }
+
+            if let Ok(children) = children_query.get(entity) {
+                stack.extend(children.iter());
+            }
+        }
     }
 }
 

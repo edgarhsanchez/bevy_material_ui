@@ -9,11 +9,12 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(MaterialUiPlugin)
+        .add_plugins(TelemetryPlugin)
         .add_systems(Startup, setup)
         .run();
 }
 
-fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<TelemetryConfig>) {
     commands.spawn(Camera2d);
 
     commands
@@ -29,6 +30,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
             },
             BackgroundColor(theme.surface),
         ))
+        .insert_test_id("list_demo/root", &telemetry)
         .with_children(|root| {
             root.spawn((
                 Node {
@@ -41,12 +43,14 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
                 },
                 BackgroundColor(theme.surface_container_low),
             ))
+            .insert_test_id("list_demo/panel", &telemetry)
             .with_children(|panel| {
                 panel
                     .spawn((
                         ListBuilder::new().max_height(360.0).build_scrollable(),
                         BackgroundColor(theme.surface),
                     ))
+                    .insert_test_id("list_demo/list", &telemetry)
                     .with_children(|list| {
                         for i in 1..=20 {
                             let builder = if i % 3 == 0 {

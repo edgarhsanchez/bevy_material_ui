@@ -33,6 +33,9 @@ impl Plugin for SwitchPlugin {
                 switch_theme_refresh_system,
             ),
         );
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
     }
 }
 

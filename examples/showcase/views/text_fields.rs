@@ -18,7 +18,9 @@ pub fn spawn_text_fields_section(parent: &mut ChildSpawnerCommands, theme: &Mate
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.text_fields.title",
                 "Text Fields",
+                "showcase.section.text_fields.description",
                 "Text input with Filled and Outlined variants",
             );
 
@@ -68,6 +70,9 @@ pub fn spawn_text_fields_section(parent: &mut ChildSpawnerCommands, theme: &Mate
                             .label("Email")
                             .placeholder("name@example.com")
                             .supporting_text("Must look like name@example.com")
+                            .label_key("showcase.text_fields.email.label")
+                            .placeholder_key("showcase.text_fields.email.placeholder")
+                            .supporting_text_key("showcase.text_fields.email.supporting")
                             .input_type(InputType::Email)
                             .outlined()
                             .width(Val::Px(240.0)),

@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 use bevy_material_ui::{
     loading_indicator::{LoadingIndicatorBuilder, ShapeMorphMaterial, SpawnLoadingIndicatorChild},
+    telemetry::TelemetryPlugin,
     theme::MaterialTheme,
     MaterialUiPlugin,
 };
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, MaterialUiPlugin))
+        .add_plugins((DefaultPlugins, MaterialUiPlugin, TelemetryPlugin))
         .add_systems(Startup, setup)
         .run();
 }

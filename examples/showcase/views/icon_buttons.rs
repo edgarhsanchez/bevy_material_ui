@@ -1,7 +1,6 @@
 //! Icon buttons view for the showcase application.
 
 use bevy::prelude::*;
-use bevy_material_ui::icons::{ICON_ADD, ICON_DELETE, ICON_EDIT, ICON_FAVORITE, ICON_STAR};
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
@@ -10,7 +9,7 @@ use crate::showcase::common::*;
 pub fn spawn_icon_buttons_section(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     parent
         .spawn(Node {
@@ -22,11 +21,11 @@ pub fn spawn_icon_buttons_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.icon_buttons.title",
                 "Icon Buttons",
+                "showcase.section.icon_buttons.description",
                 "Icon-only buttons for actions - Standard, Filled, Tonal, and Outlined variants",
             );
-
-            let icon_font_clone = icon_font.clone();
             section
                 .spawn(Node {
                     flex_direction: FlexDirection::Row,
@@ -41,25 +40,16 @@ pub fn spawn_icon_buttons_section(
                     spawn_icon_button_demo(
                         row,
                         theme,
-                        &icon_font_clone,
                         "favorite",
                         IconButtonVariant::Standard,
                         "Standard",
                     );
                     // Filled icon button
-                    spawn_icon_button_demo(
-                        row,
-                        theme,
-                        &icon_font_clone,
-                        "add",
-                        IconButtonVariant::Filled,
-                        "Filled",
-                    );
+                    spawn_icon_button_demo(row, theme, "add", IconButtonVariant::Filled, "Filled");
                     // Filled Tonal icon button
                     spawn_icon_button_demo(
                         row,
                         theme,
-                        &icon_font_clone,
                         "edit",
                         IconButtonVariant::FilledTonal,
                         "Tonal",
@@ -68,7 +58,6 @@ pub fn spawn_icon_buttons_section(
                     spawn_icon_button_demo(
                         row,
                         theme,
-                        &icon_font_clone,
                         "delete",
                         IconButtonVariant::Outlined,
                         "Outlined",
@@ -103,7 +92,6 @@ commands.spawn((
 fn spawn_icon_button_demo(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: &Handle<Font>,
     icon_name: &str,
     variant: IconButtonVariant,
     label: &str,
@@ -113,15 +101,6 @@ fn spawn_icon_button_demo(
     let icon_color = icon_btn.icon_color(theme);
     let has_border = variant == IconButtonVariant::Outlined;
 
-    // Map icon names to actual icon characters
-    let icon_char = match icon_name {
-        "favorite" => ICON_FAVORITE,
-        "add" => ICON_ADD,
-        "edit" => ICON_EDIT,
-        "delete" => ICON_DELETE,
-        _ => ICON_STAR,
-    };
-
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -130,7 +109,6 @@ fn spawn_icon_button_demo(
             ..default()
         })
         .with_children(|col| {
-            let icon_font_btn = icon_font.clone();
             col.spawn((
                 IconButtonMarker,
                 icon_btn,
@@ -154,15 +132,11 @@ fn spawn_icon_button_demo(
                 BorderRadius::all(Val::Px(20.0)),
             ))
             .with_children(|btn| {
-                btn.spawn((
-                    Text::new(icon_char.to_string()),
-                    TextFont {
-                        font: icon_font_btn,
-                        font_size: 24.0,
-                        ..default()
-                    },
-                    TextColor(icon_color),
-                ));
+                if let Some(icon) =
+                    MaterialIcon::from_name(icon_name).or_else(|| MaterialIcon::from_name("star"))
+                {
+                    btn.spawn(icon.with_size(24.0).with_color(icon_color));
+                }
             });
 
             col.spawn((

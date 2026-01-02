@@ -17,7 +17,9 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.progress.title",
                 "Progress Indicators",
+                "showcase.section.progress.description",
                 "Visual feedback for loading and progress states",
             );
 
@@ -44,7 +46,9 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     })
                     .with_children(|row| {
                         row.spawn((
-                            Text::new("Indeterminate"),
+                            Text::new(""),
+                            LocalizedText::new("showcase.progress.indeterminate")
+                                .with_default("Indeterminate"),
                             TextFont {
                                 font_size: 12.0,
                                 ..default()
@@ -54,12 +58,14 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                                 width: Val::Px(90.0),
                                 ..default()
                             },
+                            NeedsInternationalFont,
                         ));
 
                         row.spawn(
                             LinearProgressBuilder::new()
                                 .indeterminate()
                                 .width(Val::Px(200.0))
+                                .height_px(8.0)
                                 .build(theme),
                         );
                     });
@@ -129,6 +135,7 @@ fn spawn_animated_linear_progress(
                 LinearProgressBuilder::new()
                     .progress(initial)
                     .width(Val::Px(200.0))
+                    .height_px(8.0)
                     .build(theme),
             ));
         });

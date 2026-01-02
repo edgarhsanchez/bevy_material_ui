@@ -13,7 +13,7 @@ use crate::showcase::common::*;
 pub fn spawn_menus_section(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     parent
         .spawn(Node {
@@ -25,11 +25,11 @@ pub fn spawn_menus_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.menus.title",
                 "Menus",
+                "showcase.section.menus.description",
                 "Dropdown menus with selectable items",
             );
-
-            let icon_font_clone = icon_font.clone();
             // Menu trigger and dropdown container
             section
                 .spawn(Node {
@@ -63,15 +63,9 @@ pub fn spawn_menus_section(
                             BorderRadius::all(Val::Px(8.0)),
                         ))
                         .with_children(|btn| {
-                            btn.spawn((
-                                Text::new(ICON_MORE_VERT.to_string()),
-                                TextFont {
-                                    font: icon_font_clone.clone(),
-                                    font_size: 20.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface),
-                            ));
+                            if let Some(icon) = MaterialIcon::from_name(ICON_MORE_VERT) {
+                                btn.spawn(icon.with_size(20.0).with_color(theme.on_surface));
+                            }
                             btn.spawn((
                                 MenuSelectedText,
                                 Text::new("Options"),
@@ -81,15 +75,9 @@ pub fn spawn_menus_section(
                                 },
                                 TextColor(theme.on_surface),
                             ));
-                            btn.spawn((
-                                Text::new(ICON_EXPAND_MORE.to_string()),
-                                TextFont {
-                                    font: icon_font_clone.clone(),
-                                    font_size: 20.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface),
-                            ));
+                            if let Some(icon) = MaterialIcon::from_name(ICON_EXPAND_MORE) {
+                                btn.spawn(icon.with_size(20.0).with_color(theme.on_surface));
+                            }
                         });
 
                     // Menu dropdown (hidden by default)

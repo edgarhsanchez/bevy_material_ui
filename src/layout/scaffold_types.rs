@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::telemetry::TestId;
 
-/// Entities spawned by a scaffold helper.
+/// Entities for common scaffold layouts (navigation + content).
 #[derive(Debug, Clone, Copy)]
 pub struct ScaffoldEntities {
     pub root: Entity,
@@ -10,15 +10,7 @@ pub struct ScaffoldEntities {
     pub content: Entity,
 }
 
-/// Entities for multi-pane layouts.
-#[derive(Debug, Clone, Copy)]
-pub struct PaneEntities {
-    pub primary: Entity,
-    pub secondary: Option<Entity>,
-    pub supporting: Option<Entity>,
-}
-
-/// TestIds for scaffold regions.
+/// TestIds for common scaffold layouts (navigation + content).
 #[derive(Debug, Clone)]
 pub struct ScaffoldTestIds {
     pub root: TestId,
@@ -34,6 +26,14 @@ impl Default for ScaffoldTestIds {
             content: TestId::new("scaffold_content"),
         }
     }
+}
+
+/// Entities for multi-pane layouts.
+#[derive(Debug, Clone, Copy)]
+pub struct PaneEntities {
+    pub primary: Entity,
+    pub secondary: Option<Entity>,
+    pub supporting: Option<Entity>,
 }
 
 /// TestIds for multi-pane layouts.

@@ -1,4 +1,5 @@
 pub mod common;
+pub mod i18n_helpers;
 pub mod navigation;
 pub mod views;
 
@@ -104,7 +105,7 @@ fn setup_ui(
                             width: Val::Percent(100.0),
                             flex_direction: FlexDirection::Column,
                             row_gap: Val::Px(4.0),
-                            overflow: Overflow::scroll_y(),
+                            overflow: Overflow::scroll(),
                             ..default()
                         },
                     ))
@@ -113,8 +114,7 @@ fn setup_ui(
                             spawn_nav_item(nav, &theme, *section, *section == selected.current);
                         }
 
-                        // Framework scrollbar visuals
-                        spawn_scrollbars(nav, &theme, ScrollDirection::Vertical);
+                        // Scrollbars spawn automatically via ScrollPlugin's ensure_scrollbars_system
                     });
             });
 
@@ -336,3 +336,4 @@ fn add_triangle(
     indices.push(start + 1);
     indices.push(start + 2);
 }
+

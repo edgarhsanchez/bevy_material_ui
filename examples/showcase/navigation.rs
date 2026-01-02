@@ -26,15 +26,12 @@ pub fn spawn_nav_item(
     is_selected: bool,
 ) {
     // Create list item with proper selected state
-    let item = MaterialListItem::new(section.display_name()).selected(is_selected);
+    let item = MaterialListItem::new("").selected(is_selected);
     let text_color = item.headline_color(theme);
     let bg_color = item.background_color(theme);
 
     // Create test ID from section name (e.g., "nav_buttons", "nav_sliders")
-    let test_id = format!(
-        "nav_{}",
-        section.display_name().to_lowercase().replace(" ", "_")
-    );
+    let test_id = format!("nav_{}", section.telemetry_name().to_lowercase());
 
     // Spawn with MaterialListItem + NavItem marker + TestId
     parent
@@ -58,7 +55,8 @@ pub fn spawn_nav_item(
             // Item content - headline text with ListItemHeadline marker for automatic color updates
             item_container.spawn((
                 ListItemHeadline,
-                Text::new(section.display_name()),
+                Text::new(""),
+                LocalizedText::new(section.i18n_key()).with_default(section.display_name()),
                 TextFont {
                     font_size: 14.0,
                     ..default()
@@ -72,52 +70,6 @@ pub fn spawn_nav_item(
 ///
 /// Keeps the same `TestId` format as `spawn_nav_item` so automation doesn't need
 /// special-casing.
-pub fn spawn_nav_item_horizontal(
-    parent: &mut ChildSpawnerCommands,
-    theme: &MaterialTheme,
-    section: ComponentSection,
-    is_selected: bool,
-) {
-    let item = MaterialListItem::new(section.display_name()).selected(is_selected);
-    let text_color = item.headline_color(theme);
-    let bg_color = item.background_color(theme);
-
-    let test_id = format!(
-        "nav_{}",
-        section.display_name().to_lowercase().replace(" ", "_")
-    );
-
-    parent
-        .spawn((
-            NavItem(section),
-            TestId::new(test_id),
-            item,
-            Button,
-            Interaction::None,
-            Node {
-                // Fixed width so many items can live in a horizontal scroller.
-                width: Val::Px(160.0),
-                height: Val::Px(48.0),
-                padding: UiRect::axes(Val::Px(12.0), Val::Px(12.0)),
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(8.0)),
-        ))
-        .with_children(|item_container| {
-            item_container.spawn((
-                ListItemHeadline,
-                Text::new(section.display_name()),
-                TextFont {
-                    font_size: 14.0,
-                    ..default()
-                },
-                TextColor(text_color),
-            ));
-        });
-}
-
 // ============================================================================
 // Navigation Systems
 // ============================================================================

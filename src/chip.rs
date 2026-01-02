@@ -21,6 +21,9 @@ pub struct ChipPlugin;
 
 impl Plugin for ChipPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<ChipClickEvent>()
             .add_message::<ChipDeleteEvent>()
             .add_systems(

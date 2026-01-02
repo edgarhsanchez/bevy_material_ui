@@ -6,10 +6,18 @@
 use bevy::prelude::*;
 use bevy_material_ui::{
     button::{ButtonVariant, MaterialButton},
+    card::MaterialCard,
     checkbox::{CheckboxState, MaterialCheckbox},
+    divider::MaterialDivider,
     elevation::{Elevation, ElevationShadow},
+    fab::MaterialFab,
     focus::Focusable,
+    icon_button::MaterialIconButton,
+    list::MaterialListItem,
+    loading_indicator::MaterialLoadingIndicator,
+    radio::MaterialRadio,
     ripple::Ripple,
+    search::MaterialSearchBar,
     slider::MaterialSlider,
     switch::MaterialSwitch,
     theme::MaterialTheme,
@@ -82,6 +90,127 @@ fn bench_entity_spawning(c: &mut Criterion) {
                         Node::default(),
                     )
                 }));
+                black_box(app.world().entities().len())
+            })
+        });
+    }
+
+    // Spawn radio entities
+    for count in [10, 100, 500, 1000].iter() {
+        group.bench_with_input(BenchmarkId::new("radios", count), count, |b, &count| {
+            b.iter(|| {
+                let mut app = setup_app();
+                app.world_mut().spawn_batch((0..count).map(|i| {
+                    (
+                        MaterialRadio::new()
+                            .selected(i % 2 == 0)
+                            .group("test_group"),
+                        Node::default(),
+                    )
+                }));
+                black_box(app.world().entities().len())
+            })
+        });
+    }
+
+    // Spawn FAB entities
+    for count in [10, 100, 500, 1000].iter() {
+        group.bench_with_input(BenchmarkId::new("fabs", count), count, |b, &count| {
+            b.iter(|| {
+                let mut app = setup_app();
+                app.world_mut()
+                    .spawn_batch((0..count).map(|_| (MaterialFab::new("add"), Node::default())));
+                black_box(app.world().entities().len())
+            })
+        });
+    }
+
+    // Spawn icon button entities
+    for count in [10, 100, 500, 1000].iter() {
+        group.bench_with_input(
+            BenchmarkId::new("icon_buttons", count),
+            count,
+            |b, &count| {
+                b.iter(|| {
+                    let mut app = setup_app();
+                    app.world_mut().spawn_batch(
+                        (0..count).map(|_| (MaterialIconButton::new("home"), Node::default())),
+                    );
+                    black_box(app.world().entities().len())
+                })
+            },
+        );
+    }
+
+    // Spawn card entities
+    for count in [10, 100, 500, 1000].iter() {
+        group.bench_with_input(BenchmarkId::new("cards", count), count, |b, &count| {
+            b.iter(|| {
+                let mut app = setup_app();
+                app.world_mut()
+                    .spawn_batch((0..count).map(|_| (MaterialCard::new(), Node::default())));
+                black_box(app.world().entities().len())
+            })
+        });
+    }
+
+    // Spawn list item entities
+    for count in [10, 100, 500, 1000].iter() {
+        group.bench_with_input(BenchmarkId::new("list_items", count), count, |b, &count| {
+            b.iter(|| {
+                let mut app = setup_app();
+                app.world_mut().spawn_batch((0..count).map(|i| {
+                    (
+                        MaterialListItem::new(format!("Item {}", i)),
+                        Node::default(),
+                    )
+                }));
+                black_box(app.world().entities().len())
+            })
+        });
+    }
+
+    // Spawn loading indicator entities
+    for count in [10, 100, 500, 1000].iter() {
+        group.bench_with_input(
+            BenchmarkId::new("loading_indicators", count),
+            count,
+            |b, &count| {
+                b.iter(|| {
+                    let mut app = setup_app();
+                    app.world_mut().spawn_batch(
+                        (0..count).map(|_| (MaterialLoadingIndicator::new(), Node::default())),
+                    );
+                    black_box(app.world().entities().len())
+                })
+            },
+        );
+    }
+
+    // Spawn search bar entities
+    for count in [10, 100, 500, 1000].iter() {
+        group.bench_with_input(
+            BenchmarkId::new("search_bars", count),
+            count,
+            |b, &count| {
+                b.iter(|| {
+                    let mut app = setup_app();
+                    app.world_mut().spawn_batch(
+                        (0..count).map(|_| (MaterialSearchBar::new("Search..."), Node::default())),
+                    );
+                    black_box(app.world().entities().len())
+                })
+            },
+        );
+    }
+
+    // Spawn divider entities
+    for count in [10, 100, 500, 1000].iter() {
+        group.bench_with_input(BenchmarkId::new("dividers", count), count, |b, &count| {
+            b.iter(|| {
+                let mut app = setup_app();
+                app.world_mut()
+                    .spawn_batch((0..count).map(|_| (MaterialDivider::new(), Node::default())));
                 black_box(app.world().entities().len())
             })
         });

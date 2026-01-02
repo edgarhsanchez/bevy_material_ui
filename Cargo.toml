@@ -1,6 +1,6 @@
 [package]
 name = "bevy_material_ui"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 authors = ["Edgar H. Sanchez"]
 description = "Material Design 3 UI components for Bevy game engine"
@@ -33,6 +33,13 @@ rustdoc-args = ["--cfg", "docsrs"]
 # Bevy Game Engine - Latest version
 bevy = "0.17.3"
 serde_json = "1.0"
+thiserror = "1.0"
+
+# Pure Rust CAM16 + HCT solver
+hct-cam16 = "0.1.0"
+
+# Packed embedded icon blob (required).
+google-material-design-icons-bin = "0.1.2"
 
 # Optional clipboard support for text fields (copy/paste)
 arboard = { version = "3.4", optional = true }
@@ -47,7 +54,8 @@ clipboard = ["dep:arboard"]
 [dev-dependencies]
 # No dynamic_linking to avoid Windows linker limit issues
 criterion = { version = "0.5", features = ["html_reports"] }
-ttf-parser = "0.20"
+
+
 
 [[bench]]
 name = "color_benchmarks"

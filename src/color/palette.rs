@@ -7,7 +7,7 @@
 //! The standard tones used in MD3 are:
 //! 0, 4, 6, 10, 12, 17, 20, 22, 24, 30, 40, 50, 60, 70, 80, 87, 90, 92, 94, 95, 96, 98, 99, 100
 
-use super::hct::Hct;
+use super::Hct;
 use bevy::prelude::Color;
 use std::collections::HashMap;
 
@@ -129,13 +129,14 @@ impl CorePalette {
     /// Create a CorePalette from a seed HCT color
     pub fn from_hct(seed: &Hct) -> Self {
         let hue = seed.hue();
-        let _chroma = seed.chroma();
+        let chroma = seed.chroma();
 
         Self {
-            // Material 3 uses fixed chroma targets for its core palettes.
-            // Using the seed's chroma directly makes many seeds look "off" compared to the
-            // reference Material algorithm.
-            primary: TonalPalette::new(hue, 48.0),
+            // Material Design 3 formula: primary uses max(48.0, seed_chroma).
+            // 48.0 is MD3's minimum chroma specification for primary palettes to
+            // maintain sufficient colorfulness, while higher seed chroma values
+            // are preserved to keep highly chromatic seed colors vibrant.
+            primary: TonalPalette::new(hue, chroma.max(48.0)),
 
             // Secondary uses the same hue with reduced chroma (16)
             secondary: TonalPalette::new(hue, 16.0),

@@ -19,6 +19,9 @@ pub struct ToolbarPlugin;
 
 impl Plugin for ToolbarPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<ToolbarNavigationEvent>()
             .add_message::<ToolbarActionEvent>()
             .add_systems(
@@ -58,7 +61,7 @@ pub struct MaterialToolbar {
     /// Title text.
     pub title: String,
     /// Optional navigation icon.
-    pub navigation_icon: Option<MaterialIcon>,
+    pub navigation_icon: Option<String>,
     /// Actions to show on the right side.
     pub actions: Vec<ToolbarAction>,
 }
@@ -73,15 +76,9 @@ impl MaterialToolbar {
         }
     }
 
-    /// Set the navigation icon.
-    pub fn with_navigation_icon(mut self, icon: MaterialIcon) -> Self {
-        self.navigation_icon = Some(icon);
-        self
-    }
-
     /// Set the navigation icon by name.
     pub fn with_navigation_icon_name(mut self, icon_name: &str) -> Self {
-        self.navigation_icon = MaterialIcon::from_name(icon_name);
+        self.navigation_icon = Some(icon_name.to_string());
         self
     }
 
@@ -102,7 +99,7 @@ impl Default for MaterialToolbar {
 #[derive(Debug, Clone)]
 pub struct ToolbarAction {
     /// Icon to display.
-    pub icon: MaterialIcon,
+    pub icon: String,
     /// Action identifier.
     pub id: String,
     /// Whether disabled.
@@ -111,17 +108,17 @@ pub struct ToolbarAction {
 
 impl ToolbarAction {
     /// Create a new action.
-    pub fn new(icon: MaterialIcon, id: impl Into<String>) -> Self {
+    pub fn new(icon_name: impl Into<String>, id: impl Into<String>) -> Self {
         Self {
-            icon,
+            icon: icon_name.into(),
             id: id.into(),
             disabled: false,
         }
     }
 
     /// Create a new action from an icon name.
-    pub fn from_name(icon_name: &str, id: impl Into<String>) -> Option<Self> {
-        MaterialIcon::from_name(icon_name).map(|icon| Self::new(icon, id))
+    pub fn from_name(icon_name: &str, id: impl Into<String>) -> Self {
+        Self::new(icon_name, id)
     }
 
     /// Set disabled state.
@@ -170,28 +167,14 @@ impl ToolbarBuilder {
     }
 
     /// Set the navigation icon.
-    pub fn navigation_icon(mut self, icon: MaterialIcon) -> Self {
-        self.toolbar.navigation_icon = Some(icon);
-        self
-    }
-
-    /// Set the navigation icon by name.
     pub fn navigation_icon_name(mut self, icon_name: &str) -> Self {
-        self.toolbar.navigation_icon = MaterialIcon::from_name(icon_name);
+        self.toolbar.navigation_icon = Some(icon_name.to_string());
         self
     }
 
     /// Add an action.
-    pub fn action(mut self, icon: MaterialIcon, id: impl Into<String>) -> Self {
-        self.toolbar.actions.push(ToolbarAction::new(icon, id));
-        self
-    }
-
-    /// Add an action by icon name.
     pub fn action_name(mut self, icon_name: &str, id: impl Into<String>) -> Self {
-        if let Some(action) = ToolbarAction::from_name(icon_name, id) {
-            self.toolbar.actions.push(action);
-        }
+        self.toolbar.actions.push(ToolbarAction::new(icon_name, id));
         self
     }
 
@@ -229,22 +212,21 @@ impl SpawnToolbarChild for ChildSpawnerCommands<'_> {
     fn spawn_toolbar_with(&mut self, theme: &MaterialTheme, builder: ToolbarBuilder) {
         // Extract a copy of the logical config before we move it into the root bundle.
         let title = builder.toolbar.title.clone();
-        let nav_icon = builder.toolbar.navigation_icon;
+        let nav_icon = builder.toolbar.navigation_icon.clone();
         let actions = builder.toolbar.actions.clone();
 
         self.spawn(builder.build(theme)).with_children(|toolbar| {
-            if let Some(icon) = nav_icon {
+            if let Some(icon_name) = nav_icon.as_deref() {
                 // Navigation icon button.
                 toolbar
                     .spawn((
                         ToolbarNavigation,
-                        IconButtonBuilder::new(icon.as_str())
-                            .standard()
-                            .build(theme),
+                        IconButtonBuilder::new(icon_name).standard().build(theme),
                     ))
                     .with_children(|btn| {
                         btn.spawn((
-                            icon,
+                            MaterialIcon::from_name(icon_name)
+                                .expect("embedded toolbar navigation icon not found"),
                             IconStyle::outlined()
                                 .with_color(theme.on_surface_variant)
                                 .with_size(TOOLBAR_ICON_SIZE),
@@ -290,7 +272,8 @@ impl SpawnToolbarChild for ChildSpawnerCommands<'_> {
 
                             button_entity.with_children(|btn| {
                                 btn.spawn((
-                                    action.icon,
+                                    MaterialIcon::from_name(action.icon.as_str())
+                                        .expect("embedded toolbar action icon not found"),
                                     IconStyle::outlined()
                                         .with_color(theme.on_surface_variant)
                                         .with_size(TOOLBAR_ICON_SIZE),
@@ -368,16 +351,15 @@ mod tests {
 
     #[test]
     fn test_toolbar_creation() {
-        let toolbar =
-            MaterialToolbar::new("Title").with_navigation_icon(MaterialIcon::new(ICON_MENU));
+        let toolbar = MaterialToolbar::new("Title").with_navigation_icon_name(ICON_MENU);
         assert_eq!(toolbar.title, "Title");
         assert!(toolbar.navigation_icon.is_some());
     }
 
     #[test]
     fn test_toolbar_actions() {
-        let toolbar = MaterialToolbar::new("Title")
-            .add_action(ToolbarAction::new(MaterialIcon::menu(), "menu"));
+        let toolbar =
+            MaterialToolbar::new("Title").add_action(ToolbarAction::new(ICON_MENU, "menu"));
         assert_eq!(toolbar.actions.len(), 1);
         assert_eq!(toolbar.actions[0].id, "menu");
     }

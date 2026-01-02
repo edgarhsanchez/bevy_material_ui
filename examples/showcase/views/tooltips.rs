@@ -21,7 +21,9 @@ pub fn spawn_tooltip_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.tooltips.title",
                 "Tooltips",
+                "showcase.section.tooltips.description",
                 "Contextual information on hover - Configure options below",
             );
 

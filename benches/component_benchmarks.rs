@@ -5,11 +5,18 @@
 
 use bevy_material_ui::{
     button::{ButtonVariant, MaterialButton},
+    card::MaterialCard,
     checkbox::{CheckboxState, MaterialCheckbox},
     chip::{ChipVariant, MaterialChip},
+    divider::MaterialDivider,
     elevation::Elevation,
+    fab::{FabSize, MaterialFab},
+    icon_button::{IconButtonVariant, MaterialIconButton},
+    list::MaterialListItem,
+    loading_indicator::MaterialLoadingIndicator,
     progress::{MaterialCircularProgress, MaterialLinearProgress},
     radio::MaterialRadio,
+    search::MaterialSearchBar,
     slider::MaterialSlider,
     switch::MaterialSwitch,
     tokens::{CornerRadius, Duration, Easing, Spacing},
@@ -384,6 +391,173 @@ fn bench_state_changes(c: &mut Criterion) {
     group.finish();
 }
 
+/// Benchmark FAB component creation
+fn bench_fab(c: &mut Criterion) {
+    let mut group = c.benchmark_group("FAB Component");
+
+    group.bench_function("create_regular", |b| {
+        b.iter(|| black_box(MaterialFab::new(black_box("add"))))
+    });
+
+    group.bench_function("create_small", |b| {
+        b.iter(|| black_box(MaterialFab::new(black_box("add")).with_size(FabSize::Small)))
+    });
+
+    group.bench_function("create_large", |b| {
+        b.iter(|| black_box(MaterialFab::new(black_box("add")).with_size(FabSize::Large)))
+    });
+
+    group.bench_function("create_extended", |b| {
+        b.iter(|| black_box(MaterialFab::new(black_box("add")).extended(black_box("Create"))))
+    });
+
+    group.finish();
+}
+
+/// Benchmark icon button component
+fn bench_icon_button(c: &mut Criterion) {
+    let mut group = c.benchmark_group("IconButton Component");
+
+    group.bench_function("create_standard", |b| {
+        b.iter(|| black_box(MaterialIconButton::new(black_box("home"))))
+    });
+
+    group.bench_function("create_filled", |b| {
+        b.iter(|| {
+            black_box(
+                MaterialIconButton::new(black_box("favorite"))
+                    .with_variant(IconButtonVariant::Filled),
+            )
+        })
+    });
+
+    group.bench_function("create_outlined", |b| {
+        b.iter(|| {
+            black_box(
+                MaterialIconButton::new(black_box("settings"))
+                    .with_variant(IconButtonVariant::Outlined),
+            )
+        })
+    });
+
+    group.bench_function("create_tonal", |b| {
+        b.iter(|| {
+            black_box(
+                MaterialIconButton::new(black_box("share"))
+                    .with_variant(IconButtonVariant::FilledTonal),
+            )
+        })
+    });
+
+    group.finish();
+}
+
+/// Benchmark card component
+fn bench_card(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Card Component");
+
+    group.bench_function("create_default", |b| {
+        b.iter(|| black_box(MaterialCard::new()))
+    });
+
+    group.bench_function("create_clickable", |b| {
+        b.iter(|| black_box(MaterialCard::new().clickable()))
+    });
+
+    group.bench_function("create_draggable", |b| {
+        b.iter(|| black_box(MaterialCard::new().draggable()))
+    });
+
+    group.finish();
+}
+
+/// Benchmark list component
+fn bench_list(c: &mut Criterion) {
+    let mut group = c.benchmark_group("List Component");
+
+    group.bench_function("create_list_item", |b| {
+        b.iter(|| black_box(MaterialListItem::new(black_box("Item"))))
+    });
+
+    group.bench_function("create_list_item_with_icon", |b| {
+        b.iter(|| {
+            black_box(MaterialListItem::new(black_box("Item")).leading_icon(black_box("person")))
+        })
+    });
+
+    group.bench_function("create_list_item_full", |b| {
+        b.iter(|| {
+            black_box(
+                MaterialListItem::new(black_box("Title"))
+                    .leading_icon(black_box("mail"))
+                    .supporting_text(black_box("Supporting text"))
+                    .trailing_icon(black_box("chevron_right")),
+            )
+        })
+    });
+
+    group.finish();
+}
+
+/// Benchmark loading indicator component
+fn bench_loading_indicator(c: &mut Criterion) {
+    let mut group = c.benchmark_group("LoadingIndicator Component");
+
+    group.bench_function("create_default", |b| {
+        b.iter(|| black_box(MaterialLoadingIndicator::new()))
+    });
+
+    group.bench_function("create_small", |b| {
+        b.iter(|| black_box(MaterialLoadingIndicator::new().with_size(24.0)))
+    });
+
+    group.bench_function("create_large", |b| {
+        b.iter(|| black_box(MaterialLoadingIndicator::new().with_size(64.0)))
+    });
+
+    group.bench_function("create_multi_color", |b| {
+        b.iter(|| black_box(MaterialLoadingIndicator::new().multi_color()))
+    });
+
+    group.finish();
+}
+
+/// Benchmark search bar component
+fn bench_search_bar(c: &mut Criterion) {
+    let mut group = c.benchmark_group("SearchBar Component");
+
+    group.bench_function("create_default", |b| {
+        b.iter(|| black_box(MaterialSearchBar::new(black_box("Search..."))))
+    });
+
+    group.bench_function("create_with_text", |b| {
+        b.iter(|| {
+            black_box(MaterialSearchBar::new(black_box("Search...")).with_text(black_box("test")))
+        })
+    });
+
+    group.finish();
+}
+
+/// Benchmark divider component
+fn bench_divider(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Divider Component");
+
+    group.bench_function("create_horizontal", |b| {
+        b.iter(|| black_box(MaterialDivider::new()))
+    });
+
+    group.bench_function("create_vertical", |b| {
+        b.iter(|| black_box(MaterialDivider::vertical()))
+    });
+
+    group.bench_function("create_inset", |b| {
+        b.iter(|| black_box(MaterialDivider::new().inset()))
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_button_creation,
@@ -393,6 +567,13 @@ criterion_group!(
     bench_slider,
     bench_progress,
     bench_chip,
+    bench_fab,
+    bench_icon_button,
+    bench_card,
+    bench_list,
+    bench_loading_indicator,
+    bench_search_bar,
+    bench_divider,
     bench_tokens,
     bench_state_changes,
 );

@@ -1,86 +1,369 @@
-//! Material Design Icons System
+//! Embedded icon system.
 //!
-//! This module provides support for Material Symbols icons in Bevy UI.
-//! Icons can be rendered using an icon font or as custom images.
-//!
-//! # Icon Font Approach
-//!
-//! Material Symbols is a variable icon font that supports:
-//! - **Fill**: 0 (outlined) to 1 (filled)
-//! - **Weight**: 100 to 700 (thin to bold)
-//! - **Grade**: -25 to 200 (emphasis adjustment)
-//! - **Optical Size**: 20, 24, 40, 48 (optimized for size)
-//!
-//! # Usage
-//!
-//! ```rust,ignore
-//! use bevy_material_ui::icons::{MaterialIcon, IconStyle, MaterialIconsPlugin};
-//!
-//! // Add the plugin to load the font
-//! app.add_plugins(MaterialIconsPlugin);
-//!
-//! // Create an icon with the font
-//! fn spawn_icon(mut commands: Commands, icon_font: Res<MaterialIconFont>) {
-//!     commands.spawn((
-//!         Text::new(MaterialIcon::home().as_str()),
-//!         TextFont {
-//!             font: icon_font.0.clone(),
-//!             font_size: 24.0,
-//!             ..default()
-//!         },
-//!     ));
-//! }
-//! ```
-//!
-//! # Available Icons
-//!
-//! This module includes commonly used icons from Material Symbols.
-//! For a complete list, see <https://fonts.google.com/icons>
+//! By default, icons come from the `google-material-design-icons-bin` crate as ALPHA8.
+//! For compatibility, icons are expanded to RGBA8 (white + alpha) when building UI images.
+//! UI tinting is applied via `ImageNode.color`.
 
+use bevy::asset::RenderAssetUsages;
 use bevy::prelude::*;
+use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
+use bevy::ui::widget::ImageNode;
+use std::collections::HashMap;
 
-mod codepoints;
-pub mod icon;
-mod style;
+fn icon_pixels_rgba8(id: material_icons::IconId) -> Vec<u8> {
+    let alpha = id.alpha();
+    let mut rgba = Vec::with_capacity(alpha.len() * 4);
+    for a in alpha.iter().copied() {
+        rgba.extend_from_slice(&[255, 255, 255, a]);
+    }
+    rgba
+}
 
-pub use codepoints::*;
-pub use icon::{IconBundle, MaterialIcon};
-pub use style::{IconGrade, IconOpticalSize, IconStyle, IconWeight};
+/// Generated icon table + embedded alpha-only bytes.
+///
+/// This mirrors the source folder layout as Rust modules (platform/category/icon).
+pub use google_material_design_icons_bin::material_icons;
 
-/// Embedded Material Symbols font data (compiled into the binary)
-/// This eliminates file I/O and ensures the font is always available
-pub const EMBEDDED_MATERIAL_SYMBOLS_FONT: &[u8] =
-    include_bytes!("../../assets/fonts/MaterialSymbolsOutlined.ttf");
+/// Lookup an embedded icon by its folder name (case-insensitive).
+///
+/// This is a small compatibility shim for older call sites that used an
+/// `icon_by_name` helper.
+pub use material_icons::by_name as icon_by_name;
 
-/// Path to the Material Symbols font file (for fallback/external loading)
-pub const MATERIAL_SYMBOLS_FONT_PATH: &str = "fonts/MaterialSymbolsOutlined.ttf";
+// ---------------------------------------------------------------------------
+// Common icon name constants
+// ---------------------------------------------------------------------------
+// These are folder names from the upstream icon repository.
 
-/// Resource holding the loaded Material Symbols font handle
-#[derive(Resource, Clone)]
-pub struct MaterialIconFont(pub Handle<Font>);
+pub const ICON_CLOSE: &str = "close";
+pub const ICON_CHECK: &str = "check";
+pub const ICON_REMOVE: &str = "remove";
+pub const ICON_DELETE: &str = "delete";
+pub const ICON_SEARCH: &str = "search";
+pub const ICON_MENU: &str = "menu";
+pub const ICON_HOME: &str = "home";
+pub const ICON_SETTINGS: &str = "settings";
+pub const ICON_FAVORITE: &str = "favorite";
+pub const ICON_ADD: &str = "add";
+pub const ICON_EDIT: &str = "edit";
+pub const ICON_STAR: &str = "star";
+pub const ICON_EMAIL: &str = "email";
+pub const ICON_MORE_VERT: &str = "more_vert";
+pub const ICON_NOTIFICATIONS: &str = "notifications";
+pub const ICON_ARROW_BACK: &str = "arrow_back";
+pub const ICON_EXPAND_MORE: &str = "expand_more";
+pub const ICON_EXPAND_LESS: &str = "expand_less";
 
-impl MaterialIconFont {
-    /// Get the font handle
-    pub fn handle(&self) -> Handle<Font> {
-        self.0.clone()
+/// Backwards-compatible icon name constants.
+///
+/// Some widgets historically referenced Android-style resource identifiers.
+/// These now map to embedded icon folder names.
+pub mod material_icon_names {
+    pub const IC_KEYBOARD_BLACK_24DP: &str = "keyboard";
+    pub const IC_CLOCK_BLACK_24DP: &str = "schedule";
+
+    pub const MATERIAL_IC_EDIT_BLACK_24DP: &str = "edit";
+    pub const MATERIAL_IC_CALENDAR_BLACK_24DP: &str = "calendar_today";
+    pub const MATERIAL_IC_MENU_ARROW_UP_BLACK_24DP: &str = "expand_less";
+    pub const MATERIAL_IC_MENU_ARROW_DOWN_BLACK_24DP: &str = "expand_more";
+    pub const MATERIAL_IC_KEYBOARD_ARROW_PREVIOUS_BLACK_24DP: &str = "chevron_left";
+    pub const MATERIAL_IC_KEYBOARD_ARROW_NEXT_BLACK_24DP: &str = "chevron_right";
+}
+
+// ---------------------------------------------------------------------------
+// Compatibility shims (style + svg)
+// ---------------------------------------------------------------------------
+
+/// Simple icon style component.
+///
+/// Older widgets in this crate used an `IconStyle` component to drive size and
+/// color updates separately from the icon itself. In the embedded icon system,
+/// the source-of-truth is `MaterialIcon { size, color }`, but we keep this
+/// lightweight shim to avoid rewriting every widget at once.
+#[derive(Component, Clone, Copy, Debug)]
+pub struct IconStyle {
+    pub size: f32,
+    pub color: Color,
+}
+
+impl Default for IconStyle {
+    fn default() -> Self {
+        Self {
+            size: 24.0,
+            color: Color::WHITE,
+        }
     }
 }
 
-/// Plugin that loads the Material Symbols font
+impl IconStyle {
+    pub fn outlined() -> Self {
+        Self::default()
+    }
+
+    pub fn filled() -> Self {
+        Self::default()
+    }
+
+    pub fn with_size(mut self, size: f32) -> Self {
+        self.size = size;
+        self
+    }
+
+    pub fn with_color(mut self, color: Color) -> Self {
+        self.color = color;
+        self
+    }
+}
+
+/// Minimal stand-in for the old SVG icon component.
+///
+/// This does *not* load SVGs; it simply maps a name to an embedded bitmap icon.
+pub mod svg {
+    use super::{icon_by_name, MaterialIcon};
+    use bevy::prelude::*;
+
+    #[derive(Component, Clone, Debug)]
+    pub struct SvgIcon {
+        pub name: String,
+        pub size: f32,
+        pub color: Color,
+    }
+
+    impl SvgIcon {
+        pub fn new(name: impl Into<String>) -> Self {
+            Self {
+                name: name.into(),
+                size: 24.0,
+                color: Color::WHITE,
+            }
+        }
+
+        pub fn with_size(mut self, size: f32) -> Self {
+            self.size = size;
+            self
+        }
+
+        pub fn with_color(mut self, color: Color) -> Self {
+            self.color = color;
+            self
+        }
+    }
+
+    pub(super) fn svg_icon_sync_system(
+        mut commands: Commands,
+        mut icons: Query<
+            (
+                Entity,
+                &SvgIcon,
+                Option<&mut MaterialIcon>,
+                Option<&mut Visibility>,
+            ),
+            Or<(Added<SvgIcon>, Changed<SvgIcon>)>,
+        >,
+    ) {
+        for (entity, svg, material_icon, visibility) in icons.iter_mut() {
+            let Some(id) = icon_by_name(&svg.name) else {
+                if let Some(mut visibility) = visibility {
+                    *visibility = Visibility::Hidden;
+                } else {
+                    commands.entity(entity).insert(Visibility::Hidden);
+                }
+                continue;
+            };
+
+            if let Some(mut material_icon) = material_icon {
+                material_icon.id = id;
+                material_icon.size = svg.size;
+                material_icon.color = svg.color;
+            } else {
+                commands.entity(entity).insert(
+                    MaterialIcon::new(id)
+                        .with_size(svg.size)
+                        .with_color(svg.color),
+                );
+            }
+
+            if let Some(mut visibility) = visibility {
+                *visibility = Visibility::Inherited;
+            } else {
+                commands.entity(entity).insert(Visibility::Inherited);
+            }
+        }
+    }
+}
+
+#[derive(Resource, Default)]
+struct MaterialIconImageCache(HashMap<material_icons::IconId, Handle<Image>>);
+
+/// Icon component for rendering an embedded icon via `ImageNode`.
+#[derive(Component, Clone, Copy, Debug)]
+pub struct MaterialIcon {
+    pub id: material_icons::IconId,
+    pub size: f32,
+    pub color: Color,
+}
+
+impl MaterialIcon {
+    pub fn new(id: material_icons::IconId) -> Self {
+        Self {
+            id,
+            size: 20.0,
+            color: Color::WHITE,
+        }
+    }
+
+    pub fn from_name(name: &str) -> Option<Self> {
+        material_icons::by_name(name).map(Self::new)
+    }
+
+    pub fn with_size(mut self, size: f32) -> Self {
+        self.size = size;
+        self
+    }
+
+    pub fn with_color(mut self, color: Color) -> Self {
+        self.color = color;
+        self
+    }
+}
+
+/// Plugin that enables `MaterialIcon` rendering.
 pub struct MaterialIconsPlugin;
 
 impl Plugin for MaterialIconsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreStartup, load_material_icons_font);
+        app.init_resource::<MaterialIconImageCache>();
+        app.add_systems(
+            Update,
+            (
+                material_icon_system,
+                material_icon_repair_system,
+                icon_style_sync_system,
+                svg::svg_icon_sync_system,
+            ),
+        );
     }
 }
 
-/// System to load the Material Symbols font at startup
-/// Uses embedded font data for instant availability (no async loading)
-fn load_material_icons_font(mut commands: Commands, mut fonts: ResMut<Assets<Font>>) {
-    // Load from embedded bytes - this is synchronous and immediately available
-    let font = Font::try_from_bytes(EMBEDDED_MATERIAL_SYMBOLS_FONT.to_vec())
-        .expect("Failed to load embedded Material Symbols font");
-    let font_handle = fonts.add(font);
-    commands.insert_resource(MaterialIconFont(font_handle));
+fn icon_style_sync_system(
+    mut icons: Query<(&mut MaterialIcon, &IconStyle), Or<(Added<IconStyle>, Changed<IconStyle>)>>,
+) {
+    for (mut icon, style) in icons.iter_mut() {
+        icon.size = style.size;
+        icon.color = style.color;
+    }
+}
+
+fn material_icon_system(
+    mut commands: Commands,
+    mut images: ResMut<Assets<Image>>,
+    mut cache: ResMut<MaterialIconImageCache>,
+    mut icons: Query<
+        (
+            Entity,
+            &MaterialIcon,
+            Option<&mut ImageNode>,
+            Option<&mut Node>,
+        ),
+        Or<(Added<MaterialIcon>, Changed<MaterialIcon>)>,
+    >,
+) {
+    for (entity, icon, image_node, node) in icons.iter_mut() {
+        let handle = if let Some(handle) = cache.0.get(&icon.id) {
+            handle.clone()
+        } else {
+            let extent = Extent3d {
+                width: icon.id.width as u32,
+                height: icon.id.height as u32,
+                depth_or_array_layers: 1,
+            };
+            let image = Image::new(
+                extent,
+                TextureDimension::D2,
+                icon_pixels_rgba8(icon.id),
+                TextureFormat::Rgba8UnormSrgb,
+                RenderAssetUsages::default(),
+            );
+            let handle = images.add(image);
+            cache.0.insert(icon.id, handle.clone());
+            handle
+        };
+
+        if let Some(mut image_node) = image_node {
+            image_node.image = handle;
+            image_node.color = icon.color;
+        } else {
+            commands
+                .entity(entity)
+                .insert(ImageNode::new(handle).with_color(icon.color));
+        }
+
+        if let Some(mut node) = node {
+            node.width = Val::Px(icon.size);
+            node.height = Val::Px(icon.size);
+        } else {
+            commands.entity(entity).insert(Node {
+                width: Val::Px(icon.size),
+                height: Val::Px(icon.size),
+                ..default()
+            });
+        }
+    }
+}
+
+fn material_icon_repair_system(
+    mut commands: Commands,
+    mut images: ResMut<Assets<Image>>,
+    mut cache: ResMut<MaterialIconImageCache>,
+    mut icons: Query<
+        (
+            Entity,
+            &MaterialIcon,
+            Option<&mut ImageNode>,
+            Option<&mut Node>,
+        ),
+        Or<(Without<ImageNode>, Without<Node>)>,
+    >,
+) {
+    for (entity, icon, image_node, node) in icons.iter_mut() {
+        let handle = if let Some(handle) = cache.0.get(&icon.id) {
+            handle.clone()
+        } else {
+            let extent = Extent3d {
+                width: icon.id.width as u32,
+                height: icon.id.height as u32,
+                depth_or_array_layers: 1,
+            };
+            let image = Image::new(
+                extent,
+                TextureDimension::D2,
+                icon_pixels_rgba8(icon.id),
+                TextureFormat::Rgba8UnormSrgb,
+                RenderAssetUsages::default(),
+            );
+            let handle = images.add(image);
+            cache.0.insert(icon.id, handle.clone());
+            handle
+        };
+
+        if let Some(mut image_node) = image_node {
+            image_node.image = handle;
+            image_node.color = icon.color;
+        } else {
+            commands
+                .entity(entity)
+                .insert(ImageNode::new(handle).with_color(icon.color));
+        }
+
+        if let Some(mut node) = node {
+            node.width = Val::Px(icon.size);
+            node.height = Val::Px(icon.size);
+        } else {
+            commands.entity(entity).insert(Node {
+                width: Val::Px(icon.size),
+                height: Val::Px(icon.size),
+                ..default()
+            });
+        }
+    }
 }

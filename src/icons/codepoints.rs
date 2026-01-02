@@ -1,10 +1,11 @@
-//! Material Symbols Icon Codepoints
+//! Material Design Icon Identifiers
 //!
-//! This file contains Unicode codepoints for Material Symbols icons.
-//! The codepoints are from the Material Symbols Outlined font.
+//! This file contains identifiers for Material Design icons.
+//! Icons are embedded as bitmaps from the `google-material-design-icons-bin` crate.
 //!
-//! These codepoints can be used with the Material Symbols font to render icons.
-//! Font download: <https://fonts.google.com/icons?icon.set=Material+Symbols>
+//! Note: These constants may reference legacy codepoint values but icons are now
+//! rendered as embedded bitmaps, not font glyphs.
+//! Icon reference: <https://fonts.google.com/icons>
 
 // Navigation Icons
 /// Home icon codepoint
@@ -320,7 +321,7 @@ pub const ICON_TODAY: char = '\u{E8DF}';
 ///
 /// Returns the Unicode codepoint for the given icon name, or None if not found.
 pub fn icon_by_name(name: &str) -> Option<char> {
-    match name.to_lowercase().as_str() {
+    match name.trim().to_lowercase().as_str() {
         // Navigation
         "home" => Some(ICON_HOME),
         "menu" => Some(ICON_MENU),
@@ -470,6 +471,26 @@ pub fn icon_by_name(name: &str) -> Option<char> {
         "event" | "calendar" => Some(ICON_EVENT),
         "today" => Some(ICON_TODAY),
 
+        // -----------------------------------------------------------------
+        // Reference drawable-name compatibility
+        // -----------------------------------------------------------------
+        // DatePicker drawables
+        "material_ic_calendar_black_24dp" => Some(ICON_EVENT),
+        "material_ic_edit_black_24dp" => Some(ICON_EDIT),
+        "material_ic_clear_black_24dp" => Some(ICON_CLOSE),
+        "material_ic_menu_arrow_down_black_24dp" => Some(ICON_EXPAND_MORE),
+        "material_ic_menu_arrow_up_black_24dp" => Some(ICON_EXPAND_LESS),
+        "material_ic_keyboard_arrow_left_black_24dp" => Some(ICON_CHEVRON_LEFT),
+        "material_ic_keyboard_arrow_right_black_24dp" => Some(ICON_CHEVRON_RIGHT),
+        // Some source sets provide these as RTL-flipping aliases; we map to
+        // logical previous/next for LTR by default.
+        "material_ic_keyboard_arrow_previous_black_24dp" => Some(ICON_CHEVRON_LEFT),
+        "material_ic_keyboard_arrow_next_black_24dp" => Some(ICON_CHEVRON_RIGHT),
+
+        // TimePicker drawables
+        "ic_keyboard_black_24dp" => Some(ICON_KEYBOARD),
+        "ic_clock_black_24dp" => Some(ICON_SCHEDULE),
+
         _ => None,
     }
 }
@@ -484,6 +505,17 @@ mod tests {
         assert_eq!(icon_by_name("Home"), Some(ICON_HOME));
         assert_eq!(icon_by_name("settings"), Some(ICON_SETTINGS));
         assert_eq!(icon_by_name("gear"), Some(ICON_SETTINGS));
+
+        // Drawable resource names (name part only)
+        assert_eq!(
+            icon_by_name("material_ic_clear_black_24dp"),
+            Some(ICON_CLOSE)
+        );
+        assert_eq!(
+            icon_by_name("material_ic_calendar_black_24dp"),
+            Some(ICON_EVENT)
+        );
+
         assert_eq!(icon_by_name("nonexistent"), None);
     }
 

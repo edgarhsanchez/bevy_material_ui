@@ -1,6 +1,7 @@
 # bevy_material_ui
 
 [![CI](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/ci.yml/badge.svg)](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/ci.yml)
+[![Benchmark](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/benchmark.yml/badge.svg)](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/benchmark.yml)
 [![Crates.io](https://img.shields.io/crates/v/bevy_material_ui.svg)](https://crates.io/crates/bevy_material_ui)
 [![Docs.rs](https://docs.rs/bevy_material_ui/badge.svg)](https://docs.rs/bevy_material_ui)
 [![Dependencies](https://deps.rs/repo/github/edgarhsanchez/bevy_material_ui/status.svg)](https://deps.rs/repo/github/edgarhsanchez/bevy_material_ui)
@@ -28,59 +29,48 @@ bevy_material_ui = "0.1"
 
 - **Material Design 3 Components**: Buttons, FABs, Cards, Checkboxes, Switches, Radio Buttons, Sliders, Text Fields, Dialogs, Lists, Menus, Tabs, Progress Indicators, and more
 - **Date/Time Picker**: Material-style date and time picker component (see the showcase for an end-to-end example)
-- **Material Symbols Icons**: Full support for [Material Symbols](https://fonts.google.com/icons) icon font with 3,000+ scalable icons
+- **Icons**: Material icons embedded at build time and rendered via Bevy UI `ImageNode` tinting
 - **Theming**: Dynamic color system with light/dark mode support
 - **Animations**: Motion system following MD3 guidelines
 - **Accessibility**: Proper touch targets and focus handling
 
-## Material Symbols Icons
+## Icons
 
-This library includes the Material Symbols Outlined variable font from Google. The font is automatically loaded when you add the `MaterialUiPlugin`.
+By default, this crate uses the published [`google-material-design-icons-bin`](https://crates.io/crates/google-material-design-icons-bin) crate as its icon source.
+Icons are embedded as **ALPHA8** and expanded to RGBA8 (white + alpha) at runtime so Bevy UI tinting via `ImageNode.color` continues to work.
 
 ### Using Icons
 
 ```rust
 use bevy::prelude::*;
-use bevy_material_ui::prelude::*;
+use bevy_material_ui::icons::{MaterialIcon, ICON_HOME};
 
-fn spawn_icon(mut commands: Commands, icon_font: Res<MaterialIconFont>) {
-    // Spawn a home icon
-    commands.spawn((
-        Text::new(MaterialIcon::home().as_str()),
-        TextFont {
-            font: icon_font.0.clone(),
-            font_size: 24.0,
-            ..default()
-        },
-        TextColor(Color::WHITE),
-    ));
+fn spawn_icon(mut commands: Commands) {
+    // Spawn a home icon (tinted white)
+    if let Some(icon) = MaterialIcon::from_name(ICON_HOME) {
+        commands.spawn(icon.with_size(24.0).with_color(Color::WHITE));
+    }
 }
 ```
 
 ### Available Icons
 
-Common icons are available as methods on `MaterialIcon`:
-- Navigation: `home()`, `menu()`, `arrow_back()`, `close()`, `check()`
-- Actions: `add()`, `delete()`, `edit()`, `save()`, `search()`, `settings()`
-- Toggle: `checkbox_checked()`, `radio_checked()`, `star()`, `favorite()`
-- Media: `play_arrow()`, `pause()`, `volume_up()`, `skip_next()`
-- And many more...
+Common icon name constants are available in `bevy_material_ui::icons`, for example:
 
-Or use any icon codepoint directly:
+- Navigation: `ICON_HOME`, `ICON_MENU`, `ICON_ARROW_BACK`, `ICON_CLOSE`
+- Actions: `ICON_ADD`, `ICON_DELETE`, `ICON_EDIT`, `ICON_SEARCH`, `ICON_SETTINGS`
+
+You can also use arbitrary icon names (folder names from the upstream repo):
+
 ```rust
-use bevy_material_ui::icons::ICON_SETTINGS;
+use bevy_material_ui::icons::MaterialIcon;
 
-let icon = MaterialIcon::new(ICON_SETTINGS);
+let icon = MaterialIcon::from_name("arrow_drop_down");
 ```
-
-For the complete list of icons, see [Material Symbols](https://fonts.google.com/icons).
 
 ## License
 
 This library is licensed under MIT.
-
-The Material Symbols font is licensed under the Apache License 2.0 by Google.
-See `assets/fonts/LICENSE` for details.
 
 ## Releases (semantic versioning)
 

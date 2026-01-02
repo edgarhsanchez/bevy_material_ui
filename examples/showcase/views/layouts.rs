@@ -1,7 +1,7 @@
 //! Layout scaffolds showcase demonstrating navigation and pane patterns.
 
 use bevy::prelude::*;
-use bevy_material_ui::icons::{icon_by_name, ICON_STAR};
+use bevy_material_ui::icons::icon_by_name;
 use bevy_material_ui::layout::{self, PaneEntities};
 use bevy_material_ui::prelude::*;
 
@@ -22,7 +22,9 @@ pub fn spawn_layouts_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.layouts.title",
                 "Layouts",
+                "showcase.section.layouts.description",
                 "Canonical Material 3 scaffolds: bottom navigation, rail, modal drawer, list-detail, and supporting panes.",
             );
 
@@ -76,7 +78,7 @@ spawn_navigation_suite_scaffold(parent, theme, &size_class,
 fn spawn_navigation_examples(
     parent: &mut ChildSpawnerCommands,
     theme: MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     parent
         .spawn(Node {
@@ -102,8 +104,8 @@ fn spawn_navigation_examples(
                 ..default()
             })
             .with_children(|row| {
-                spawn_bottom_nav_card(row, &theme, icon_font.clone());
-                spawn_nav_rail_card(row, &theme, icon_font.clone());
+                spawn_bottom_nav_card(row, &theme, _icon_font.clone());
+                spawn_nav_rail_card(row, &theme, _icon_font.clone());
             });
         });
 }
@@ -111,7 +113,7 @@ fn spawn_navigation_examples(
 fn spawn_adaptive_examples(
     parent: &mut ChildSpawnerCommands,
     theme: MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     parent
         .spawn(Node {
@@ -143,7 +145,7 @@ fn spawn_adaptive_examples(
                 spawn_adaptive_card(
                     row,
                     &theme,
-                    icon_font.clone(),
+                    _icon_font.clone(),
                     "Phone (Compact)",
                     phone,
                     "layout_adaptive_phone",
@@ -151,7 +153,7 @@ fn spawn_adaptive_examples(
                 spawn_adaptive_card(
                     row,
                     &theme,
-                    icon_font.clone(),
+                    _icon_font.clone(),
                     "Tablet (Rail)",
                     tablet,
                     "layout_adaptive_tablet",
@@ -159,7 +161,7 @@ fn spawn_adaptive_examples(
                 spawn_adaptive_card(
                     row,
                     &theme,
-                    icon_font.clone(),
+                    _icon_font.clone(),
                     "Desktop (Drawer)",
                     desktop,
                     "layout_adaptive_desktop",
@@ -171,7 +173,7 @@ fn spawn_adaptive_examples(
 fn spawn_adaptive_card(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
     label: &str,
     size_class: WindowSizeClass,
     test_prefix: &str,
@@ -202,14 +204,13 @@ fn spawn_adaptive_card(
                 ..default()
             })
             .with_children(|root| {
-                let _entities = spawn_navigation_suite_scaffold(
+                let _entities = layout::spawn_navigation_suite_scaffold(
                     root,
                     theme,
                     &size_class,
                     &config,
                     |nav| {
                         for (i, icon_name) in ["home", "search", "person"].iter().enumerate() {
-                            let icon_char = icon_by_name(icon_name).unwrap_or(ICON_STAR);
                             nav.spawn((
                                 TestId::new(format!("{}_nav_{}", test_prefix, i)),
                                 Button,
@@ -224,15 +225,13 @@ fn spawn_adaptive_card(
                                 },
                             ))
                             .with_children(|btn| {
-                                btn.spawn((
-                                    Text::new(icon_char.to_string()),
-                                    TextFont {
-                                        font: icon_font.clone(),
-                                        font_size: 18.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface),
-                                ));
+                                if let Some(id) = icon_by_name(icon_name) {
+                                    btn.spawn(
+                                        bevy_material_ui::icons::MaterialIcon::new(id)
+                                            .with_size(18.0)
+                                            .with_color(theme.on_surface),
+                                    );
+                                }
                             });
                         }
                     },
@@ -266,7 +265,7 @@ fn spawn_adaptive_card(
 fn spawn_bottom_nav_card(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     let config = layout::NavigationBarScaffold::default();
     parent
@@ -286,7 +285,7 @@ fn spawn_bottom_nav_card(
                 ..default()
             })
             .with_children(|root| {
-                let _entities = spawn_navigation_bar_scaffold(
+                let _entities = layout::spawn_navigation_bar_scaffold(
                     root,
                     theme,
                     &config,
@@ -314,7 +313,6 @@ fn spawn_bottom_nav_card(
                     },
                     |nav| {
                         for (i, icon_name) in ["home", "search", "person"].iter().enumerate() {
-                            let icon_char = icon_by_name(icon_name).unwrap_or(ICON_STAR);
                             nav.spawn((
                                 TestId::new(format!("layout_bottom_nav_{}", i)),
                                 Button,
@@ -329,15 +327,13 @@ fn spawn_bottom_nav_card(
                                 },
                             ))
                             .with_children(|btn| {
-                                btn.spawn((
-                                    Text::new(icon_char.to_string()),
-                                    TextFont {
-                                        font: icon_font.clone(),
-                                        font_size: 18.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface),
-                                ));
+                                if let Some(id) = icon_by_name(icon_name) {
+                                    btn.spawn(
+                                        bevy_material_ui::icons::MaterialIcon::new(id)
+                                            .with_size(18.0)
+                                            .with_color(theme.on_surface),
+                                    );
+                                }
                             });
                         }
                     },
@@ -349,7 +345,7 @@ fn spawn_bottom_nav_card(
 fn spawn_nav_rail_card(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     let config = layout::NavigationRailScaffold::default();
     parent
@@ -368,13 +364,12 @@ fn spawn_nav_rail_card(
                 ..default()
             })
             .with_children(|root| {
-                let _entities = spawn_navigation_rail_scaffold(
+                let _entities = layout::spawn_navigation_rail_scaffold(
                     root,
                     theme,
                     &config,
                     |nav| {
                         for (i, icon_name) in ["menu", "favorite", "more_vert"].iter().enumerate() {
-                            let icon_char = icon_by_name(icon_name).unwrap_or(ICON_STAR);
                             nav.spawn((
                                 TestId::new(format!("layout_rail_nav_{}", i)),
                                 Button,
@@ -389,15 +384,13 @@ fn spawn_nav_rail_card(
                                 },
                             ))
                             .with_children(|btn| {
-                                btn.spawn((
-                                    Text::new(icon_char.to_string()),
-                                    TextFont {
-                                        font: icon_font.clone(),
-                                        font_size: 20.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface),
-                                ));
+                                if let Some(id) = icon_by_name(icon_name) {
+                                    btn.spawn(
+                                        bevy_material_ui::icons::MaterialIcon::new(id)
+                                            .with_size(20.0)
+                                            .with_color(theme.on_surface),
+                                    );
+                                }
                             });
                         }
                     },
@@ -453,7 +446,7 @@ fn spawn_modal_drawer_example(parent: &mut ChildSpawnerCommands, theme: Material
                 ..default()
             })
             .with_children(|root| {
-                let _entities = spawn_modal_drawer_scaffold(
+                let _entities = layout::spawn_modal_drawer_scaffold(
                     root,
                     &theme,
                     &config,
@@ -572,7 +565,7 @@ fn spawn_list_detail_card(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                 ..default()
             })
             .with_children(|root| {
-                let _entities: PaneEntities = spawn_list_detail_scaffold(
+                let _entities: PaneEntities = layout::spawn_list_detail_scaffold(
                     root,
                     theme,
                     &config,
@@ -657,7 +650,7 @@ fn spawn_supporting_panes_card(parent: &mut ChildSpawnerCommands, theme: &Materi
                 ..default()
             })
             .with_children(|root| {
-                let _entities: PaneEntities = spawn_supporting_panes_scaffold(
+                let _entities: PaneEntities = layout::spawn_supporting_panes_scaffold(
                     root,
                     theme,
                     &config,

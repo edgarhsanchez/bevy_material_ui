@@ -14,7 +14,13 @@
 
 use bevy::prelude::*;
 
-use crate::{motion::StateLayer, ripple::RippleHost, theme::MaterialTheme, tokens::CornerRadius};
+use crate::{
+    motion::StateLayer,
+    ripple::RippleHost,
+    telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
+    theme::MaterialTheme,
+    tokens::CornerRadius,
+};
 
 /// Marker component for the radio outer circle
 #[derive(Component)]
@@ -40,8 +46,70 @@ impl Plugin for RadioPlugin {
                 radio_group_system,
                 radio_style_system,
                 radio_theme_refresh_system,
+                radio_telemetry_system,
             ),
         );
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
+    }
+}
+
+fn radio_telemetry_system(
+    mut commands: Commands,
+    telemetry: Option<Res<TelemetryConfig>>,
+    radios: Query<(&TestId, &Children), With<MaterialRadio>>,
+    children_query: Query<&Children>,
+    radio_outer: Query<(), With<RadioOuter>>,
+    radio_inner: Query<(), With<RadioInner>>,
+    radio_state_layer: Query<(), With<RadioStateLayer>>,
+) {
+    let Some(telemetry) = telemetry else { return };
+    if !telemetry.enabled {
+        return;
+    }
+
+    for (test_id, children) in radios.iter() {
+        let base = test_id.id();
+
+        let mut found_outer = false;
+        let mut found_inner = false;
+        let mut found_state_layer = false;
+
+        let mut stack: Vec<Entity> = children.iter().collect();
+        while let Some(entity) = stack.pop() {
+            if !found_state_layer && radio_state_layer.get(entity).is_ok() {
+                found_state_layer = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/state_layer"),
+                });
+            }
+
+            if !found_outer && radio_outer.get(entity).is_ok() {
+                found_outer = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/outer"),
+                });
+            }
+
+            if !found_inner && radio_inner.get(entity).is_ok() {
+                found_inner = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/inner"),
+                });
+            }
+
+            if found_outer && found_inner && found_state_layer {
+                break;
+            }
+
+            if let Ok(children) = children_query.get(entity) {
+                stack.extend(children.iter());
+            }
+        }
     }
 }
 

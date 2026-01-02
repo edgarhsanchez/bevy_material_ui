@@ -58,10 +58,16 @@ use bevy::prelude::*;
 /// Theme and color system based on Material Design 3
 pub mod theme;
 
+/// Locale configuration and locale-driven defaults
+pub mod locale;
+
+/// Runtime localization / translation (i18n)
+pub mod i18n;
+
 /// HCT color space and dynamic color generation
 pub mod color;
 
-/// Material Symbols icon system
+/// Embedded icon system
 pub mod icons;
 
 /// Typography scale definitions
@@ -88,6 +94,9 @@ pub mod telemetry;
 
 /// Button components (filled, outlined, text, elevated, tonal)
 pub mod button;
+
+/// Button groups / segmented buttons (toggle groups)
+pub mod button_group;
 
 /// Icon button component
 pub mod icon_button;
@@ -116,14 +125,14 @@ pub mod text_field;
 /// Progress indicators (linear and circular)
 pub mod progress;
 
-/// Loading indicator (indeterminate activity indicator)
-pub mod loading_indicator;
-
 /// Dialog component
 pub mod dialog;
 
-/// Date & time picker component (dialog-based)
-pub mod datetime_picker;
+/// Date picker component (Material Design 3)
+pub mod date_picker;
+
+/// Time picker component (Material Design 3)
+pub mod time_picker;
 
 /// List and list item components
 pub mod list;
@@ -158,9 +167,6 @@ pub mod chip;
 /// App bar components (top and bottom)
 pub mod app_bar;
 
-/// Toolbar component (compact top row)
-pub mod toolbar;
-
 /// Badge component for notifications
 pub mod badge;
 
@@ -173,8 +179,11 @@ pub mod scroll;
 /// Search bar component
 pub mod search;
 
-/// Animation and transformation system
-pub mod animation;
+/// Toolbar component
+pub mod toolbar;
+
+/// Loading indicator component
+pub mod loading_indicator;
 
 // ============================================================================
 // Prelude
@@ -194,6 +203,10 @@ pub mod prelude {
     pub use crate::focus::{
         create_native_focus_outline, FocusGained, FocusLost, FocusPlugin, FocusRing, Focusable,
     };
+    pub use crate::i18n::{
+        LocalizedText, MaterialI18n, MaterialI18nPlugin, MaterialLanguage,
+        MaterialLanguageOverride, MaterialTranslations,
+    };
     pub use crate::ripple::{Ripple, RippleHost, RipplePlugin, SpawnRipple};
     pub use crate::telemetry::{
         test_id_if_enabled, ElementBounds, InsertTestId, TelemetryConfig, TelemetryPlugin, TestId,
@@ -206,10 +219,7 @@ pub mod prelude {
     pub use crate::color::{Hct, MaterialColorScheme, TonalPalette};
 
     // Icons
-    pub use crate::icons::{
-        icon_by_name, IconBundle, IconGrade, IconOpticalSize, IconStyle, IconWeight, MaterialIcon,
-        MaterialIconFont, MaterialIconsPlugin, MATERIAL_SYMBOLS_FONT_PATH,
-    };
+    pub use crate::icons::{material_icons, MaterialIcon, MaterialIconsPlugin};
 
     // Button
     pub use crate::button::{
@@ -217,34 +227,15 @@ pub mod prelude {
         ButtonVariant, MaterialButton, MaterialButtonBuilder, SpawnButtonChild,
     };
 
+    // Button Group
+    pub use crate::button_group::{
+        ButtonGroupBuilder, ButtonGroupOrientation, ButtonGroupPlugin, MaterialButtonGroup,
+    };
+
     // Icon Button
     pub use crate::icon_button::{
         IconButtonBuilder, IconButtonClickEvent, IconButtonPlugin, IconButtonVariant,
         MaterialIconButton, SpawnIconButtonChild, ICON_BUTTON_SIZE, ICON_SIZE,
-    };
-
-    // Toolbar
-    pub use crate::toolbar::{
-        MaterialToolbar, SpawnToolbarChild, ToolbarAction, ToolbarActionEvent, ToolbarBuilder,
-        ToolbarNavigationEvent, ToolbarPlugin, TOOLBAR_HEIGHT, TOOLBAR_ICON_SIZE,
-    };
-
-    // Loading Indicator
-    pub use crate::loading_indicator::{
-        LoadingIndicatorBuilder, LoadingIndicatorPlugin, LoadingShape, MaterialLoadingIndicator,
-        SpawnLoadingIndicatorChild, LOADING_INDICATOR_SIZE,
-    };
-
-    // Search
-    pub use crate::search::{
-        MaterialSearchBar, SearchBarBuilder, SearchBarClickEvent, SearchPlugin, SearchQueryEvent,
-        SpawnSearchBarChild, SEARCH_BAR_HEIGHT,
-    };
-
-    // Animation
-    pub use crate::animation::{
-        AnimatedValue, AnimationPlugin, FabTransformState, FabTransformation, MorphAnimation,
-        SpringAnimation,
     };
 
     // FAB
@@ -282,19 +273,17 @@ pub mod prelude {
 
     // Slider
     pub use crate::slider::{
-        spawn_slider_control, spawn_slider_control_with, MaterialSlider, SliderActiveTrack,
-        SliderBuilder, SliderChangeEvent, SliderDirection, SliderHandle, SliderLabel,
-        SliderOrientation, SliderPlugin, SliderTrack, SpawnSliderChild, SLIDER_HANDLE_SIZE,
-        SLIDER_HANDLE_SIZE_PRESSED, SLIDER_LABEL_HEIGHT, SLIDER_TICK_SIZE, SLIDER_TRACK_HEIGHT,
-        SLIDER_TRACK_HEIGHT_ACTIVE,
+        MaterialSlider, SliderActiveTrack, SliderBuilder, SliderChangeEvent, SliderHandle,
+        SliderLabel, SliderPlugin, SliderTraceSettings, SliderTrack, SpawnSliderChild,
+        SLIDER_HANDLE_SIZE, SLIDER_HANDLE_SIZE_PRESSED, SLIDER_LABEL_HEIGHT, SLIDER_TICK_SIZE,
+        SLIDER_TRACK_HEIGHT, SLIDER_TRACK_HEIGHT_ACTIVE,
     };
 
     // Text Field
     pub use crate::text_field::{
-        spawn_text_field_control, spawn_text_field_control_with, MaterialTextField,
-        SpawnTextFieldChild, TextFieldBuilder, TextFieldChangeEvent, TextFieldInput,
-        TextFieldLabel, TextFieldPlugin, TextFieldSubmitEvent, TextFieldSupportingText,
-        TextFieldVariant, TEXT_FIELD_HEIGHT, TEXT_FIELD_MIN_WIDTH,
+        MaterialTextField, SpawnTextFieldChild, TextFieldBuilder, TextFieldChangeEvent,
+        TextFieldFormatter, TextFieldInput, TextFieldLabel, TextFieldPlugin, TextFieldSubmitEvent,
+        TextFieldSupportingText, TextFieldVariant, TEXT_FIELD_HEIGHT, TEXT_FIELD_MIN_WIDTH,
     };
 
     // Progress
@@ -309,15 +298,21 @@ pub mod prelude {
     pub use crate::dialog::{
         create_dialog_scrim, create_dialog_scrim_for, DialogActions, DialogBuilder,
         DialogCloseEvent, DialogConfirmEvent, DialogContent, DialogHeadline, DialogOpenEvent,
-        DialogPlugin, DialogScrim, DialogScrimFor, DialogType, MaterialDialog, SpawnDialogChild,
-        DIALOG_MAX_WIDTH, DIALOG_MIN_WIDTH,
+        DialogPlugin, DialogScrim, DialogType, MaterialDialog, SpawnDialogChild, DIALOG_MAX_WIDTH,
+        DIALOG_MIN_WIDTH,
     };
 
-    // DateTime Picker
-    pub use crate::datetime_picker::{
-        Date, DateTimePickerBuilder, DateTimePickerCancelEvent, DateTimePickerPlugin,
-        DateTimePickerSubmitEvent, MaterialDateTimePicker, SpawnDateTimePickerChild, TimeFormat,
-        Weekday,
+    // Date Picker
+    pub use crate::date_picker::{
+        CalendarConstraints, Date, DateInputMode, DatePickerBuilder, DatePickerCancelEvent,
+        DatePickerMode, DatePickerSubmitEvent, DateSelection, DateSelector, DateValidator,
+        MaterialDatePicker, Month, RangeDateSelector, SingleDateSelector, SpawnDatePicker, Weekday,
+    };
+
+    // Time Picker
+    pub use crate::time_picker::{
+        MaterialTimePicker, SpawnTimePicker, TimeFormat, TimeInputMode, TimePeriod,
+        TimePickerBuilder, TimePickerCancelEvent, TimePickerSubmitEvent,
     };
 
     // List
@@ -364,20 +359,33 @@ pub mod prelude {
 
     // Layout
     pub use crate::layout::{
-        apply_app_bar_inset, spawn_adaptive_navigation_scaffold, spawn_bottom_navigation_scaffold,
-        spawn_list_detail_scaffold, spawn_modal_drawer_scaffold, spawn_navigation_bar_scaffold,
-        spawn_navigation_rail_scaffold, spawn_navigation_suite_scaffold,
-        spawn_permanent_drawer_scaffold, spawn_supporting_panes_scaffold,
-        AdaptiveNavigationScaffold, AppBarOffsetConfig, BottomNavigationScaffold,
-        ListDetailScaffold, ModalDrawerScaffold, NavigationBarScaffold, NavigationRailScaffold,
-        NavigationSuiteScaffold, PaneEntities, PaneTestIds, PermanentDrawerScaffold,
-        ScaffoldEntities, ScaffoldTestIds, SupportingPanesScaffold,
+        spawn_permanent_drawer_scaffold, PermanentDrawerScaffold, ScaffoldEntities, ScaffoldTestIds,
+    };
+
+    // Search
+    pub use crate::search::{
+        MaterialSearchBar, SearchBarAction, SearchBarBuilder, SearchBarClickEvent,
+        SearchBarNavigation, SearchPlugin, SearchQueryEvent, SpawnSearchBarChild,
+        SEARCH_BAR_HEIGHT,
+    };
+
+    // Toolbar
+    pub use crate::toolbar::{
+        MaterialToolbar, SpawnToolbarChild, ToolbarAction, ToolbarActionEvent, ToolbarBuilder,
+        ToolbarNavigationEvent, ToolbarPlugin, TOOLBAR_HEIGHT, TOOLBAR_ICON_SIZE,
+    };
+
+    // Loading Indicator
+    pub use crate::loading_indicator::{
+        LoadingIndicatorBuilder, LoadingIndicatorPlugin, LoadingShape, MaterialLoadingIndicator,
+        ShapeMorphMaterial, SpawnLoadingIndicatorChild, LOADING_INDICATOR_SIZE,
     };
 
     // Motion
     pub use crate::motion::{
         ease_emphasized, ease_emphasized_accelerate, ease_emphasized_decelerate, ease_standard,
-        ease_standard_accelerate, ease_standard_decelerate, MotionPlugin, SpringConfig, StateLayer,
+        ease_standard_accelerate, ease_standard_decelerate, AnimatedValue, MotionPlugin,
+        SpringConfig, StateLayer,
     };
 
     // Snackbar
@@ -451,16 +459,8 @@ pub struct MaterialUiPlugin;
 
 impl Plugin for MaterialUiPlugin {
     fn build(&self, app: &mut App) {
-        // Initialize theme resource
-        app.init_resource::<theme::MaterialTheme>();
-
-        // Core plugins
-        app.add_plugins((
-            focus::FocusPlugin,
-            ripple::RipplePlugin,
-            icons::icon::IconPlugin,
-            icons::MaterialIconsPlugin,
-        ));
+        // Core systems (theme, icons, focus, ripple).
+        app.add_plugins(MaterialUiCorePlugin);
 
         // Component plugins
         app.add_plugins((
@@ -481,24 +481,61 @@ impl Plugin for MaterialUiPlugin {
             select::SelectPlugin,
         ));
 
+        // Keep plugin tuples under Bevy's arity limit.
+        app.add_plugins(button_group::ButtonGroupPlugin);
+
         // New component plugins
         app.add_plugins((
             motion::MotionPlugin,
             snackbar::SnackbarPlugin,
             chip::ChipPlugin,
             app_bar::AppBarPlugin,
-            toolbar::ToolbarPlugin,
             badge::BadgePlugin,
             tooltip::TooltipPlugin,
             scroll::ScrollPlugin,
-            datetime_picker::DateTimePickerPlugin,
-            loading_indicator::LoadingIndicatorPlugin,
+            date_picker::DatePickerPlugin,
+            time_picker::TimePickerPlugin,
             search::SearchPlugin,
-            animation::AnimationPlugin,
+            toolbar::ToolbarPlugin,
+            loading_indicator::LoadingIndicatorPlugin,
         ));
 
         // Adaptive layout
         app.add_plugins(adaptive::WindowSizeClassPlugin);
+    }
+}
+
+/// Core plugin that provides the shared foundations required by most components.
+///
+/// This is intended to be used as an internal dependency for component plugins
+/// so downstream users can do either of:
+/// - `app.add_plugins(MaterialUiPlugin)` (everything)
+/// - `app.add_plugins(ButtonPlugin)` (single component; core dependencies auto-added)
+pub struct MaterialUiCorePlugin;
+
+impl Plugin for MaterialUiCorePlugin {
+    fn build(&self, app: &mut App) {
+        // Theme is a resource; initializing it is idempotent.
+        app.init_resource::<theme::MaterialTheme>();
+
+        // Locale is a resource; initializing it is idempotent.
+        app.init_resource::<locale::MaterialLocale>();
+
+        // i18n is a plugin (assets + systems), so guard it.
+        if !app.is_plugin_added::<i18n::MaterialI18nPlugin>() {
+            app.add_plugins(i18n::MaterialI18nPlugin);
+        }
+
+        // These are true plugins (adding twice panics), so guard them.
+        if !app.is_plugin_added::<focus::FocusPlugin>() {
+            app.add_plugins(focus::FocusPlugin);
+        }
+        if !app.is_plugin_added::<ripple::RipplePlugin>() {
+            app.add_plugins(ripple::RipplePlugin);
+        }
+        if !app.is_plugin_added::<icons::MaterialIconsPlugin>() {
+            app.add_plugins(icons::MaterialIconsPlugin);
+        }
     }
 }
 

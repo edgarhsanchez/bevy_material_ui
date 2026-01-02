@@ -5,20 +5,34 @@
 //!
 //! Reference: <https://m3.material.io/components/app-bars/overview>
 
+use bevy::ecs::relationship::Relationship;
 use bevy::prelude::*;
 
 use crate::{
+    i18n::LocalizedText,
     icons::{IconStyle, MaterialIcon},
     ripple::RippleHost,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
 };
 
+/// Conventional maximum depth to traverse when searching for ancestor entities.
+///
+/// In typical Material Design–style UI layouts (see module-level reference), the widget
+/// hierarchy is only a handful of levels deep (usually well under 10). A value of 32 is
+/// therefore a conservative upper bound: it is far larger than any realistic app bar
+/// hierarchy, but still finite, and can be used by traversal helpers to guard against
+/// circular references or otherwise corrupted/pathological entity hierarchies.
+const MAX_ANCESTOR_DEPTH: usize = 32;
+
 /// Plugin for app bar components
 pub struct AppBarPlugin;
 
 impl Plugin for AppBarPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<AppBarNavigationEvent>()
             .add_message::<AppBarActionEvent>()
             .add_systems(
@@ -330,6 +344,7 @@ pub const BOTTOM_APP_BAR_HEIGHT: f32 = 80.0;
 /// Builder for creating Top App Bars
 pub struct TopAppBarBuilder {
     app_bar: TopAppBar,
+    title_key: Option<String>,
 }
 
 impl TopAppBarBuilder {
@@ -337,7 +352,15 @@ impl TopAppBarBuilder {
     pub fn new(title: impl Into<String>) -> Self {
         Self {
             app_bar: TopAppBar::new(title),
+            title_key: None,
         }
+    }
+
+    /// Set title from an i18n key.
+    pub fn title_key(mut self, key: impl Into<String>) -> Self {
+        self.app_bar.title = String::new();
+        self.title_key = Some(key.into());
+        self
     }
 
     /// Set small variant
@@ -515,6 +538,20 @@ pub trait SpawnAppBarChild {
     );
 }
 
+/// Extension trait to spawn Top App Bars with a right-side custom content slot.
+///
+/// This keeps navigation/actions wired through `AppBarNavigationEvent` and `AppBarActionEvent`,
+/// while letting callers inject extra widgets (e.g. a search box) into the right section.
+pub trait SpawnTopAppBarWithRightContentChild {
+    /// Spawn a top app bar and inject additional widgets into the right section *before* actions.
+    fn spawn_top_app_bar_with_right_content(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: TopAppBarBuilder,
+        with_right_content: impl FnOnce(&mut ChildSpawnerCommands),
+    ) -> Entity;
+}
+
 impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
     fn spawn_top_app_bar(
         &mut self,
@@ -532,22 +569,39 @@ impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
         with_content: impl FnOnce(&mut ChildSpawnerCommands),
     ) {
         let title_text = builder.app_bar.title.clone();
+        let title_key = builder.title_key.clone();
         let title_color = builder.app_bar.title_color(theme);
 
         self.spawn(builder.build(theme)).with_children(|bar| {
             // Title
-            bar.spawn((
-                Text::new(&title_text),
-                TextFont {
-                    font_size: 22.0,
-                    ..default()
-                },
-                TextColor(title_color),
-                Node {
-                    flex_grow: 1.0,
-                    ..default()
-                },
-            ));
+            if let Some(key) = title_key.as_deref() {
+                bar.spawn((
+                    Text::new(""),
+                    LocalizedText::new(key),
+                    TextFont {
+                        font_size: 22.0,
+                        ..default()
+                    },
+                    TextColor(title_color),
+                    Node {
+                        flex_grow: 1.0,
+                        ..default()
+                    },
+                ));
+            } else {
+                bar.spawn((
+                    Text::new(&title_text),
+                    TextFont {
+                        font_size: 22.0,
+                        ..default()
+                    },
+                    TextColor(title_color),
+                    Node {
+                        flex_grow: 1.0,
+                        ..default()
+                    },
+                ));
+            }
 
             // Additional content
             with_content(bar);
@@ -569,6 +623,171 @@ impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
         with_content: impl FnOnce(&mut ChildSpawnerCommands),
     ) {
         self.spawn(builder.build(theme)).with_children(with_content);
+    }
+}
+
+impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
+    fn spawn_top_app_bar_with_right_content(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: TopAppBarBuilder,
+        with_right_content: impl FnOnce(&mut ChildSpawnerCommands),
+    ) -> Entity {
+        let title = builder.app_bar.title.clone();
+        let title_key = builder.title_key.clone();
+        let title_color = builder.app_bar.title_color(theme);
+        let nav_icon = builder.app_bar.navigation_icon.clone();
+        let actions = builder.app_bar.actions.clone();
+        let variant = builder.app_bar.variant;
+
+        self.spawn(builder.build(theme))
+            .with_children(|parent| {
+                // Left section (navigation + title for small)
+                parent
+                    .spawn(Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        column_gap: Val::Px(Spacing::EXTRA_SMALL),
+                        ..default()
+                    })
+                    .with_children(|left| {
+                        // Navigation icon
+                        if let Some(icon) = &nav_icon {
+                            left.spawn((
+                                AppBarNavigation,
+                                Button,
+                                Interaction::None,
+                                RippleHost::new(),
+                                Node {
+                                    width: Val::Px(48.0),
+                                    height: Val::Px(48.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::NONE),
+                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            ))
+                            .with_children(|btn| {
+                                if let Some(icon) = MaterialIcon::from_name(icon) {
+                                    btn.spawn((
+                                        icon,
+                                        IconStyle::outlined()
+                                            .with_color(theme.on_surface)
+                                            .with_size(24.0),
+                                    ));
+                                }
+                            });
+                        }
+
+                        // Title (for Small variant)
+                        if variant == TopAppBarVariant::Small {
+                            if let Some(key) = title_key.as_deref() {
+                                left.spawn((
+                                    AppBarTitle,
+                                    Text::new(""),
+                                    LocalizedText::new(key),
+                                    TextFont {
+                                        font_size: 22.0,
+                                        ..default()
+                                    },
+                                    TextColor(title_color),
+                                ));
+                            } else {
+                                left.spawn((
+                                    AppBarTitle,
+                                    Text::new(&title),
+                                    TextFont {
+                                        font_size: 22.0,
+                                        ..default()
+                                    },
+                                    TextColor(title_color),
+                                ));
+                            }
+                        }
+                    });
+
+                // Center section (title for center-aligned)
+                if variant == TopAppBarVariant::CenterAligned {
+                    if let Some(key) = title_key.as_deref() {
+                        parent.spawn((
+                            AppBarTitle,
+                            Text::new(""),
+                            LocalizedText::new(key),
+                            TextFont {
+                                font_size: 22.0,
+                                ..default()
+                            },
+                            TextColor(title_color),
+                            Node {
+                                flex_grow: 1.0,
+                                justify_content: JustifyContent::Center,
+                                ..default()
+                            },
+                        ));
+                    } else {
+                        parent.spawn((
+                            AppBarTitle,
+                            Text::new(&title),
+                            TextFont {
+                                font_size: 22.0,
+                                ..default()
+                            },
+                            TextColor(title_color),
+                            Node {
+                                flex_grow: 1.0,
+                                justify_content: JustifyContent::Center,
+                                ..default()
+                            },
+                        ));
+                    }
+                }
+
+                // Right section (custom content + actions)
+                parent
+                    .spawn(Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        column_gap: Val::Px(Spacing::EXTRA_SMALL),
+                        ..default()
+                    })
+                    .with_children(|right| {
+                        // Injected widgets come first (so actions stay right-most).
+                        with_right_content(right);
+
+                        for action in &actions {
+                            right
+                                .spawn((
+                                    AppBarActionButton {
+                                        id: action.id.clone(),
+                                    },
+                                    Button,
+                                    Interaction::None,
+                                    RippleHost::new(),
+                                    Node {
+                                        width: Val::Px(48.0),
+                                        height: Val::Px(48.0),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::NONE),
+                                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                ))
+                                .with_children(|btn| {
+                                    if let Some(icon) = MaterialIcon::from_name(&action.icon) {
+                                        btn.spawn((
+                                            icon,
+                                            IconStyle::outlined()
+                                                .with_color(theme.on_surface_variant)
+                                                .with_size(24.0),
+                                        ));
+                                    }
+                                });
+                        }
+                    });
+            })
+            .id()
     }
 }
 
@@ -703,6 +922,157 @@ pub fn spawn_top_app_bar(
         .id()
 }
 
+/// Spawn a top app bar with a right-side custom content slot.
+///
+/// The injected widgets are spawned *before* the action buttons.
+pub fn spawn_top_app_bar_with_right_content(
+    commands: &mut Commands,
+    theme: &MaterialTheme,
+    builder: TopAppBarBuilder,
+    with_right_content: impl FnOnce(&mut ChildSpawnerCommands),
+) -> Entity {
+    let title = builder.app_bar.title.clone();
+    let title_color = builder.app_bar.title_color(theme);
+    let nav_icon = builder.app_bar.navigation_icon.clone();
+    let actions = builder.app_bar.actions.clone();
+    let variant = builder.app_bar.variant;
+
+    commands
+        .spawn(builder.build(theme))
+        .with_children(|parent| {
+            // Left section (navigation + title for small/center)
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    column_gap: Val::Px(Spacing::EXTRA_SMALL),
+                    ..default()
+                })
+                .with_children(|left| {
+                    // Make the navigation area (icon + title) one large clickable target.
+                    // This matches user expectations that clicking the title behaves like "Back",
+                    // and it provides a clear hover target.
+                    if nav_icon.is_some() {
+                        left.spawn((
+                            AppBarNavigation,
+                            Button,
+                            Interaction::None,
+                            RippleHost::new(),
+                            GlobalZIndex(1002),
+                            Node {
+                                height: Val::Px(48.0),
+                                flex_direction: FlexDirection::Row,
+                                align_items: AlignItems::Center,
+                                padding: UiRect::horizontal(Val::Px(8.0)),
+                                column_gap: Val::Px(Spacing::EXTRA_SMALL),
+                                ..default()
+                            },
+                            BackgroundColor(Color::NONE),
+                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        ))
+                        .with_children(|btn| {
+                            if let Some(icon_name) = &nav_icon {
+                                if let Some(icon) = MaterialIcon::from_name(icon_name) {
+                                    btn.spawn((
+                                        icon,
+                                        IconStyle::outlined()
+                                            .with_color(theme.on_surface)
+                                            .with_size(24.0),
+                                    ));
+                                }
+                            }
+
+                            if variant == TopAppBarVariant::Small {
+                                btn.spawn((
+                                    AppBarTitle,
+                                    Text::new(&title),
+                                    TextFont {
+                                        font_size: 22.0,
+                                        ..default()
+                                    },
+                                    TextColor(title_color),
+                                ));
+                            }
+                        });
+                    } else if variant == TopAppBarVariant::Small {
+                        // No navigation: just show the title.
+                        left.spawn((
+                            AppBarTitle,
+                            Text::new(&title),
+                            TextFont {
+                                font_size: 22.0,
+                                ..default()
+                            },
+                            TextColor(title_color),
+                        ));
+                    }
+                });
+
+            // Center section (title for center-aligned)
+            if variant == TopAppBarVariant::CenterAligned {
+                parent.spawn((
+                    AppBarTitle,
+                    Text::new(&title),
+                    TextFont {
+                        font_size: 22.0,
+                        ..default()
+                    },
+                    TextColor(title_color),
+                    Node {
+                        flex_grow: 1.0,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                ));
+            }
+
+            // Right section (custom content + actions)
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    column_gap: Val::Px(Spacing::EXTRA_SMALL),
+                    ..default()
+                })
+                .with_children(|right| {
+                    with_right_content(right);
+
+                    for action in &actions {
+                        right
+                            .spawn((
+                                AppBarActionButton {
+                                    id: action.id.clone(),
+                                },
+                                Button,
+                                Interaction::None,
+                                RippleHost::new(),
+                                GlobalZIndex(1002),
+                                Node {
+                                    width: Val::Px(48.0),
+                                    height: Val::Px(48.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::NONE),
+                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            ))
+                            .with_children(|btn| {
+                                if let Some(icon) = MaterialIcon::from_name(&action.icon) {
+                                    btn.spawn((
+                                        icon,
+                                        IconStyle::outlined()
+                                            .with_color(theme.on_surface_variant)
+                                            .with_size(24.0),
+                                    ));
+                                }
+                            });
+                    }
+                });
+        })
+        .id()
+}
+
 // ============================================================================
 // Systems
 // ============================================================================
@@ -718,26 +1088,60 @@ fn top_app_bar_scroll_system(
 
 /// System to handle app bar interactions
 fn app_bar_interaction_system(
-    nav_buttons: Query<(&Interaction, &ChildOf), (Changed<Interaction>, With<AppBarNavigation>)>,
-    action_buttons: Query<(&Interaction, &AppBarActionButton, &ChildOf), Changed<Interaction>>,
+    theme: Res<MaterialTheme>,
+    nav_buttons: Query<(Entity, &Interaction), (Changed<Interaction>, With<AppBarNavigation>)>,
+    action_buttons: Query<(Entity, &Interaction, &AppBarActionButton), Changed<Interaction>>,
+    parents: Query<&ChildOf>,
     app_bars: Query<Entity, With<TopAppBar>>,
+    mut bgs: Query<&mut BackgroundColor>,
     mut nav_events: MessageWriter<AppBarNavigationEvent>,
     mut action_events: MessageWriter<AppBarActionEvent>,
 ) {
+    let find_app_bar_ancestor = |mut cursor: Entity| {
+        for _ in 0..MAX_ANCESTOR_DEPTH {
+            if app_bars.get(cursor).is_ok() {
+                return Some(cursor);
+            }
+            if let Ok(parent) = parents.get(cursor) {
+                cursor = parent.get();
+            } else {
+                break;
+            }
+        }
+        None
+    };
+
     // Handle navigation clicks
-    for (interaction, parent) in nav_buttons.iter() {
+    for (entity, interaction) in nav_buttons.iter() {
+        if let Ok(mut bg) = bgs.get_mut(entity) {
+            *bg = match interaction {
+                Interaction::Hovered | Interaction::Pressed => {
+                    BackgroundColor(theme.surface_container_highest)
+                }
+                Interaction::None => BackgroundColor(Color::NONE),
+            };
+        }
+
         if *interaction == Interaction::Pressed {
-            // Find the app bar ancestor
-            if let Ok(app_bar) = app_bars.get(parent.parent()) {
+            if let Some(app_bar) = find_app_bar_ancestor(entity) {
                 nav_events.write(AppBarNavigationEvent { app_bar });
             }
         }
     }
 
     // Handle action clicks
-    for (interaction, action, parent) in action_buttons.iter() {
+    for (entity, interaction, action) in action_buttons.iter() {
+        if let Ok(mut bg) = bgs.get_mut(entity) {
+            *bg = match interaction {
+                Interaction::Hovered | Interaction::Pressed => {
+                    BackgroundColor(theme.surface_container_highest)
+                }
+                Interaction::None => BackgroundColor(Color::NONE),
+            };
+        }
+
         if *interaction == Interaction::Pressed {
-            if let Ok(app_bar) = app_bars.get(parent.parent()) {
+            if let Some(app_bar) = find_app_bar_ancestor(entity) {
                 action_events.write(AppBarActionEvent {
                     app_bar,
                     action: action.id.clone(),

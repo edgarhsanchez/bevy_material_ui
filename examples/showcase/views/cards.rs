@@ -17,7 +17,9 @@ pub fn spawn_cards_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.cards.title",
                 "Cards",
+                "showcase.section.cards.description",
                 "Containers for related content and actions",
             );
 
@@ -30,9 +32,9 @@ pub fn spawn_cards_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                     ..default()
                 })
                 .with_children(|row| {
-                    spawn_card(row, theme, "Elevated", CardType::Elevated);
-                    spawn_card(row, theme, "Filled", CardType::Filled);
-                    spawn_card(row, theme, "Outlined", CardType::Outlined);
+                    spawn_card(row, theme, "showcase.cards.elevated", CardType::Elevated);
+                    spawn_card(row, theme, "showcase.cards.filled", CardType::Filled);
+                    spawn_card(row, theme, "showcase.cards.outlined", CardType::Outlined);
                 });
 
             spawn_code_block(
@@ -76,20 +78,25 @@ fn spawn_card(
         .spawn((Interaction::None, builder.build(theme)))
         .with_children(|card| {
             card.spawn((
-                Text::new(title),
+                Text::new(""),
+                LocalizedText::new(title).with_default(title),
                 TextFont {
                     font_size: 16.0,
                     ..default()
                 },
                 TextColor(theme.on_surface),
+                NeedsInternationalFont,
             ));
             card.spawn((
-                Text::new("Card content goes here with supporting text."),
+                Text::new(""),
+                LocalizedText::new("showcase.cards.content")
+                    .with_default("Card content goes here with supporting text."),
                 TextFont {
                     font_size: 12.0,
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
+                NeedsInternationalFont,
             ));
         });
 }

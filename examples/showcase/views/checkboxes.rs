@@ -5,10 +5,10 @@
 //! configuration options.
 
 use bevy::prelude::*;
-use bevy_material_ui::checkbox::SpawnCheckboxChild;
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
+use crate::showcase::i18n_helpers::spawn_checkbox_i18n;
 
 /// Spawn the checkboxes section content
 pub fn spawn_checkboxes_section(
@@ -26,7 +26,9 @@ pub fn spawn_checkboxes_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.checkboxes.title",
                 "Checkboxes",
+                "showcase.section.checkboxes.description",
                 "Toggle selection with visual checkmark feedback",
             );
 
@@ -38,27 +40,56 @@ pub fn spawn_checkboxes_section(
                     ..default()
                 })
                 .with_children(|col| {
-                    // Simple, clean API - just pass theme, state, and label
-                    col.spawn_checkbox(theme, CheckboxState::Checked, "Option 1");
-                    col.spawn_checkbox(theme, CheckboxState::Unchecked, "Option 2");
-                    col.spawn_checkbox(theme, CheckboxState::Unchecked, "Option 3");
+                    spawn_checkbox_i18n(
+                        col,
+                        theme,
+                        CheckboxState::Checked,
+                        "showcase.checkboxes.option_1",
+                        "Option 1",
+                    );
+                    spawn_checkbox_i18n(
+                        col,
+                        theme,
+                        CheckboxState::Unchecked,
+                        "showcase.checkboxes.option_2",
+                        "Option 2",
+                    );
+                    spawn_checkbox_i18n(
+                        col,
+                        theme,
+                        CheckboxState::Unchecked,
+                        "showcase.checkboxes.option_3",
+                        "Option 3",
+                    );
                 });
 
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create checkboxes with the simple spawn API
+                r#"// Without i18n - simple API
 parent.spawn_checkbox(&theme, CheckboxState::Unchecked, "Accept terms");
-parent.spawn_checkbox(&theme, CheckboxState::Checked, "Remember me");
 
-// Or use the builder for more control
-parent.spawn_checkbox_with(
-    &theme,
-    MaterialCheckbox::new()
-        .with_state(CheckboxState::Indeterminate)
-        .disabled(true),
-    "Partial selection"
-);
+// With i18n - use LocalizedText component
+parent.spawn(Node::default()).with_children(|row| {
+    row.spawn((
+        MaterialCheckbox::new().with_state(CheckboxState::Checked),
+        Button,
+        // ... other button components
+    )).with_children(|checkbox| {
+        // Add checkbox internals (state layer, box, icon)
+        // ...
+    });
+    
+    // Add localized label
+    row.spawn((
+        Text::new(""),
+        LocalizedText::new("settings.remember_me")
+            .with_default("Remember me"),
+        TextFont { font_size: 14.0, ..default() },
+        TextColor(theme.on_surface),
+        NeedsInternationalFont,
+    ));
+});
 
 // Listen for changes
 fn handle_checkbox_changes(

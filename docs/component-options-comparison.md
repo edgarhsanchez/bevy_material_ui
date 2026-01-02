@@ -1,6 +1,6 @@
 # Material Design Component Options Comparison
 
-This document compares the configurable options from Android Material Components (1.13.0) with our bevy_material_ui implementation.
+This document compares the configurable options from the reference Material Components implementation (1.13.0) with our bevy_material_ui implementation.
 
 Legend:
 - ✅ = Implemented
@@ -12,11 +12,11 @@ Legend:
 
 ## Button (`MaterialButton`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **Variants** | - | `variant: ButtonVariant` | ✅ Filled, FilledTonal, Outlined, Elevated, Text |
-| **Disabled** | `android:enabled` | `disabled: bool` | ✅ |
-| **Label** | `android:text` | `label: String` | ✅ |
+| **Disabled** | `enabled` | `disabled: bool` | ✅ |
+| **Label** | `text` | `label: String` | ✅ |
 | **Icon** | `icon` | `icon: Option<String>` | ✅ |
 | **Trailing Icon** | - | `trailing_icon: Option<String>` | ✅ |
 | **Icon Gravity** | `iconGravity` (START, TEXT_START, END, TEXT_END, TOP, TEXT_TOP) | `icon_gravity: IconGravity` | ✅ |
@@ -24,10 +24,10 @@ Legend:
 | **Icon Size** | `iconSize` | `icon_size: f32` | ✅ |
 | **Icon Tint** | `iconTint` | `custom_text_color` (shared) | 🔄 Needs separate field |
 | **Corner Radius** | `cornerRadius`, `shapeAppearance` | `corner_radius: Option<f32>` | ✅ |
-| **Min Width** | `android:minWidth` | `min_width: Option<f32>` | ✅ |
-| **Min Height** | `android:minHeight` | `min_height: Option<f32>` | ✅ |
+| **Min Width** | `minWidth` | `min_width: Option<f32>` | ✅ |
+| **Min Height** | `minHeight` | `min_height: Option<f32>` | ✅ |
 | **Background Tint** | `backgroundTint` | `custom_background_color: Option<Color>` | ✅ |
-| **Text Color** | `android:textColor` | `custom_text_color: Option<Color>` | ✅ |
+| **Text Color** | `textColor` | `custom_text_color: Option<Color>` | ✅ |
 | **Stroke Width** | `strokeWidth` | `stroke_width: f32` | ✅ |
 | **Stroke Color** | `strokeColor` | `stroke_color: Option<Color>` | ✅ |
 | **Checkable** | `checkable` | `checkable: bool` | ✅ |
@@ -48,13 +48,13 @@ pub inset: Option<UiRect>,          // Insets/margins
 
 ## Slider (`MaterialSlider`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
-| **Value** | `android:value` | `value: f32` | ✅ |
-| **Value From** | `android:valueFrom` | `min: f32` | ✅ |
-| **Value To** | `android:valueTo` | `max: f32` | ✅ |
-| **Step Size** | `android:stepSize` | `step: Option<f32>` | ✅ |
-| **Disabled** | `android:enabled` | `disabled: bool` | ✅ |
+| **Value** | `value` | `value: f32` | ✅ |
+| **Value From** | `valueFrom` | `min: f32` | ✅ |
+| **Value To** | `valueTo` | `max: f32` | ✅ |
+| **Step Size** | `stepSize` | `step: Option<f32>` | ✅ |
+| **Disabled** | `enabled` | `disabled: bool` | ✅ |
 | **Discrete Mode** | - | `discrete_value_count: Option<usize>` | ✅ |
 | **Show Ticks** | `tickVisible`, `tickVisibilityMode` | `show_ticks: bool`, `tick_visibility: TickVisibility` | ✅ |
 | **Show Label** | `labelBehavior` | `show_label: bool` | ✅ |
@@ -107,12 +107,12 @@ pub tick_radius_inactive: f32,
 
 ## TextField (`MaterialTextField`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **Variant** | `boxBackgroundMode` | `variant: TextFieldVariant` | ✅ Filled, Outlined |
 | **Value** | - | `value: String` | ✅ |
 | **Placeholder** | `placeholderText` | `placeholder: String` | ✅ |
-| **Label/Hint** | `android:hint` | `label: Option<String>` | ✅ |
+| **Label/Hint** | `hint` | `label: Option<String>` | ✅ |
 | **Hint Enabled** | `hintEnabled` | - (always enabled if label set) | 🔄 |
 | **Hint Animation** | `hintAnimationEnabled` | `hint_animation_enabled: bool` | ✅ |
 | **Helper Text** | `helperText` | `supporting_text: Option<String>` | ✅ |
@@ -122,7 +122,7 @@ pub tick_radius_inactive: f32,
 | **Start Icon** | `startIconDrawable` | `leading_icon: Option<String>` | ✅ |
 | **End Icon Mode** | `endIconMode` | `end_icon_mode: EndIconMode` | ✅ None, PasswordToggle, ClearText, DropdownMenu, Custom |
 | **End Icon** | `endIconDrawable` | `trailing_icon: Option<String>` | ✅ |
-| **Disabled** | `android:enabled` | `disabled: bool` | ✅ |
+| **Disabled** | `enabled` | `disabled: bool` | ✅ |
 | **Error State** | `errorEnabled` | `error: bool` | ✅ |
 | **Error Text** | `errorTextAppearance` | `error_text: Option<String>` | ✅ |
 | **Counter Enabled** | `counterEnabled` | `counter_enabled: bool` | ✅ |
@@ -130,9 +130,9 @@ pub tick_radius_inactive: f32,
 | **Box Stroke Width** | `boxStrokeWidth` | `box_stroke_width: f32` | ✅ |
 | **Box Stroke Focused** | `boxStrokeWidthFocused` | `box_stroke_width_focused: f32` | ✅ |
 | **Box Corner Radius** | `boxCornerRadiusTopStart/End/BottomStart/End` | `box_corner_radius: Option<f32>` | 🔄 Single value vs 4 corners |
-| **Input Type** | `android:inputType` | `input_type: InputType` | ✅ |
+| **Input Type** | `inputType` | `input_type: InputType` | ✅ |
 | **Password Visible** | - | `password_visible: bool` | ✅ |
-| **Hint Text Color** | `android:textColorHint` | - | ❌ |
+| **Hint Text Color** | `textColorHint` | - | ❌ |
 | **Helper Text Color** | `helperTextTextColor` | - | ❌ |
 | **Error Text Color** | `errorTextColor` | - | ❌ |
 | **Prefix Text Color** | `prefixTextColor` | - | ❌ |
@@ -171,10 +171,10 @@ pub box_corner_radius_bottom_end: Option<f32>,
 
 ## Chip (`MaterialChip`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **Variant** | - | `variant: ChipVariant` | ✅ Assist, Filter, Input, Suggestion |
-| **Label** | `android:text` | `label: String` | ✅ |
+| **Label** | `text` | `label: String` | ✅ |
 | **Value** | - | `value: Option<String>` | ✅ |
 | **Selected** | - | `selected: bool` | ✅ |
 | **Disabled** | - | `disabled: bool` | ✅ |
@@ -195,9 +195,9 @@ pub box_corner_radius_bottom_end: Option<f32>,
 | **Close Icon Size** | `closeIconSize` | - | ❌ |
 | **Checked Icon** | `checkedIcon` | - | ❌ |
 | **Checked Icon Visible** | `checkedIconVisible` | - | ❌ |
-| **Checkable** | `android:checkable` | - | ❌ |
-| **Text Color** | `android:textColor` | - | ❌ |
-| **Text Size** | `android:textSize` | - | ❌ |
+| **Checkable** | `checkable` | - | ❌ |
+| **Text Color** | `textColor` | - | ❌ |
+| **Text Size** | `textSize` | - | ❌ |
 | **Chip Start Padding** | `chipStartPadding` | - | ❌ |
 | **Chip End Padding** | `chipEndPadding` | - | ❌ |
 | **Icon Start Padding** | `iconStartPadding` | - | ❌ |
@@ -240,7 +240,7 @@ pub close_icon_end_padding: f32,
 
 ## Snackbar (`ShowSnackbar`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **Message** | `setText` | `message: String` | ✅ |
 | **Action** | `setAction` | `action: Option<String>` | ✅ |
@@ -255,7 +255,7 @@ pub close_icon_end_padding: f32,
 | **Max Inline Action Width** | `maxActionInlineWidth` | - | ❌ |
 | **Shape Appearance** | `shapeAppearance` | - | ❌ |
 | **Elevation** | `elevation` | - (fixed) | ❌ |
-| **Max Width** | `android:maxWidth` | - | ❌ |
+| **Max Width** | `maxWidth` | - | ❌ |
 
 ### Missing Snackbar Options to Add:
 ```rust
@@ -274,17 +274,17 @@ pub max_width: Option<f32>,
 
 ## Tooltip (`TooltipTrigger`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
-| **Text** | `android:text` | `text: String` | ✅ |
+| **Text** | `text` | `text: String` | ✅ |
 | **Variant** | - | `variant: TooltipVariant` | ✅ Plain, Rich |
 | **Position** | - | `position: TooltipPosition` | ✅ Top, Bottom, Left, Right |
 | **Delay** | - | `delay: f32` | ✅ |
-| **Text Color** | `android:textColor` | - | ❌ |
+| **Text Color** | `textColor` | - | ❌ |
 | **Background Tint** | `backgroundTint` | - | ❌ |
-| **Min Width** | `android:minWidth` | - | ❌ |
-| **Min Height** | `android:minHeight` | - | ❌ |
-| **Padding** | `android:padding` | - | ❌ |
+| **Min Width** | `minWidth` | - | ❌ |
+| **Min Height** | `minHeight` | - | ❌ |
+| **Padding** | `padding` | - | ❌ |
 | **Show Marker/Arrow** | `showMarker` | - | ❌ |
 
 ### Missing Tooltip Options to Add:
@@ -302,7 +302,7 @@ pub duration: Option<f32>,  // How long to show
 
 ## Checkbox (`MaterialCheckbox`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **State** | `checkedState` (unchecked, checked, indeterminate) | `state: CheckboxState` | ✅ |
 | **Disabled** | - | `disabled: bool` | ✅ |
@@ -328,9 +328,9 @@ pub size: f32,
 
 ## Switch (`MaterialSwitch`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
-| **Selected** | `android:checked` | `selected: bool` | ✅ |
+| **Selected** | `checked` | `selected: bool` | ✅ |
 | **Disabled** | - | `disabled: bool` | ✅ |
 | **With Icon** | - | `with_icon: bool` | ✅ |
 | **Thumb Icon** | `thumbIcon` | - | ❌ |
@@ -356,9 +356,9 @@ pub track_decoration_tint: Option<Color>,
 
 ## Radio (`MaterialRadio`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
-| **Selected** | `android:checked` | `selected: bool` | ✅ |
+| **Selected** | `checked` | `selected: bool` | ✅ |
 | **Disabled** | - | `disabled: bool` | ✅ |
 | **Group** | - | `group: Option<String>` | ✅ |
 | **Button Tint** | `buttonTint` | - | ❌ |
@@ -374,7 +374,7 @@ pub size: f32,
 
 ## FAB (`MaterialFab`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **Size** | `fabSize` (auto, normal, mini), `fabCustomSize` | `size: FabSize` | ✅ Small, Regular, Large |
 | **Color** | - | `color: FabColor` | ✅ Primary, Surface, Secondary, Tertiary |
@@ -407,7 +407,7 @@ pub corner_radius: Option<f32>,
 
 ## Badge (`MaterialBadge`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **Size** | - | `size: BadgeSize` | ✅ Small (dot), Large |
 | **Content** | `number`, `badgeText` | `content: Option<String>` | ✅ |
@@ -442,7 +442,7 @@ pub corner_radius: Option<f32>,
 
 ## Dialog (`MaterialDialog`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **Type** | - | `dialog_type: DialogType` | ✅ Basic, FullScreen |
 | **Open** | - | `open: bool` | ✅ |
@@ -472,10 +472,10 @@ pub min_width: Option<f32>,
 
 ## Progress Indicator (`MaterialLinearProgress`, `MaterialCircularProgress`)
 
-| Option | Android Attribute | bevy_material_ui | Status |
+| Option | Reference Attribute | bevy_material_ui | Status |
 |--------|-------------------|------------------|--------|
 | **Progress** | - | `progress: f32` | ✅ |
-| **Mode** | `android:indeterminate` | `mode: ProgressMode` | ✅ Determinate, Indeterminate |
+| **Mode** | `indeterminate` | `mode: ProgressMode` | ✅ Determinate, Indeterminate |
 | **Four Color** | - | `four_color: bool` | ✅ |
 | **Size** (circular) | `indicatorSize` | `size: f32` | ✅ |
 | **Track Thickness** | `trackThickness` | - | ❌ |
@@ -518,7 +518,7 @@ pub indicator_inset: f32,
 
 ### Implementation Coverage by Component
 
-| Component | Android Options | Implemented | Coverage |
+| Component | Reference Options | Implemented | Coverage |
 |-----------|-----------------|-------------|----------|
 | Button | ~25 | 15 | 60% |
 | Slider | ~35 | 12 | 34% |

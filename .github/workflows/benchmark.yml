@@ -1,0 +1,50 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [main, v0.2.4]
+  pull_request:
+    branches: [main, v0.2.4]
+
+permissions:
+  contents: write
+  deployments: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    runs-on: ${{ github.actor == 'edgarhsanchez' && 'self-hosted' || 'ubuntu-latest' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libwayland-dev libxkbcommon-dev libasound2-dev libudev-dev
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run benchmarks
+        run: cargo bench --benches --no-fail-fast -- --output-format bencher | tee output.txt
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          output-file-path: output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          # Show alert with commit comment on detecting possible performance regression
+          alert-threshold: '200%'
+          comment-on-alert: true
+          fail-on-alert: false
+          alert-comment-cc-users: '@edgarhsanchez'
+          # Store results for each branch
+          benchmark-data-dir-path: "dev/bench/${{ github.ref_name }}"

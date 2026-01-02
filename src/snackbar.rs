@@ -11,7 +11,7 @@ use bevy::prelude::*;
 
 use crate::{
     elevation::Elevation,
-    icons::{IconStyle, MaterialIcon, MaterialIconFont, ICON_CLOSE},
+    icons::{icon_by_name, IconStyle, MaterialIcon, ICON_CLOSE},
     motion::{ease_standard_accelerate, ease_standard_decelerate},
     theme::MaterialTheme,
     tokens::{CornerRadius, Duration, Spacing},
@@ -22,6 +22,9 @@ pub struct SnackbarPlugin;
 
 impl Plugin for SnackbarPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<ShowSnackbar>()
             .add_message::<DismissSnackbar>()
             .add_message::<SnackbarActionEvent>()
@@ -576,7 +579,9 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
                 ))
                 .with_children(|btn| {
                     btn.spawn((
-                        MaterialIcon::new(ICON_CLOSE),
+                        MaterialIcon::new(
+                            icon_by_name(ICON_CLOSE).expect("embedded icon 'close' not found"),
+                        ),
                         IconStyle::outlined()
                             .with_color(close_color)
                             .with_size(24.0),
@@ -596,7 +601,6 @@ pub fn spawn_snackbar(
     theme: &MaterialTheme,
     event: &ShowSnackbar,
     host: Entity,
-    icon_font: Option<&MaterialIconFont>,
 ) -> Entity {
     let snackbar = Snackbar::from_event(event);
     let message = snackbar.message.clone();
@@ -668,7 +672,6 @@ pub fn spawn_snackbar(
 
             // Close button (X icon) - always shown for easy dismissal
             let inverse_on_surface = theme.inverse_on_surface;
-            let icon_font_handle = icon_font.map(|f| f.0.clone());
             parent
                 .spawn((
                     SnackbarCloseButton,
@@ -686,31 +689,14 @@ pub fn spawn_snackbar(
                     BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ))
                 .with_children(move |btn| {
-                    let mut icon_cmd = btn.spawn((
-                        MaterialIcon::new(ICON_CLOSE),
+                    btn.spawn((
+                        MaterialIcon::new(
+                            icon_by_name(ICON_CLOSE).expect("embedded icon 'close' not found"),
+                        ),
                         IconStyle::outlined()
                             .with_color(inverse_on_surface)
                             .with_size(24.0),
                     ));
-
-                    // If the icon font is available, eagerly provide render components so the
-                    // close icon appears immediately (even if the icon sync system is not used).
-                    if let Some(font) = icon_font_handle.clone() {
-                        icon_cmd.insert((
-                            Node {
-                                width: Val::Px(24.0),
-                                height: Val::Px(24.0),
-                                ..default()
-                            },
-                            Text::new(MaterialIcon::new(ICON_CLOSE).as_str()),
-                            TextFont {
-                                font,
-                                font_size: 24.0,
-                                ..default()
-                            },
-                            TextColor(inverse_on_surface),
-                        ));
-                    }
                 });
         })
         .id();
@@ -749,7 +735,6 @@ fn snackbar_queue_system(
     mut commands: Commands,
     mut events: MessageReader<ShowSnackbar>,
     theme: Option<Res<MaterialTheme>>,
-    icon_font: Option<Res<MaterialIconFont>>,
     mut queue: ResMut<SnackbarQueue>,
     mut hosts: Query<(Entity, &mut Node, &mut SnackbarHostPosition), With<SnackbarHost>>,
     snackbars: Query<&Snackbar>,
@@ -852,8 +837,7 @@ fn snackbar_queue_system(
                     host_node.padding = padding;
                 }
 
-                let entity =
-                    spawn_snackbar(&mut commands, &theme, &event, host, icon_font.as_deref());
+                let entity = spawn_snackbar(&mut commands, &theme, &event, host);
                 queue.active = Some(entity);
                 queue.queue.remove(0);
             }

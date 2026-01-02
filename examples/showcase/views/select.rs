@@ -22,14 +22,22 @@ pub fn spawn_select_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.select.title",
                 "Select / Dropdown",
+                "showcase.section.select.description",
                 "MaterialSelect with options and selection events",
             );
 
             let options = vec![
-                SelectOption::new("Option 1").value("opt1"),
-                SelectOption::new("Option 2").value("opt2"),
-                SelectOption::new("Option 3").value("opt3"),
+                SelectOption::new("")
+                    .label_key("showcase.select.option.1")
+                    .value("opt1"),
+                SelectOption::new("")
+                    .label_key("showcase.select.option.2")
+                    .value("opt2"),
+                SelectOption::new("")
+                    .label_key("showcase.select.option.3")
+                    .value("opt3"),
             ];
 
             section
@@ -48,16 +56,12 @@ pub fn spawn_select_section(
                         ..default()
                     })
                     .with_children(|col| {
-                        col.spawn_filled_select(theme, "Filled", options.clone());
-                    });
-
-                    row.spawn(Node {
-                        flex_direction: FlexDirection::Column,
-                        row_gap: Val::Px(8.0),
-                        ..default()
-                    })
-                    .with_children(|col| {
-                        col.spawn_outlined_select(theme, "Outlined", options.clone());
+                        col.spawn_select_with(
+                            theme,
+                            SelectBuilder::new(options.clone())
+                                .filled()
+                                .label_key("showcase.select.label.filled"),
+                        );
                     });
 
                     row.spawn(Node {
@@ -70,7 +74,21 @@ pub fn spawn_select_section(
                             theme,
                             SelectBuilder::new(options.clone())
                                 .outlined()
-                                .label("With selection")
+                                .label_key("showcase.select.label.outlined"),
+                        );
+                    });
+
+                    row.spawn(Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(8.0),
+                        ..default()
+                    })
+                    .with_children(|col| {
+                        col.spawn_select_with(
+                            theme,
+                            SelectBuilder::new(options.clone())
+                                .outlined()
+                                .label_key("showcase.select.label.with_selection")
                                 .selected(1),
                         );
                     });

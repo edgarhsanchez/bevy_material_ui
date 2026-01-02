@@ -1,10 +1,11 @@
 //! Icon Style Configuration
 //!
-//! Material Symbols is a variable icon font with four axes:
-//! - Fill: 0 (outlined) to 1 (filled)
-//! - Weight: 100 to 700
-//! - Grade: -25 to 200
-//! - Optical Size: 20, 24, 40, 48
+//! Material Design icons are embedded as bitmaps from the `google-material-design-icons-bin` crate.
+//! Icons support different styles:
+//! - Fill: outlined or filled variants
+//! - Weight: stroke thickness (100-700)
+//! - Grade: visual prominence adjustment
+//! - Optical Size: optimized for different display sizes (20, 24, 40, 48)
 
 use bevy::prelude::*;
 

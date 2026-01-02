@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
+use crate::showcase::i18n_helpers::spawn_chip_i18n;
 
 /// Spawn the chips section content
 pub fn spawn_chips_section(
@@ -21,7 +22,9 @@ pub fn spawn_chips_section(
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.chips.title",
                 "Chips",
+                "showcase.section.chips.description",
                 "Compact elements for filters, selections, and actions",
             );
 
@@ -34,10 +37,10 @@ pub fn spawn_chips_section(
                     ..default()
                 })
                 .with_children(|row| {
-                    spawn_chip(row, theme, "Filter", false);
-                    spawn_chip(row, theme, "Selected", true);
-                    spawn_chip(row, theme, "Tag", false);
-                    spawn_chip(row, theme, "Action", false);
+                    spawn_chip_i18n(row, theme, "showcase.chips.filter", "Filter", false);
+                    spawn_chip_i18n(row, theme, "showcase.chips.selected", "Selected", true);
+                    spawn_chip_i18n(row, theme, "showcase.chips.tag", "Tag", false);
+                    spawn_chip_i18n(row, theme, "showcase.chips.action", "Action", false);
                 });
 
             spawn_code_block(
@@ -53,32 +56,5 @@ let chip = MaterialChip::filter("Category")
 // Create an input chip (with close button)
 let chip = MaterialChip::input("User Input");"#,
             );
-        });
-}
-
-fn spawn_chip(
-    parent: &mut ChildSpawnerCommands,
-    theme: &MaterialTheme,
-    label: &str,
-    selected: bool,
-) {
-    let chip_for_color = MaterialChip::filter(label).with_selected(selected);
-    let label_color = chip_for_color.label_color(theme);
-
-    parent
-        .spawn((
-            Interaction::None,
-            ChipBuilder::filter(label).selected(selected).build(theme),
-        ))
-        .with_children(|chip| {
-            chip.spawn((
-                ChipLabel,
-                Text::new(label),
-                TextFont {
-                    font_size: 12.0,
-                    ..default()
-                },
-                TextColor(label_color),
-            ));
         });
 }

@@ -17,7 +17,9 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
             spawn_section_header(
                 section,
                 theme,
+                "showcase.section.dividers.title",
                 "Dividers",
+                "showcase.section.dividers.description",
                 "Visual separators between content sections",
             );
 
@@ -32,36 +34,45 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                 })
                 .with_children(|col| {
                     col.spawn((
-                        Text::new("Content above divider"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.dividers.content_above")
+                            .with_default("Content above divider"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface),
+                        NeedsInternationalFont,
                     ));
 
                     // Full-width divider (real MaterialDivider)
                     col.spawn_horizontal_divider(theme);
 
                     col.spawn((
-                        Text::new("Content below divider"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.dividers.content_below")
+                            .with_default("Content below divider"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface),
+                        NeedsInternationalFont,
                     ));
 
                     // Inset divider (real MaterialDivider)
                     col.spawn_inset_divider(theme);
 
                     col.spawn((
-                        Text::new("After inset divider"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.dividers.after_inset")
+                            .with_default("After inset divider"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface),
+                        NeedsInternationalFont,
                     ));
                 });
 

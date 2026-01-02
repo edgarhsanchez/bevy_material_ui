@@ -11,6 +11,8 @@ use bevy::ui::BoxShadow;
 
 use crate::{
     elevation::Elevation,
+    i18n::LocalizedText,
+    telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
 };
@@ -20,6 +22,9 @@ pub struct DialogPlugin;
 
 impl Plugin for DialogPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<DialogOpenEvent>()
             .add_message::<DialogCloseEvent>()
             .add_message::<DialogConfirmEvent>()
@@ -30,8 +35,96 @@ impl Plugin for DialogPlugin {
                     dialog_scrim_visibility_system,
                     dialog_scrim_pickable_system,
                     dialog_shadow_system,
+                    dialog_telemetry_system,
+                    dialog_scrim_telemetry_system,
                 ),
             );
+    }
+}
+
+fn dialog_telemetry_system(
+    mut commands: Commands,
+    telemetry: Option<Res<TelemetryConfig>>,
+    dialogs: Query<(&TestId, &Children), With<MaterialDialog>>,
+    children_query: Query<&Children>,
+    headlines: Query<(), With<DialogHeadline>>,
+    contents: Query<(), With<DialogContent>>,
+    actions: Query<(), With<DialogActions>>,
+) {
+    let Some(telemetry) = telemetry else {
+        return;
+    };
+    if !telemetry.enabled {
+        return;
+    }
+
+    for (test_id, children) in dialogs.iter() {
+        let base = test_id.id();
+
+        let mut found_headline = false;
+        let mut found_content = false;
+        let mut found_actions = false;
+
+        let mut stack: Vec<Entity> = children.iter().collect();
+        while let Some(entity) = stack.pop() {
+            if !found_headline && headlines.get(entity).is_ok() {
+                found_headline = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/headline"),
+                });
+            }
+
+            if !found_content && contents.get(entity).is_ok() {
+                found_content = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/content"),
+                });
+            }
+
+            if !found_actions && actions.get(entity).is_ok() {
+                found_actions = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/actions"),
+                });
+            }
+
+            if found_headline && found_content && found_actions {
+                break;
+            }
+
+            if let Ok(children) = children_query.get(entity) {
+                stack.extend(children.iter());
+            }
+        }
+    }
+}
+
+fn dialog_scrim_telemetry_system(
+    mut commands: Commands,
+    telemetry: Option<Res<TelemetryConfig>>,
+    scrims: Query<(Entity, &DialogScrimFor), With<DialogScrim>>,
+    dialogs: Query<&TestId, With<MaterialDialog>>,
+) {
+    let Some(telemetry) = telemetry else {
+        return;
+    };
+    if !telemetry.enabled {
+        return;
+    }
+
+    for (scrim_entity, for_dialog) in scrims.iter() {
+        let Ok(dialog_id) = dialogs.get(for_dialog.0) else {
+            continue;
+        };
+        let base = dialog_id.id();
+
+        commands.queue(InsertTestIdIfExists {
+            entity: scrim_entity,
+            id: format!("{base}/scrim"),
+        });
     }
 }
 
@@ -253,6 +346,7 @@ fn dialog_scrim_pickable_system(
 /// Builder for dialogs
 pub struct DialogBuilder {
     dialog: MaterialDialog,
+    title_key: Option<String>,
 }
 
 impl DialogBuilder {
@@ -260,6 +354,7 @@ impl DialogBuilder {
     pub fn new() -> Self {
         Self {
             dialog: MaterialDialog::new(),
+            title_key: None,
         }
     }
 
@@ -277,6 +372,13 @@ impl DialogBuilder {
     /// Set title
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.dialog.title = Some(title.into());
+        self
+    }
+
+    /// Set title from an i18n key.
+    pub fn title_key(mut self, key: impl Into<String>) -> Self {
+        self.dialog.title = Some(String::new());
+        self.title_key = Some(key.into());
         self
     }
 
@@ -495,24 +597,42 @@ impl SpawnDialogChild for ChildSpawnerCommands<'_> {
         with_content: impl FnOnce(&mut ChildSpawnerCommands),
     ) {
         let title_text: Option<String> = builder.dialog.title.clone();
+        let title_key: Option<String> = builder.title_key.clone();
         let headline_color = theme.on_surface;
 
         self.spawn(builder.build(theme)).with_children(|dialog| {
             // Headline/Title
             if let Some(ref title) = title_text {
-                dialog.spawn((
-                    DialogHeadline,
-                    Text::new(title.as_str()),
-                    TextFont {
-                        font_size: 24.0,
-                        ..default()
-                    },
-                    TextColor(headline_color),
-                    Node {
-                        margin: UiRect::bottom(Val::Px(16.0)),
-                        ..default()
-                    },
-                ));
+                if let Some(key) = title_key.as_deref() {
+                    dialog.spawn((
+                        DialogHeadline,
+                        Text::new(""),
+                        LocalizedText::new(key),
+                        TextFont {
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(headline_color),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(16.0)),
+                            ..default()
+                        },
+                    ));
+                } else {
+                    dialog.spawn((
+                        DialogHeadline,
+                        Text::new(title.as_str()),
+                        TextFont {
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(headline_color),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(16.0)),
+                            ..default()
+                        },
+                    ));
+                }
             }
 
             // Content area

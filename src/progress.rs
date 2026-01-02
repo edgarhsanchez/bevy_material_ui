@@ -6,6 +6,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
     tokens::{CornerRadius, Duration},
 };
@@ -15,6 +16,9 @@ pub struct ProgressPlugin;
 
 impl Plugin for ProgressPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         // These systems have ordering dependencies (animation must run before indicator
         // geometry updates in the same frame).
         app.add_systems(
@@ -26,9 +30,49 @@ impl Plugin for ProgressPlugin {
                 ensure_linear_progress_indicator_system,
                 linear_progress_indicator_system,
                 progress_theme_refresh_system,
+                progress_telemetry_system,
             )
                 .chain(),
         );
+    }
+}
+
+fn progress_telemetry_system(
+    mut commands: Commands,
+    telemetry: Option<Res<TelemetryConfig>>,
+    progress_bars: Query<(&TestId, &Children), With<MaterialLinearProgress>>,
+    children_query: Query<&Children>,
+    indicators: Query<(), With<ProgressIndicator>>,
+) {
+    let Some(telemetry) = telemetry else {
+        return;
+    };
+    if !telemetry.enabled {
+        return;
+    }
+
+    for (test_id, children) in progress_bars.iter() {
+        let base = test_id.id();
+
+        let mut found_indicator = false;
+        let mut stack: Vec<Entity> = children.iter().collect();
+        while let Some(entity) = stack.pop() {
+            if !found_indicator && indicators.get(entity).is_ok() {
+                found_indicator = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/indicator"),
+                });
+            }
+
+            if found_indicator {
+                break;
+            }
+
+            if let Ok(children) = children_query.get(entity) {
+                stack.extend(children.iter());
+            }
+        }
     }
 }
 
@@ -306,20 +350,23 @@ fn ensure_linear_progress_indicator_system(
 
         let indicator_color = progress.indicator_color(&theme);
 
+        let indicator_node = Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(0.0),
+            top: Val::Px(0.0),
+            bottom: Val::Px(0.0),
+            width: Val::Percent(progress.progress.clamp(0.0, 1.0) * 100.0),
+            ..default()
+        };
+        let indicator_radius = BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL));
+
         commands.entity(entity).with_children(|container| {
             container.spawn((
                 ProgressIndicator,
                 LinearProgressIndicatorFor(entity),
-                Node {
-                    position_type: PositionType::Absolute,
-                    left: Val::Px(0.0),
-                    top: Val::Px(0.0),
-                    bottom: Val::Px(0.0),
-                    width: Val::Percent(progress.progress.clamp(0.0, 1.0) * 100.0),
-                    ..default()
-                },
+                indicator_node,
                 BackgroundColor(indicator_color),
-                BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+                indicator_radius,
             ));
         });
     }
@@ -358,6 +405,7 @@ fn progress_theme_refresh_system(
 pub struct LinearProgressBuilder {
     progress: MaterialLinearProgress,
     width: Val,
+    height_px: f32,
 }
 
 impl LinearProgressBuilder {
@@ -366,6 +414,7 @@ impl LinearProgressBuilder {
         Self {
             progress: MaterialLinearProgress::new(),
             width: Val::Percent(100.0),
+            height_px: LINEAR_PROGRESS_HEIGHT,
         }
     }
 
@@ -393,21 +442,29 @@ impl LinearProgressBuilder {
         self
     }
 
+    /// Set bar height in pixels.
+    pub fn height_px(mut self, height_px: f32) -> Self {
+        self.height_px = height_px.max(0.0);
+        self
+    }
+
     /// Build the bundle
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = self.progress.track_color(theme);
 
+        let node = Node {
+            width: self.width,
+            min_width: self.width,
+            height: Val::Px(self.height_px),
+            min_height: Val::Px(self.height_px),
+            overflow: Overflow::clip(),
+            position_type: PositionType::Relative,
+            ..default()
+        };
+
         (
             self.progress,
-            Node {
-                width: self.width,
-                min_width: self.width,
-                height: Val::Px(LINEAR_PROGRESS_HEIGHT),
-                min_height: Val::Px(LINEAR_PROGRESS_HEIGHT),
-                overflow: Overflow::clip(),
-                position_type: PositionType::Relative,
-                ..default()
-            },
+            node,
             BackgroundColor(bg_color),
             BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
         )
@@ -556,18 +613,20 @@ impl SpawnProgressChild for ChildSpawnerCommands<'_> {
 
         bar.with_children(|container| {
             // Progress indicator fill
+            let indicator_node = Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(0.0),
+                top: Val::Px(0.0),
+                bottom: Val::Px(0.0),
+                width: Val::Percent(progress_value * 100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            };
+
             container.spawn((
                 ProgressIndicator,
                 LinearProgressIndicatorFor(bar_entity),
-                Node {
-                    position_type: PositionType::Absolute,
-                    left: Val::Px(0.0),
-                    top: Val::Px(0.0),
-                    bottom: Val::Px(0.0),
-                    width: Val::Percent(progress_value * 100.0),
-                    height: Val::Percent(100.0),
-                    ..default()
-                },
+                indicator_node,
                 BackgroundColor(indicator_color),
                 BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             ));

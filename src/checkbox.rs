@@ -11,9 +11,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    icons::{MaterialIconFont, ICON_CHECK, ICON_REMOVE},
+    icons::{icon_by_name, MaterialIcon, ICON_CHECK, ICON_REMOVE},
     motion::{ease_emphasized_decelerate, StateLayer},
     ripple::RippleHost,
+    telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
     tokens::{CornerRadius, Duration},
 };
@@ -30,9 +31,71 @@ impl Plugin for CheckboxPlugin {
                 checkbox_visual_update_system,
                 checkbox_theme_refresh_system,
                 checkbox_animation_system,
+                checkbox_telemetry_system,
             )
                 .chain(),
         );
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
+    }
+}
+
+fn checkbox_telemetry_system(
+    mut commands: Commands,
+    telemetry: Option<Res<TelemetryConfig>>,
+    checkboxes: Query<(&TestId, &Children), With<MaterialCheckbox>>,
+    children_query: Query<&Children>,
+    checkbox_boxes: Query<(), With<CheckboxBox>>,
+    checkbox_icons: Query<(), With<CheckboxIcon>>,
+    checkbox_state_layers: Query<(), With<CheckboxStateLayer>>,
+) {
+    let Some(telemetry) = telemetry else { return };
+    if !telemetry.enabled {
+        return;
+    }
+
+    for (test_id, children) in checkboxes.iter() {
+        let base = test_id.id();
+
+        let mut found_box = false;
+        let mut found_icon = false;
+        let mut found_state_layer = false;
+
+        let mut stack: Vec<Entity> = children.iter().collect();
+        while let Some(entity) = stack.pop() {
+            if !found_box && checkbox_boxes.get(entity).is_ok() {
+                found_box = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/box"),
+                });
+            }
+
+            if !found_icon && checkbox_icons.get(entity).is_ok() {
+                found_icon = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/icon"),
+                });
+            }
+
+            if !found_state_layer && checkbox_state_layers.get(entity).is_ok() {
+                found_state_layer = true;
+                commands.queue(InsertTestIdIfExists {
+                    entity,
+                    id: format!("{base}/state_layer"),
+                });
+            }
+
+            if found_box && found_icon && found_state_layer {
+                break;
+            }
+
+            if let Ok(children) = children_query.get(entity) {
+                stack.extend(children.iter());
+            }
+        }
     }
 }
 
@@ -68,8 +131,12 @@ impl CheckboxState {
         matches!(self, CheckboxState::Indeterminate)
     }
 
-    /// Get the icon for this state (Material Symbols codepoints)
-    pub fn icon(&self) -> Option<char> {
+    /// Get the Material icon name for this state.
+    ///
+    /// The returned string is a Material icon identifier (as used by [`icon_by_name`])
+    /// that can be resolved to a [`MaterialIcon`]. Returns `None` for the unchecked
+    /// state, which has no icon.
+    pub fn icon(&self) -> Option<&'static str> {
         match self {
             CheckboxState::Unchecked => None,
             CheckboxState::Checked => Some(ICON_CHECK),
@@ -287,14 +354,16 @@ fn checkbox_interaction_system(
 /// System to update checkbox visual styles when state changes
 fn checkbox_visual_update_system(
     theme: Option<Res<MaterialTheme>>,
-    icon_font: Option<Res<MaterialIconFont>>,
     checkboxes: Query<(Entity, &MaterialCheckbox, &Children), Changed<MaterialCheckbox>>,
     mut boxes: Query<(&mut BackgroundColor, &mut BorderColor), With<CheckboxBox>>,
-    mut icons: Query<(&mut Text, &mut TextFont, &mut TextColor), With<CheckboxIcon>>,
+    mut icons: Query<(&mut MaterialIcon, &mut Visibility), With<CheckboxIcon>>,
     mut state_layers: Query<&mut StateLayer, With<CheckboxStateLayer>>,
     children_query: Query<&Children>,
 ) {
     let Some(theme) = theme else { return };
+
+    let default_icon_id = icon_by_name(ICON_CHECK)
+        .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
 
     for (_entity, checkbox, children) in checkboxes.iter() {
         // Find checkbox box and icon through children
@@ -323,16 +392,15 @@ fn checkbox_visual_update_system(
                     // Update icon
                     if let Ok(great_grandchildren) = children_query.get(grandchild) {
                         for ggc in great_grandchildren.iter() {
-                            if let Ok((mut text, mut text_font, mut color)) = icons.get_mut(ggc) {
-                                if let Some(icon) = checkbox.state.icon() {
-                                    **text = icon.to_string();
-                                    color.0 = checkbox.icon_color(&theme);
-                                    // Set the Material Symbols font if available
-                                    if let Some(ref font) = icon_font {
-                                        text_font.font = font.0.clone();
-                                    }
+                            if let Ok((mut icon, mut visibility)) = icons.get_mut(ggc) {
+                                if let Some(icon_name) = checkbox.state.icon() {
+                                    let icon_id =
+                                        icon_by_name(icon_name).unwrap_or(default_icon_id);
+                                    icon.id = icon_id;
+                                    icon.color = checkbox.icon_color(&theme);
+                                    *visibility = Visibility::Inherited;
                                 } else {
-                                    **text = String::new();
+                                    *visibility = Visibility::Hidden;
                                 }
                             }
                         }
@@ -346,10 +414,9 @@ fn checkbox_visual_update_system(
 /// Refresh checkbox visuals when the theme changes.
 fn checkbox_theme_refresh_system(
     theme: Option<Res<MaterialTheme>>,
-    icon_font: Option<Res<MaterialIconFont>>,
     checkboxes: Query<(Entity, &MaterialCheckbox, &Children), With<MaterialCheckbox>>,
     mut boxes: Query<(&mut BackgroundColor, &mut BorderColor), With<CheckboxBox>>,
-    mut icons: Query<(&mut Text, &mut TextFont, &mut TextColor), With<CheckboxIcon>>,
+    mut icons: Query<(&mut MaterialIcon, &mut Visibility), With<CheckboxIcon>>,
     mut state_layers: Query<&mut StateLayer, With<CheckboxStateLayer>>,
     children_query: Query<&Children>,
 ) {
@@ -357,6 +424,9 @@ fn checkbox_theme_refresh_system(
     if !theme.is_changed() {
         return;
     }
+
+    let default_icon_id = icon_by_name(ICON_CHECK)
+        .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
 
     for (_entity, checkbox, children) in checkboxes.iter() {
         // Find checkbox box and icon through children
@@ -385,16 +455,15 @@ fn checkbox_theme_refresh_system(
                     // Update icon
                     if let Ok(great_grandchildren) = children_query.get(grandchild) {
                         for ggc in great_grandchildren.iter() {
-                            if let Ok((mut text, mut text_font, mut color)) = icons.get_mut(ggc) {
-                                if let Some(icon) = checkbox.state.icon() {
-                                    **text = icon.to_string();
-                                    color.0 = checkbox.icon_color(&theme);
-                                    // Set the Material Symbols font if available
-                                    if let Some(ref font) = icon_font {
-                                        text_font.font = font.0.clone();
-                                    }
+                            if let Ok((mut icon, mut visibility)) = icons.get_mut(ggc) {
+                                if let Some(icon_name) = checkbox.state.icon() {
+                                    let icon_id =
+                                        icon_by_name(icon_name).unwrap_or(default_icon_id);
+                                    icon.id = icon_id;
+                                    icon.color = checkbox.icon_color(&theme);
+                                    *visibility = Visibility::Inherited;
                                 } else {
-                                    **text = String::new();
+                                    *visibility = Visibility::Hidden;
                                 }
                             }
                         }
@@ -484,8 +553,16 @@ impl CheckboxBuilder {
         let bg_color = checkbox.container_color(theme);
         let border_color = checkbox.outline_color(theme);
         let icon_color = checkbox.icon_color(theme);
-        let icon_char = checkbox.state.icon();
+        let icon_name = checkbox.state.icon();
         let state_layer_color = checkbox.state_layer_color(theme);
+        let default_icon_id = icon_by_name(ICON_CHECK)
+            .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
+        let icon_visibility = if icon_name.is_some() {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+        let icon_id = icon_name.and_then(icon_by_name).unwrap_or(default_icon_id);
 
         commands
             .spawn((
@@ -538,12 +615,10 @@ impl CheckboxBuilder {
                                 // Checkmark icon
                                 box_parent.spawn((
                                     CheckboxIcon,
-                                    Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(icon_color),
+                                    MaterialIcon::new(icon_id)
+                                        .with_size(14.0)
+                                        .with_color(icon_color),
+                                    icon_visibility,
                                 ));
                             });
                     });
@@ -582,8 +657,16 @@ impl SpawnCheckbox for Commands<'_, '_> {
         let bg_color = checkbox.container_color(theme);
         let border_color = checkbox.outline_color(theme);
         let icon_color = checkbox.icon_color(theme);
-        let icon_char = checkbox.state.icon();
+        let icon_name = checkbox.state.icon();
         let state_layer_color = checkbox.state_layer_color(theme);
+        let default_icon_id = icon_by_name(ICON_CHECK)
+            .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
+        let icon_visibility = if icon_name.is_some() {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+        let icon_id = icon_name.and_then(icon_by_name).unwrap_or(default_icon_id);
 
         self.spawn(Node {
             flex_direction: FlexDirection::Row,
@@ -645,12 +728,10 @@ impl SpawnCheckbox for Commands<'_, '_> {
                                 // Checkmark
                                 box_parent.spawn((
                                     CheckboxIcon,
-                                    Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(icon_color),
+                                    MaterialIcon::new(icon_id)
+                                        .with_size(14.0)
+                                        .with_color(icon_color),
+                                    icon_visibility,
                                 ));
                             });
                     });
@@ -701,8 +782,16 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
         let bg_color = checkbox.container_color(theme);
         let border_color = checkbox.outline_color(theme);
         let icon_color = checkbox.icon_color(theme);
-        let icon_char = checkbox.state.icon();
+        let icon_name = checkbox.state.icon();
         let state_layer_color = checkbox.state_layer_color(theme);
+        let default_icon_id = icon_by_name(ICON_CHECK)
+            .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
+        let icon_visibility = if icon_name.is_some() {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+        let icon_id = icon_name.and_then(icon_by_name).unwrap_or(default_icon_id);
 
         self.spawn(Node {
             flex_direction: FlexDirection::Row,
@@ -765,12 +854,10 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                                 // Checkmark
                                 box_parent.spawn((
                                     CheckboxIcon,
-                                    Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(icon_color),
+                                    MaterialIcon::new(icon_id)
+                                        .with_size(14.0)
+                                        .with_color(icon_color),
+                                    icon_visibility,
                                 ));
                             });
                     });

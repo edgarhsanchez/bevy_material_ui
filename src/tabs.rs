@@ -5,19 +5,93 @@
 
 use bevy::prelude::*;
 
-use crate::{ripple::RippleHost, theme::MaterialTheme, tokens::Spacing};
+use crate::{
+    ripple::RippleHost,
+    telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
+    theme::MaterialTheme,
+    tokens::Spacing,
+};
 
 /// Plugin for the tabs component
 pub struct TabsPlugin;
 
 impl Plugin for TabsPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
         app.add_message::<TabChangeEvent>()
             .add_systems(Update, tab_interaction_system)
             .add_systems(Update, tab_style_system)
             .add_systems(Update, sync_tabs_selection_system)
             .add_systems(Update, tab_label_and_indicator_system)
-            .add_systems(Update, tab_content_visibility_system);
+            .add_systems(Update, tab_content_visibility_system)
+            .add_systems(
+                Update,
+                tabs_telemetry_system.after(tab_label_and_indicator_system),
+            );
+    }
+}
+
+fn tabs_telemetry_system(
+    mut commands: Commands,
+    telemetry: Option<Res<TelemetryConfig>>,
+    tabs_query: Query<(Entity, &TestId, &Children), With<MaterialTabs>>,
+    tab_query: Query<(&MaterialTab, &Children), With<MaterialTab>>,
+    label_query: Query<(), With<TabLabelText>>,
+    indicator_query: Query<(), With<TabIndicator>>,
+    content_query: Query<(Entity, &TabContent), Without<TestId>>,
+) {
+    let Some(telemetry) = telemetry else {
+        return;
+    };
+    if !telemetry.enabled {
+        return;
+    }
+
+    use std::collections::HashMap;
+    let mut tabs_ids: HashMap<Entity, String> = HashMap::new();
+
+    for (tabs_entity, tabs_id, children) in tabs_query.iter() {
+        let tabs_id = tabs_id.id();
+        tabs_ids.insert(tabs_entity, tabs_id.to_owned());
+
+        for child in children.iter() {
+            let Ok((tab, tab_children)) = tab_query.get(child) else {
+                continue;
+            };
+
+            commands.queue(InsertTestIdIfExists {
+                entity: child,
+                id: format!("{tabs_id}/tab/{}", tab.index),
+            });
+
+            for tab_child in tab_children.iter() {
+                if label_query.get(tab_child).is_ok() {
+                    commands.queue(InsertTestIdIfExists {
+                        entity: tab_child,
+                        id: format!("{tabs_id}/tab/{}/label", tab.index),
+                    });
+                }
+                if indicator_query.get(tab_child).is_ok() {
+                    commands.queue(InsertTestIdIfExists {
+                        entity: tab_child,
+                        id: format!("{tabs_id}/tab/{}/indicator", tab.index),
+                    });
+                }
+            }
+        }
+    }
+
+    for (entity, content) in content_query.iter() {
+        let Some(tabs_id) = tabs_ids.get(&content.tabs_entity) else {
+            continue;
+        };
+
+        commands.queue(InsertTestIdIfExists {
+            entity,
+            id: format!("{tabs_id}/content/{}", content.index),
+        });
     }
 }
 
