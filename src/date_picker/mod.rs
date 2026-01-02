@@ -1567,17 +1567,17 @@ fn date_picker_render_system(
         // Update toggle icons (input mode + year dropdown) without conflicting queries.
         // When in calendar mode, show the EDIT icon; when in text mode, show the CALENDAR icon.
         let mode_toggle_icon_name = if picker.input_mode == DateInputMode::Calendar {
-            material_icon_names::material_ic_edit_black_24dp
+            material_icon_names::MATERIAL_IC_EDIT_BLACK_24DP
         } else {
-            material_icon_names::material_ic_calendar_black_24dp
+            material_icon_names::MATERIAL_IC_CALENDAR_BLACK_24DP
         };
         let desired_mode_icon = mode_toggle_icon_name;
 
         // Month dropdown chevron icon (down when years hidden; up when showing years).
         let year_toggle_icon_name = if picker.showing_years {
-            material_icon_names::material_ic_menu_arrow_up_black_24dp
+            material_icon_names::MATERIAL_IC_MENU_ARROW_UP_BLACK_24DP
         } else {
-            material_icon_names::material_ic_menu_arrow_down_black_24dp
+            material_icon_names::MATERIAL_IC_MENU_ARROW_DOWN_BLACK_24DP
         };
         let desired_year_icon = year_toggle_icon_name;
 
@@ -1874,9 +1874,9 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             .with_children(|btn| {
                                 let mode_toggle_icon_name = if input_mode == DateInputMode::Calendar
                                 {
-                                    material_icon_names::material_ic_edit_black_24dp
+                                    material_icon_names::MATERIAL_IC_EDIT_BLACK_24DP
                                 } else {
-                                    material_icon_names::material_ic_calendar_black_24dp
+                                    material_icon_names::MATERIAL_IC_CALENDAR_BLACK_24DP
                                 };
                                 btn.spawn((
                                     DatePickerModeToggleLabel { picker: entity },
@@ -1918,7 +1918,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             .with_children(|btn| {
                                 btn.spawn((
                             crate::icons::svg::SvgIcon::new(
-                                material_icon_names::material_ic_keyboard_arrow_previous_black_24dp,
+                                material_icon_names::MATERIAL_IC_KEYBOARD_ARROW_PREVIOUS_BLACK_24DP,
                             )
                             .with_size(20.0)
                             .with_color(on_surface),
@@ -1959,9 +1959,9 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     ));
 
                                     let year_toggle_icon_name = if showing_years {
-                                        material_icon_names::material_ic_menu_arrow_up_black_24dp
+                                        material_icon_names::MATERIAL_IC_MENU_ARROW_UP_BLACK_24DP
                                     } else {
-                                        material_icon_names::material_ic_menu_arrow_down_black_24dp
+                                        material_icon_names::MATERIAL_IC_MENU_ARROW_DOWN_BLACK_24DP
                                     };
                                     row.spawn((
                                         DatePickerYearToggleIcon { picker: entity },
@@ -1993,7 +1993,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             ))
                             .with_children(|btn| {
                                 btn.spawn((crate::icons::svg::SvgIcon::new(
-                                    material_icon_names::material_ic_keyboard_arrow_next_black_24dp,
+                                    material_icon_names::MATERIAL_IC_KEYBOARD_ARROW_NEXT_BLACK_24DP,
                                 )
                                 .with_size(20.0)
                                 .with_color(on_surface),));

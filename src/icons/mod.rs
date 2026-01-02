@@ -59,16 +59,15 @@ pub const ICON_EXPAND_LESS: &str = "expand_less";
 /// Some widgets historically referenced Android-style resource identifiers.
 /// These now map to embedded icon folder names.
 pub mod material_icon_names {
-    #![allow(non_upper_case_globals)]
-    pub const ic_keyboard_black_24dp: &str = "keyboard";
-    pub const ic_clock_black_24dp: &str = "schedule";
+    pub const IC_KEYBOARD_BLACK_24DP: &str = "keyboard";
+    pub const IC_CLOCK_BLACK_24DP: &str = "schedule";
 
-    pub const material_ic_edit_black_24dp: &str = "edit";
-    pub const material_ic_calendar_black_24dp: &str = "calendar_today";
-    pub const material_ic_menu_arrow_up_black_24dp: &str = "expand_less";
-    pub const material_ic_menu_arrow_down_black_24dp: &str = "expand_more";
-    pub const material_ic_keyboard_arrow_previous_black_24dp: &str = "chevron_left";
-    pub const material_ic_keyboard_arrow_next_black_24dp: &str = "chevron_right";
+    pub const MATERIAL_IC_EDIT_BLACK_24DP: &str = "edit";
+    pub const MATERIAL_IC_CALENDAR_BLACK_24DP: &str = "calendar_today";
+    pub const MATERIAL_IC_MENU_ARROW_UP_BLACK_24DP: &str = "expand_less";
+    pub const MATERIAL_IC_MENU_ARROW_DOWN_BLACK_24DP: &str = "expand_more";
+    pub const MATERIAL_IC_KEYBOARD_ARROW_PREVIOUS_BLACK_24DP: &str = "chevron_left";
+    pub const MATERIAL_IC_KEYBOARD_ARROW_NEXT_BLACK_24DP: &str = "chevron_right";
 }
 
 // ---------------------------------------------------------------------------

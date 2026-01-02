@@ -940,8 +940,8 @@ fn time_picker_render_system(
         // Update mode-toggle icon (keyboard <-> clock).
         // When in clock mode, show the KEYBOARD icon; when in keyboard mode, show the CLOCK icon.
         let mode_toggle_icon_name = match picker.input_mode {
-            TimeInputMode::Clock => material_icon_names::ic_keyboard_black_24dp,
-            TimeInputMode::Keyboard => material_icon_names::ic_clock_black_24dp,
+            TimeInputMode::Clock => material_icon_names::IC_KEYBOARD_BLACK_24DP,
+            TimeInputMode::Keyboard => material_icon_names::IC_CLOCK_BLACK_24DP,
         };
         for (mut icon, marker) in mode_toggle_icons.iter_mut() {
             if marker.picker != picker_entity {
@@ -1280,10 +1280,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 TimePickerModeToggleLabel { picker: entity },
                                 crate::icons::svg::SvgIcon::new(match initial_input_mode {
                                     TimeInputMode::Clock => {
-                                        material_icon_names::ic_keyboard_black_24dp
+                                        material_icon_names::IC_KEYBOARD_BLACK_24DP
                                     }
                                     TimeInputMode::Keyboard => {
-                                        material_icon_names::ic_clock_black_24dp
+                                        material_icon_names::IC_CLOCK_BLACK_24DP
                                     }
                                 })
                                 .with_size(18.0)
