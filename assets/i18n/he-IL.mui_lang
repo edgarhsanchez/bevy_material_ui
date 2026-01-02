@@ -87,6 +87,35 @@
     "showcase.chips.tag": "תג",
     "showcase.chips.action": "פעולה",
     
+    "showcase.fab.create": "צור",
+    
+    "showcase.progress.indeterminate": "לא מוגדר",
+    
+    "showcase.sliders.continuous": "רציף",
+    "showcase.sliders.discrete": "בדיד",
+    "showcase.sliders.vertical": "אנכי",
+    
+    "showcase.cards.elevated": "מוגבה",
+    "showcase.cards.filled": "ממולא",
+    "showcase.cards.outlined": "מתוחם",
+    "showcase.cards.content": "תוכן הכרטיס בא כאן עם טקסט תמיכה.",
+    
+    "showcase.dividers.content_above": "תוכן מעל המפריד",
+    "showcase.dividers.content_below": "תוכן מתחת למפריד",
+    "showcase.dividers.after_inset": "אחרי מפריד מוזז",
+    
+    "showcase.lists.selection_mode": "מצב בחירה:",    "showcase.lists.mode_single": "בודד",
+    "showcase.lists.mode_multi": "מרובה",    
+    "showcase.search.default": "סרגל חיפוש ברירת מחדל",
+    "showcase.search.with_navigation": "עם סמל ניווט",
+    "showcase.search.with_text": "עם טקסט חיפוש",
+    
+    "showcase.loading.default": "מחוון טעינה",
+    "showcase.loading.with_container": "מחוון טעינה עם מכיל",
+    "showcase.loading.multi_color": "מחוון טעינה רב צבעים",
+    "showcase.loading.small": "מחוון טעינה קטן",
+    "showcase.loading.large_fast": "מחוון טעינה גדול (מהיר)",
+    
     "showcase.section.checkboxes.title": "תיבות סימון",
     "showcase.section.checkboxes.description": "החלפת בחירה עם משוב סימון",
     "showcase.section.switches.title": "מתגים",

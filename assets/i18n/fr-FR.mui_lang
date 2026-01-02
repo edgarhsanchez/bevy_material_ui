@@ -85,7 +85,37 @@
     "showcase.chips.selected": "Sélectionné",
     "showcase.chips.tag": "Étiquette",
     "showcase.chips.action": "Action",
-        "showcase.section.checkboxes.title": "Cases à cocher",
+    
+    "showcase.fab.create": "Créer",
+    
+    "showcase.progress.indeterminate": "Indéterminé",
+    
+    "showcase.sliders.continuous": "Continu",
+    "showcase.sliders.discrete": "Discret",
+    "showcase.sliders.vertical": "Vertical",
+    
+    "showcase.cards.elevated": "Élevé",
+    "showcase.cards.filled": "Rempli",
+    "showcase.cards.outlined": "Contouré",
+    "showcase.cards.content": "Le contenu de la carte va ici avec un texte de support.",
+    
+    "showcase.dividers.content_above": "Contenu au-dessus du séparateur",
+    "showcase.dividers.content_below": "Contenu en dessous du séparateur",
+    "showcase.dividers.after_inset": "Après le séparateur inset",
+    
+    "showcase.lists.selection_mode": "Mode de sélection :",
+    
+    "showcase.search.default": "Barre de recherche par défaut",
+    "showcase.search.with_navigation": "Avec icône de navigation",
+    "showcase.search.with_text": "Avec texte de recherche",
+    
+    "showcase.loading.default": "Indicateur de chargement",
+    "showcase.loading.with_container": "Indicateur de chargement avec conteneur",
+    "showcase.loading.multi_color": "Indicateur de chargement multicolore",
+    "showcase.loading.small": "Petit indicateur de chargement",
+    "showcase.loading.large_fast": "Grand indicateur de chargement (rapide)",
+    
+    "showcase.section.checkboxes.title": "Cases à cocher",
     "showcase.section.checkboxes.description": "Basculer la sélection avec une coche visuelle",
     "showcase.section.switches.title": "Interrupteurs",
     "showcase.section.switches.description": "Activer/désactiver avec une animation du bouton",

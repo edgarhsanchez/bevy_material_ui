@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
+use crate::showcase::i18n_helpers::spawn_extended_fab_i18n;
 
 /// Spawn the FAB section content
 pub fn spawn_fab_section(
@@ -39,7 +40,7 @@ pub fn spawn_fab_section(
                     row.spawn_small_fab(theme, "add");
                     row.spawn_regular_fab(theme, "add");
                     row.spawn_large_fab(theme, "add");
-                    row.spawn_extended_fab(theme, "add", "Create");
+                    spawn_extended_fab_i18n(row, theme, "add", "showcase.fab.create", "Create");
                 });
 
             spawn_code_block(

@@ -33,11 +33,58 @@ pub fn spawn_sliders_section(parent: &mut ChildSpawnerCommands, theme: &Material
                     ..default()
                 })
                 .with_children(|col| {
-                    // Continuous slider
-                    col.spawn_slider(theme, 0.0, 100.0, 40.0, Some("Continuous"));
+                    // Continuous slider with localized label
+                    col.spawn(Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(4.0),
+                        ..default()
+                    })
+                    .with_children(|container| {
+                        container.spawn((
+                            Text::new(""),
+                            LocalizedText::new("showcase.sliders.continuous")
+                                .with_default("Continuous"),
+                            TextFont {
+                                font_size: 12.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface_variant),
+                            NeedsInternationalFont,
+                        ));
+                        container.spawn_slider_with(
+                            theme,
+                            MaterialSlider::new(0.0, 100.0).with_value(40.0),
+                            None,
+                        );
+                    });
 
-                    // Discrete slider with ticks
-                    col.spawn_discrete_slider(theme, 0.0, 100.0, 60.0, 20.0, Some("Discrete"));
+                    // Discrete slider with ticks and localized label
+                    col.spawn(Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(4.0),
+                        ..default()
+                    })
+                    .with_children(|container| {
+                        container.spawn((
+                            Text::new(""),
+                            LocalizedText::new("showcase.sliders.discrete")
+                                .with_default("Discrete"),
+                            TextFont {
+                                font_size: 12.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface_variant),
+                            NeedsInternationalFont,
+                        ));
+                        container.spawn_discrete_slider(
+                            theme,
+                            0.0,
+                            100.0,
+                            60.0,
+                            20.0,
+                            None,
+                        );
+                    });
 
                     // Vertical slider
                     col.spawn(Node {
@@ -48,7 +95,9 @@ pub fn spawn_sliders_section(parent: &mut ChildSpawnerCommands, theme: &Material
                     })
                     .with_children(|row| {
                         row.spawn((
-                            Text::new("Vertical"),
+                            Text::new(""),
+                            LocalizedText::new("showcase.sliders.vertical")
+                                .with_default("Vertical"),
                             TextFont {
                                 font_size: 12.0,
                                 ..default()
@@ -58,6 +107,7 @@ pub fn spawn_sliders_section(parent: &mut ChildSpawnerCommands, theme: &Material
                                 width: Val::Px(64.0),
                                 ..default()
                             },
+                            NeedsInternationalFont,
                         ));
 
                         row.spawn(Node {

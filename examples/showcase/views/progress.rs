@@ -46,7 +46,9 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     })
                     .with_children(|row| {
                         row.spawn((
-                            Text::new("Indeterminate"),
+                            Text::new(""),
+                            LocalizedText::new("showcase.progress.indeterminate")
+                                .with_default("Indeterminate"),
                             TextFont {
                                 font_size: 12.0,
                                 ..default()
@@ -56,6 +58,7 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                                 width: Val::Px(90.0),
                                 ..default()
                             },
+                            NeedsInternationalFont,
                         ));
 
                         row.spawn(

@@ -87,6 +87,37 @@
     "showcase.chips.tag": "Tag",
     "showcase.chips.action": "Action",
     
+    "showcase.fab.create": "Create",
+    
+    "showcase.progress.indeterminate": "Indeterminate",
+    
+    "showcase.sliders.continuous": "Continuous",
+    "showcase.sliders.discrete": "Discrete",
+    "showcase.sliders.vertical": "Vertical",
+    
+    "showcase.cards.elevated": "Elevated",
+    "showcase.cards.filled": "Filled",
+    "showcase.cards.outlined": "Outlined",
+    "showcase.cards.content": "Card content goes here with supporting text.",
+    
+    "showcase.dividers.content_above": "Content above divider",
+    "showcase.dividers.content_below": "Content below divider",
+    "showcase.dividers.after_inset": "After inset divider",
+    
+    "showcase.lists.selection_mode": "Selection Mode:",
+    "showcase.lists.mode_single": "Single",
+    "showcase.lists.mode_multi": "Multi",
+    
+    "showcase.search.default": "Default search bar",
+    "showcase.search.with_navigation": "With navigation icon",
+    "showcase.search.with_text": "With search text",
+    
+    "showcase.loading.default": "Loading indicator",
+    "showcase.loading.with_container": "Loading indicator with container",
+    "showcase.loading.multi_color": "Loading indicator with multiple colors",
+    "showcase.loading.small": "Small loading indicator",
+    "showcase.loading.large_fast": "Large loading indicator (fast)",
+    
     "showcase.section.checkboxes.title": "Checkboxes",
     "showcase.section.checkboxes.description": "Toggle selection with visual checkmark feedback",
     "showcase.section.switches.title": "Switches",

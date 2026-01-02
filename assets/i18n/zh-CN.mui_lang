@@ -87,6 +87,35 @@
     "showcase.chips.tag": "标签",
     "showcase.chips.action": "操作",
     
+    "showcase.fab.create": "创建",
+    
+    "showcase.progress.indeterminate": "不确定",
+    
+    "showcase.sliders.continuous": "连续",
+    "showcase.sliders.discrete": "离散",
+    "showcase.sliders.vertical": "垂直",
+    
+    "showcase.cards.elevated": "提升",
+    "showcase.cards.filled": "填充",
+    "showcase.cards.outlined": "边框",
+    "showcase.cards.content": "卡片内容和支持文本在此处。",
+    
+    "showcase.dividers.content_above": "分隔线上方的内容",
+    "showcase.dividers.content_below": "分隔线下方的内容",
+    "showcase.dividers.after_inset": "缩进分隔线之后",
+    
+    "showcase.lists.selection_mode": "选择模式：",    "showcase.lists.mode_single": "单选",
+    "showcase.lists.mode_multi": "多选",    
+    "showcase.search.default": "默认搜索栏",
+    "showcase.search.with_navigation": "带导航图标",
+    "showcase.search.with_text": "带搜索文本",
+    
+    "showcase.loading.default": "加载指示器",
+    "showcase.loading.with_container": "带容器的加载指示器",
+    "showcase.loading.multi_color": "多色加载指示器",
+    "showcase.loading.small": "小型加载指示器",
+    "showcase.loading.large_fast": "大型加载指示器（快速）",
+    
     "showcase.section.checkboxes.title": "复选框",
     "showcase.section.checkboxes.description": "切换选择并显示勾选反馈",
     "showcase.section.switches.title": "开关",

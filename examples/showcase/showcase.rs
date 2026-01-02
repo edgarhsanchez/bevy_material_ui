@@ -1,6 +1,9 @@
 #[path = "common.rs"]
 pub mod common;
 
+#[path = "i18n_helpers.rs"]
+pub mod i18n_helpers;
+
 #[path = "navigation.rs"]
 pub mod navigation;
 

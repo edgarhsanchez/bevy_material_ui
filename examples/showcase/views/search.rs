@@ -37,18 +37,23 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                 .with_children(|col| {
                     // Default search bar
                     col.spawn((
-                        Text::new("Default search bar"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.search.default")
+                            .with_default("Default search bar"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
+                        NeedsInternationalFont,
                     ));
                     col.spawn_search_bar(theme, "Search...");
 
                     // Search bar with navigation
                     col.spawn((
-                        Text::new("With navigation icon"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.search.with_navigation")
+                            .with_default("With navigation icon"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
@@ -58,6 +63,7 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                             margin: UiRect::top(Val::Px(16.0)),
                             ..default()
                         },
+                        NeedsInternationalFont,
                     ));
                     col.spawn_search_bar_with(
                         theme,
@@ -69,7 +75,9 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
 
                     // Search bar with text
                     col.spawn((
-                        Text::new("With search text"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.search.with_text")
+                            .with_default("With search text"),
                         TextFont {
                             font_size: 14.0,
                             ..default()

@@ -43,7 +43,9 @@ pub fn spawn_list_section(
                 })
                 .with_children(|row| {
                     row.spawn((
-                        Text::new("Selection Mode:"),
+                        Text::new(""),
+                        LocalizedText::new("showcase.lists.selection_mode")
+                            .with_default("Selection Mode:"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
@@ -53,6 +55,7 @@ pub fn spawn_list_section(
                             margin: UiRect::right(Val::Px(8.0)),
                             ..default()
                         },
+                        NeedsInternationalFont,
                     ));
                     spawn_list_mode_option(
                         row,
@@ -344,12 +347,18 @@ fn spawn_list_mode_option(
         .with_children(|chip| {
             chip.spawn((
                 ChipLabel,
-                Text::new(label),
+                Text::new(""),
+                LocalizedText::new(match label {
+                    "Single" => "showcase.lists.mode_single",
+                    "Multi" => "showcase.lists.mode_multi",
+                    _ => label,
+                }).with_default(label),
                 TextFont {
                     font_size: 12.0,
                     ..default()
                 },
                 TextColor(label_color),
+                NeedsInternationalFont,
             ));
         });
 }

@@ -87,6 +87,37 @@
     "showcase.chips.tag": "Tag",
     "showcase.chips.action": "Aktion",
     
+    "showcase.fab.create": "Erstellen",
+    
+    "showcase.progress.indeterminate": "Unbestimmt",
+    
+    "showcase.sliders.continuous": "Kontinuierlich",
+    "showcase.sliders.discrete": "Diskret",
+    "showcase.sliders.vertical": "Vertikal",
+    
+    "showcase.cards.elevated": "Erhaben",
+    "showcase.cards.filled": "Gef\u00fcllt",
+    "showcase.cards.outlined": "Umrandet",
+    "showcase.cards.content": "Karteninhalt steht hier mit unterst\u00fctzendem Text.",
+    
+    "showcase.dividers.content_above": "Inhalt über dem Teiler",
+    "showcase.dividers.content_below": "Inhalt unter dem Teiler",
+    "showcase.dividers.after_inset": "Nach dem Einrück-Teiler",
+    
+    "showcase.lists.selection_mode": "Auswahlmodus:",
+    "showcase.lists.mode_single": "Einzeln",
+    "showcase.lists.mode_multi": "Mehrfach",
+    
+    "showcase.search.default": "Standard-Suchleiste",
+    "showcase.search.with_navigation": "Mit Navigationssymbol",
+    "showcase.search.with_text": "Mit Suchtext",
+    
+    "showcase.loading.default": "Ladeindikator",
+    "showcase.loading.with_container": "Ladeindikator mit Container",
+    "showcase.loading.multi_color": "Ladeindikator mit mehreren Farben",
+    "showcase.loading.small": "Kleiner Ladeindikator",
+    "showcase.loading.large_fast": "Großer Ladeindikator (schnell)",
+    
     "showcase.section.checkboxes.title": "Kontrollkästchen",
     "showcase.section.checkboxes.description": "Auswahl per visuellem Häkchen umschalten",
     "showcase.section.switches.title": "Schalter",

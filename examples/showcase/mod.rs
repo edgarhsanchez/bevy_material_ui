@@ -1,4 +1,5 @@
 pub mod common;
+pub mod i18n_helpers;
 pub mod navigation;
 pub mod views;
 

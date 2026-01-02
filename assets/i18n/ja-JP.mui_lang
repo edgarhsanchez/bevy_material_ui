@@ -87,6 +87,33 @@
     "showcase.chips.tag": "タグ",
     "showcase.chips.action": "アクション",
     
+    "showcase.fab.create": "作成",
+    
+    "showcase.progress.indeterminate": "不定",
+        "showcase.sliders.continuous": "連続",
+    "showcase.sliders.discrete": "離散",    "showcase.sliders.vertical": "垂直",
+    
+    "showcase.cards.elevated": "高度",
+    "showcase.cards.filled": "塗りつぶし",
+    "showcase.cards.outlined": "アウトライン",
+    "showcase.cards.content": "カードのコンテンツとサポートテキストがここに入ります。",
+    
+    "showcase.dividers.content_above": "仕切りの上のコンテンツ",
+    "showcase.dividers.content_below": "仕切りの下のコンテンツ",
+    "showcase.dividers.after_inset": "インセット仕切りの後",
+    
+    "showcase.lists.selection_mode": "選択モード:",    "showcase.lists.mode_single": "単一",
+    "showcase.lists.mode_multi": "複数",    
+    "showcase.search.default": "デフォルト検索バー",
+    "showcase.search.with_navigation": "ナビゲーションアイコン付き",
+    "showcase.search.with_text": "検索テキスト付き",
+    
+    "showcase.loading.default": "読み込みインジケーター",
+    "showcase.loading.with_container": "コンテナ付き読み込みインジケーター",
+    "showcase.loading.multi_color": "複数色読み込みインジケーター",
+    "showcase.loading.small": "小さい読み込みインジケーター",
+    "showcase.loading.large_fast": "大きい読み込みインジケーター（高速）",
+    
     "showcase.section.checkboxes.title": "チェックボックス",
     "showcase.section.checkboxes.description": "チェックマークで選択を切り替え",
     "showcase.section.switches.title": "スイッチ",

@@ -87,7 +87,33 @@
     "showcase.chips.tag": "Etiqueta",
     "showcase.chips.action": "Acción",
     
-    "showcase.section.checkboxes.title": "Casillas",
+    "showcase.fab.create": "Crear",
+    
+    "showcase.progress.indeterminate": "Indeterminado",
+        "showcase.sliders.vertical": "Vertical",
+    
+    "showcase.cards.elevated": "Elevado",
+    "showcase.cards.filled": "Relleno",
+    "showcase.cards.outlined": "Contorneado",
+    "showcase.cards.content": "El contenido de la tarjeta va aqu\u00ed con texto de apoyo.",
+    
+    "showcase.dividers.content_above": "Contenido arriba del divisor",
+    "showcase.dividers.content_below": "Contenido debajo del divisor",
+    "showcase.dividers.after_inset": "Después del divisor insertado",
+    
+    "showcase.lists.selection_mode": "Modo de selección:",    "showcase.lists.mode_single": "Único",
+    "showcase.lists.mode_multi": "Múltiple",    
+    "showcase.search.default": "Barra de búsqueda predeterminada",
+    "showcase.search.with_navigation": "Con icono de navegación",
+    "showcase.search.with_text": "Con texto de búsqueda",
+    
+    "showcase.loading.default": "Indicador de carga",
+    "showcase.loading.with_container": "Indicador de carga con contenedor",
+    "showcase.loading.multi_color": "Indicador de carga con múltiples colores",
+    "showcase.loading.small": "Indicador de carga pequeño",
+    "showcase.loading.large_fast": "Indicador de carga grande (rápido)",
+    
+    "showcase.section.checkboxes.title": "Casillas de verificación",
     "showcase.section.checkboxes.description": "Alterna la selección con una marca de verificación",
     "showcase.section.switches.title": "Interruptores",
     "showcase.section.switches.description": "Activar/desactivar con animación del pulgar",
