@@ -77,6 +77,27 @@ struct ShowcaseI18nAssets {
     handles: Vec<Handle<MaterialTranslations>>,
 }
 
+/// Global font handle for international text support.
+/// 
+/// **Required Font**: Noto Sans (or another font with comprehensive Unicode coverage)
+/// 
+/// Download from: https://fonts.google.com/noto/specimen/Noto+Sans
+/// Place the font file at: `assets/fonts/NotoSans-Regular.ttf`
+/// 
+/// This font supports:
+/// - Latin (English, Spanish, French, German)
+/// - CJK (Chinese, Japanese, Korean)
+/// - Hebrew, Arabic, Cyrillic, Greek
+/// - And many more scripts
+/// 
+/// **Fallback**: If the font file is not found, Bevy's default font will be used,
+/// but international characters (Chinese, Japanese, Hebrew, etc.) will not render correctly.
+#[derive(Resource, Clone)]
+pub struct ShowcaseFont {
+    pub handle: Handle<Font>,
+    pub available: bool,
+}
+
 #[derive(Resource)]
 struct SettingsUiEntities {
     dialog: Entity,
@@ -152,6 +173,7 @@ pub fn run() {
                 snackbar_demo_trigger_system,
                 snackbar_demo_style_system,
                 snackbar_demo_action_log_system,
+                apply_international_font_system,
             ),
         )
         .add_systems(
@@ -726,6 +748,27 @@ fn load_showcase_i18n_assets_system(mut commands: Commands, asset_server: Res<As
     ];
 
     commands.insert_resource(ShowcaseI18nAssets { handles });
+
+    // Load international font.
+    // Try to load Noto Sans; if not found, fall back to Bevy's default.
+    let font_path = "fonts/NotoSans-Regular.ttf";
+    let font_handle = asset_server.load::<Font>(font_path);
+    
+    // We can't check if the asset exists synchronously, so we'll always create the resource.
+    // The font availability will be checked later when it's used.
+    commands.insert_resource(ShowcaseFont {
+        handle: font_handle,
+        available: false, // Will be updated when first used
+    });
+
+    info!(
+        "Loading international font: {}. If not found, international characters may not display correctly.",
+        font_path
+    );
+    info!(
+        "To add font support: Download Noto Sans from https://fonts.google.com/noto/specimen/Noto+Sans"
+    );
+    info!("Place it at: assets/fonts/NotoSans-Regular.ttf");
 }
 
 fn toggle_language_system(keys: Res<ButtonInput<KeyCode>>, mut language: ResMut<MaterialLanguage>) {
@@ -737,6 +780,35 @@ fn toggle_language_system(keys: Res<ButtonInput<KeyCode>>, mut language: ResMut<
         };
 
         info!("MaterialLanguage.tag set to '{}'", language.tag);
+    }
+}
+
+/// Apply international font to text nodes marked with `NeedsInternationalFont`.
+/// 
+/// This system runs once for each marked text node, applying the international font
+/// handle and removing the marker to prevent redundant processing.
+fn apply_international_font_system(
+    mut commands: Commands,
+    font_resource: Option<Res<ShowcaseFont>>,
+    fonts: Res<Assets<Font>>,
+    mut query: Query<(Entity, &mut TextFont), With<common::NeedsInternationalFont>>,
+) {
+    let Some(font_resource) = font_resource else {
+        return;
+    };
+
+    // Check if the font asset has loaded
+    let font_loaded = fonts.get(&font_resource.handle).is_some();
+
+    for (entity, mut text_font) in query.iter_mut() {
+        if font_loaded {
+            // Font is available - apply it
+            text_font.font = font_resource.handle.clone();
+        }
+        // else: Font not loaded yet (or doesn't exist) - keep default font
+        
+        // Remove marker to prevent reprocessing
+        commands.entity(entity).remove::<common::NeedsInternationalFont>();
     }
 }
 

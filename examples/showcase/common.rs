@@ -524,6 +524,7 @@ pub fn spawn_section_header(
             ..default()
         },
         TextColor(theme.primary),
+        NeedsInternationalFont, // Marker for font system to apply
     ));
 
     if !description_default.is_empty() {
@@ -539,6 +540,12 @@ pub fn spawn_section_header(
                 margin: UiRect::bottom(Val::Px(8.0)),
                 ..default()
             },
+            NeedsInternationalFont, // Marker for font system to apply
         ));
     }
 }
+
+/// Marker component indicating that a text node should use the international font when available.
+/// This is applied to all localized text to ensure international characters display correctly.
+#[derive(Component)]
+pub struct NeedsInternationalFont;
