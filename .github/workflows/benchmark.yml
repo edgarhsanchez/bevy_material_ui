@@ -15,7 +15,7 @@ env:
 
 jobs:
   benchmark:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.actor == 'edgarhsanchez' && 'self-hosted' || 'ubuntu-latest' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
