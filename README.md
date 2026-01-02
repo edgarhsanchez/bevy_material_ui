@@ -1,6 +1,7 @@
 # bevy_material_ui
 
 [![CI](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/ci.yml/badge.svg)](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/ci.yml)
+[![Benchmark](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/benchmark.yml/badge.svg)](https://github.com/edgarhsanchez/bevy_material_ui/actions/workflows/benchmark.yml)
 [![Crates.io](https://img.shields.io/crates/v/bevy_material_ui.svg)](https://crates.io/crates/bevy_material_ui)
 [![Docs.rs](https://docs.rs/bevy_material_ui/badge.svg)](https://docs.rs/bevy_material_ui)
 [![Dependencies](https://deps.rs/repo/github/edgarhsanchez/bevy_material_ui/status.svg)](https://deps.rs/repo/github/edgarhsanchez/bevy_material_ui)
