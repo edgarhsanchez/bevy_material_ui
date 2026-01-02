@@ -216,8 +216,13 @@ mod tests {
     fn test_core_palette() {
         let palette = CorePalette::from_argb(0xFF6750A4);
 
-        // Primary uses the MD3 target chroma.
-        assert!((palette.primary.chroma() - 48.0).abs() < 0.001);
+        // Primary uses max(48.0, seed_chroma) per MD3 specification.
+        // For low-chroma seeds, this ensures minimum colorfulness of 48.0.
+        // For high-chroma seeds, this preserves their vibrancy.
+        assert!(
+            palette.primary.chroma() >= 48.0,
+            "Primary chroma must be at least 48.0 per MD3 spec"
+        );
 
         // Secondary should have reduced chroma
         assert!((palette.secondary.chroma() - 16.0).abs() < 0.001);
@@ -227,6 +232,25 @@ mod tests {
 
         // Error should be red-ish hue
         assert!(palette.error.hue() < 50.0 || palette.error.hue() > 330.0);
+    }
+
+    #[test]
+    fn test_core_palette_chroma_behavior() {
+        // Test with low-chroma seed (< 48.0)
+        let low_chroma_seed = Hct::new(250.0, 30.0, 50.0);
+        let palette_low = CorePalette::from_hct(&low_chroma_seed);
+        assert!(
+            (palette_low.primary.chroma() - 48.0).abs() < 0.001,
+            "Low-chroma seed should boost to 48.0"
+        );
+
+        // Test with high-chroma seed (> 48.0)
+        let high_chroma_seed = Hct::new(250.0, 80.0, 50.0);
+        let palette_high = CorePalette::from_hct(&high_chroma_seed);
+        assert!(
+            (palette_high.primary.chroma() - 80.0).abs() < 0.001,
+            "High-chroma seed should preserve its vibrancy"
+        );
     }
 
     #[test]
