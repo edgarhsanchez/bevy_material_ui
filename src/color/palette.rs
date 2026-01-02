@@ -132,8 +132,10 @@ impl CorePalette {
         let chroma = seed.chroma();
 
         Self {
-            // Material 3 formula: primary uses max(48.0, seed_chroma) to preserve
-            // vibrancy of highly chromatic seed colors while ensuring minimum chroma
+            // Material Design 3 formula: primary uses max(48.0, seed_chroma).
+            // 48.0 is MD3's minimum chroma specification for primary palettes to
+            // maintain sufficient colorfulness, while higher seed chroma values
+            // are preserved to keep highly chromatic seed colors vibrant.
             primary: TonalPalette::new(hue, chroma.max(48.0)),
 
             // Secondary uses the same hue with reduced chroma (16)
